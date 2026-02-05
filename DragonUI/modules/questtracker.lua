@@ -118,15 +118,20 @@ local function ApplyQuestTrackerStyling()
     watchFrame.background = watchFrame.background or watchFrame:CreateTexture(nil, 'BACKGROUND')
     local background = watchFrame.background
 
-    -- Fixed header positioning (RetailUI pattern - use SetSize for correct proportions)
-    background:ClearAllPoints()
-    background:SetPoint('RIGHT', WatchFrameCollapseExpandButton, 'RIGHT', 0, 0)
-    background:SetSize(watchFrame:GetWidth(), 36)  -- Fixed height to prevent texture stretching
-
+    -- Apply atlas texture first
     local success, err = pcall(SetAtlasTexture, background, 'QuestTracker-Header')
     if not success then
         return
     end
+    
+    -- Fixed header positioning (RetailUI pattern)
+    -- NOTE: SetSize MUST come AFTER SetAtlasTexture because it overwrites size
+    -- Use WatchFrame width to match quest tracker, maintain 8:1 aspect ratio
+    local headerWidth = watchFrame:GetWidth() or 230
+    local headerHeight = headerWidth / 8  -- Maintain aspect ratio (560/70 = 8)
+    background:ClearAllPoints()
+    background:SetPoint('RIGHT', WatchFrameCollapseExpandButton, 'RIGHT', 0, 0)
+    background:SetSize(headerWidth, headerHeight)  -- Dynamic size matching WatchFrame
     background:SetAlpha(0.9)
 
     -- Get show_header setting
@@ -215,6 +220,26 @@ function QuestTrackerModule:Initialize()
 
     self.questTrackerFrame = CreateFrame('Frame', 'DragonUI_QuestTrackerFrame', UIParent)
     self.questTrackerFrame:SetSize(230, 500)
+    self.questTrackerFrame:SetFrameLevel(100)
+    self.questTrackerFrame:SetFrameStrata('FULLSCREEN')
+    
+    -- Create green editor overlay (like other editable frames)
+    do
+        local texture = self.questTrackerFrame:CreateTexture(nil, 'BACKGROUND')
+        texture:SetAllPoints(self.questTrackerFrame)
+        texture:SetTexture(0, 1, 0, 0.3) -- Semi-transparent green
+        texture:Hide()
+        self.questTrackerFrame.editorTexture = texture
+    end
+    
+    -- Create text label for editor mode
+    do
+        local fontString = self.questTrackerFrame:CreateFontString(nil, "OVERLAY", 'GameFontNormal')
+        fontString:SetPoint("CENTER", self.questTrackerFrame, "TOP", 0, -20)
+        fontString:SetText("Quest Tracker")
+        fontString:Hide()
+        self.questTrackerFrame.editorText = fontString
+    end
 
     -- Save original WatchFrame position for restore
     if WatchFrame then
@@ -227,6 +252,30 @@ function QuestTrackerModule:Initialize()
     
     -- Replace the frame immediately upon initialization
     ReplaceBlizzardFrame(self.questTrackerFrame)
+
+    -- Register with Editor Mode system
+    if addon.RegisterEditableFrame then
+        addon:RegisterEditableFrame({
+            name = "questtracker",
+            frame = self.questTrackerFrame,
+            blizzardFrame = WatchFrame,
+            configPath = nil,  -- Use custom save logic (handled in OnDragStop)
+            showTest = function()
+                QuestTrackerModule:ShowEditorTest()
+            end,
+            hideTest = function()
+                QuestTrackerModule:HideEditorTest(true)
+            end,
+            onHide = function()
+                -- Position is already saved by OnDragStop
+                -- Just update WatchFrame position after editor mode
+                UpdateQuestTrackerPosition()
+                ReplaceBlizzardFrame(QuestTrackerModule.questTrackerFrame)
+                ForceUpdateQuestTracker()
+            end,
+            module = QuestTrackerModule
+        })
+    end
 
     self.initialized = true
     self.applied = true
@@ -326,6 +375,14 @@ function QuestTrackerModule:ShowEditorTest()
         self.questTrackerFrame:SetMovable(true)
         self.questTrackerFrame:EnableMouse(true)
         self.questTrackerFrame:RegisterForDrag("LeftButton")
+        
+        -- Show green editor overlay
+        if self.questTrackerFrame.editorTexture then
+            self.questTrackerFrame.editorTexture:Show()
+        end
+        if self.questTrackerFrame.editorText then
+            self.questTrackerFrame.editorText:Show()
+        end
 
         self.questTrackerFrame:SetScript("OnDragStart", function(frame)
             frame:StartMoving()
@@ -354,6 +411,14 @@ function QuestTrackerModule:HideEditorTest(savePosition)
         self.questTrackerFrame:EnableMouse(false)
         self.questTrackerFrame:SetScript("OnDragStart", nil)
         self.questTrackerFrame:SetScript("OnDragStop", nil)
+        
+        -- Hide green editor overlay
+        if self.questTrackerFrame.editorTexture then
+            self.questTrackerFrame.editorTexture:Hide()
+        end
+        if self.questTrackerFrame.editorText then
+            self.questTrackerFrame.editorText:Hide()
+        end
 
         if savePosition then
             UpdateQuestTrackerPosition()

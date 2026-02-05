@@ -309,11 +309,13 @@ function addon:HideAllEditableFrames(refresh)
             end
             
             if refresh then
-                -- Save position automatically
-                if #frameData.configPath == 2 then
-                    addon.SaveUIFramePosition(frameData.frame, frameData.configPath[1], frameData.configPath[2])
-                else
-                    addon.SaveUIFramePosition(frameData.frame, frameData.configPath[1])
+                -- Save position automatically (skip if configPath is nil - custom save logic)
+                if frameData.configPath then
+                    if #frameData.configPath == 2 then
+                        addon.SaveUIFramePosition(frameData.frame, frameData.configPath[1], frameData.configPath[2])
+                    else
+                        addon.SaveUIFramePosition(frameData.frame, frameData.configPath[1])
+                    end
                 end
                 
                 if frameData.onHide then
