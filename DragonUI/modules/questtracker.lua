@@ -7,6 +7,11 @@ local addon = select(2, ...);
 local QuestTrackerModule = {}
 addon.QuestTrackerModule = QuestTrackerModule
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("questtracker", QuestTrackerModule, "Quest Tracker", "Quest tracker positioning and styling")
+end
+
 QuestTrackerModule.questTrackerFrame = nil
 
 -- =============================================================================

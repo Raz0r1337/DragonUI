@@ -24,6 +24,11 @@ local VehicleModule = {
     frames = {}              -- Track created frames
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("vehicle", VehicleModule, "Vehicle", "Vehicle interface enhancements")
+end
+
 -- Frame variables (only created when enabled)
 local pUiMainBar = nil;
 local vehicleType = nil;

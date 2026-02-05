@@ -344,6 +344,208 @@ function addon:GetEditableFrameInfo(frameName)
 end
 
 -- ============================================================================
+-- MODULE REGISTRY SYSTEM
+-- ============================================================================
+-- Central registry for all DragonUI modules.
+-- Provides: auto-discovery, status reporting, batch enable/disable operations.
+-- Modules self-register during load, making the system extensible.
+
+addon.ModuleRegistry = addon.ModuleRegistry or {
+    -- Registered modules: { [name] = { module, displayName, description, order } }
+    modules = {},
+    -- Load order for enable/disable operations
+    loadOrder = {},
+    -- Counter for auto-ordering
+    orderCounter = 0,
+}
+
+local MR = addon.ModuleRegistry
+
+-- Register a module with the registry
+-- @param name: Unique module identifier (matches database key in profile.modules)
+-- @param moduleTable: The module state table (e.g., StanceModule)
+-- @param displayName: Human-readable name for UI display
+-- @param description: Description for tooltips (optional)
+-- @param order: Load order number (optional, auto-assigned if nil)
+function MR:Register(name, moduleTable, displayName, description, order)
+    if not name or not moduleTable then
+        addon:Error("ModuleRegistry:Register requires name and moduleTable")
+        return false
+    end
+    
+    -- Prevent duplicate registration
+    if self.modules[name] then
+        addon:Debug("ModuleRegistry: Module already registered -", name)
+        return false
+    end
+    
+    -- Auto-assign order if not provided
+    self.orderCounter = self.orderCounter + 1
+    local assignedOrder = order or self.orderCounter
+    
+    -- Store module info
+    self.modules[name] = {
+        module = moduleTable,
+        displayName = displayName or name,
+        description = description or "",
+        order = assignedOrder,
+    }
+    
+    -- Add to load order
+    table.insert(self.loadOrder, name)
+    
+    addon:Debug("ModuleRegistry: Registered module -", name, "order:", assignedOrder)
+    return true
+end
+
+-- Get a registered module by name
+-- @param name: Module identifier
+-- @return moduleTable or nil
+function MR:Get(name)
+    local info = self.modules[name]
+    return info and info.module or nil
+end
+
+-- Get module info (name, description, order)
+-- @param name: Module identifier
+-- @return table { module, displayName, description, order } or nil
+function MR:GetInfo(name)
+    return self.modules[name]
+end
+
+-- Get all registered module names
+-- @return table (array) of module names in load order
+function MR:GetAll()
+    return self.loadOrder
+end
+
+-- Get count of registered modules
+-- @return number
+function MR:Count()
+    return #self.loadOrder
+end
+
+-- Check if a module is enabled in database
+-- @param name: Module identifier
+-- @return boolean
+function MR:IsEnabled(name)
+    if not addon.db or not addon.db.profile or not addon.db.profile.modules then
+        return false
+    end
+    local cfg = addon.db.profile.modules[name]
+    return cfg and cfg.enabled
+end
+
+-- Enable a specific module
+-- @param name: Module identifier
+-- @return boolean success
+function MR:Enable(name)
+    local info = self.modules[name]
+    if not info then
+        addon:Error("ModuleRegistry: Unknown module -", name)
+        return false
+    end
+    
+    -- Update database
+    if addon.db and addon.db.profile and addon.db.profile.modules then
+        if not addon.db.profile.modules[name] then
+            addon.db.profile.modules[name] = {}
+        end
+        addon.db.profile.modules[name].enabled = true
+    end
+    
+    -- Call module's Apply function if it has one
+    local mod = info.module
+    if mod then
+        if mod.ApplySystem then
+            mod:ApplySystem()
+        elseif mod.Apply then
+            mod:Apply()
+        elseif mod.Enable then
+            mod:Enable()
+        end
+    end
+    
+    addon:Debug("ModuleRegistry: Enabled -", name)
+    return true
+end
+
+-- Disable a specific module
+-- @param name: Module identifier
+-- @return boolean success
+function MR:Disable(name)
+    local info = self.modules[name]
+    if not info then
+        addon:Error("ModuleRegistry: Unknown module -", name)
+        return false
+    end
+    
+    -- Update database
+    if addon.db and addon.db.profile and addon.db.profile.modules then
+        if not addon.db.profile.modules[name] then
+            addon.db.profile.modules[name] = {}
+        end
+        addon.db.profile.modules[name].enabled = false
+    end
+    
+    -- Call module's Restore function if it has one
+    local mod = info.module
+    if mod then
+        if mod.RestoreSystem then
+            mod:RestoreSystem()
+        elseif mod.Restore then
+            mod:Restore()
+        elseif mod.Disable then
+            mod:Disable()
+        end
+    end
+    
+    addon:Debug("ModuleRegistry: Disabled -", name)
+    return true
+end
+
+-- Enable all registered modules (in load order)
+function MR:EnableAll()
+    for _, name in ipairs(self.loadOrder) do
+        self:Enable(name)
+    end
+end
+
+-- Disable all registered modules (in reverse load order for proper cleanup)
+function MR:DisableAll()
+    for i = #self.loadOrder, 1, -1 do
+        self:Disable(self.loadOrder[i])
+    end
+end
+
+-- Print status of all registered modules (for /dragonui status)
+function MR:PrintStatus()
+    if #self.loadOrder == 0 then
+        print("  No modules registered in ModuleRegistry")
+        return
+    end
+    
+    print("  |cFF00FF00Registered Modules:|r")
+    for _, name in ipairs(self.loadOrder) do
+        local info = self.modules[name]
+        local enabled = self:IsEnabled(name)
+        local status = enabled and "|cFF00FF00Enabled|r" or "|cFFFF0000Disabled|r"
+        local loaded = info.module and (info.module.initialized or info.module.applied) and "|cFF00FF00Loaded|r" or "|cFFAAAAAA-|r"
+        
+        print(string.format("    %s: %s (%s)", info.displayName, status, loaded))
+    end
+end
+
+-- Convenience function for modules to register themselves
+-- @param name: Module identifier
+-- @param moduleTable: Module state table
+-- @param displayName: Display name (optional)
+-- @param description: Description (optional)
+function addon:RegisterModule(name, moduleTable, displayName, description)
+    return MR:Register(name, moduleTable, displayName, description)
+end
+
+-- ============================================================================
 -- COMBAT QUEUE SYSTEM (ElvUI Pattern)
 -- ============================================================================
 -- Central system for deferring operations that cannot run during combat lockdown.

@@ -9,6 +9,11 @@ local addon = select(2, ...);
 local BuffFrameModule = {}
 addon.BuffFrameModule = BuffFrameModule
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("buffs", BuffFrameModule, "Buff Frame", "Custom buff frame styling, positioning and toggle button")
+end
+
 --  VARIABLES LOCALES
 local buffFrame = nil
 local toggleButton = nil

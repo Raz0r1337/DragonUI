@@ -37,6 +37,11 @@ local MinimapModule = {
 }
 addon.MinimapModule = MinimapModule;
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("minimap", MinimapModule, "Minimap", "Custom minimap styling, positioning, tracking icons and calendar")
+end
+
 -- Función para obtener configuración del módulo
 local function GetModuleConfig()
     return addon.db and addon.db.profile and addon.db.profile.modules and addon.db.profile.modules.minimap

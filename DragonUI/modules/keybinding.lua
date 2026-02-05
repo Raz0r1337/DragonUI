@@ -31,6 +31,11 @@ local KeyBindingModule = {
 
 addon.KeyBindingModule = KeyBindingModule
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("keybinding", KeyBindingModule, "Key Binding", "LibKeyBound integration for intuitive keybinding")
+end
+
 -- ============================================================================
 -- BUTTON ENHANCEMENT SYSTEM
 -- ============================================================================

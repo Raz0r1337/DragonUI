@@ -62,27 +62,33 @@ end
 local function ShowStatus()
     addon:Print("=== DragonUI Status ===")
     
-    -- Show loaded modules
-    local modules = {
-        { name = "Mainbars", check = function() return addon.RefreshMainbars end },
-        { name = "Buttons", check = function() return addon.RefreshButtons end },
-        { name = "Micromenu", check = function() return addon.RefreshMicromenu end },
-        { name = "Minimap", check = function() return addon.RefreshMinimap end },
-        { name = "Target Frame", check = function() return addon.RefreshTargetFrame end },
-        { name = "Focus Frame", check = function() return addon.RefreshFocusFrame end },
-        { name = "Party Frames", check = function() return addon.RefreshPartyFrames end },
-        { name = "Stance Bar", check = function() return addon.RefreshStance end },
-        { name = "Pet Bar", check = function() return addon.RefreshPetbar end },
-        { name = "Vehicle", check = function() return addon.RefreshVehicle end },
-        { name = "Multicast", check = function() return addon.RefreshMulticast end },
-        { name = "Cooldowns", check = function() return addon.RefreshCooldowns end },
-        { name = "Buff Frame", check = function() return addon.RefreshBuffFrame end },
-        { name = "Castbar", check = function() return addon.RefreshCastbar end },
-    }
-    
-    for _, module in ipairs(modules) do
-        local status = module.check() and "|cFF00FF00Loaded|r" or "|cFFFF0000Not Loaded|r"
-        print(string.format("  %s: %s", module.name, status))
+    -- Show registered modules from ModuleRegistry (if available)
+    if addon.ModuleRegistry and addon.ModuleRegistry.Count and addon.ModuleRegistry:Count() > 0 then
+        addon.ModuleRegistry:PrintStatus()
+    else
+        -- Fallback: Show manually detected modules
+        print("  |cFF00FF00Detected Modules:|r")
+        local modules = {
+            { name = "Mainbars", check = function() return addon.RefreshMainbars end },
+            { name = "Buttons", check = function() return addon.RefreshButtons end },
+            { name = "Micromenu", check = function() return addon.RefreshMicromenu end },
+            { name = "Minimap", check = function() return addon.RefreshMinimap end },
+            { name = "Target Frame", check = function() return addon.RefreshTargetFrame end },
+            { name = "Focus Frame", check = function() return addon.RefreshFocusFrame end },
+            { name = "Party Frames", check = function() return addon.RefreshPartyFrames end },
+            { name = "Stance Bar", check = function() return addon.RefreshStance end },
+            { name = "Pet Bar", check = function() return addon.RefreshPetbar end },
+            { name = "Vehicle", check = function() return addon.RefreshVehicle end },
+            { name = "Multicast", check = function() return addon.RefreshMulticast end },
+            { name = "Cooldowns", check = function() return addon.RefreshCooldowns end },
+            { name = "Buff Frame", check = function() return addon.RefreshBuffFrame end },
+            { name = "Castbar", check = function() return addon.RefreshCastbar end },
+        }
+        
+        for _, module in ipairs(modules) do
+            local status = module.check() and "|cFF00FF00Loaded|r" or "|cFFFF0000Not Loaded|r"
+            print(string.format("    %s: %s", module.name, status))
+        end
     end
     
     -- Show mover count

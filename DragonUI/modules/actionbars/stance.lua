@@ -23,6 +23,11 @@ local StanceModule = {
     frames = {}             -- Track created frames
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("stance", StanceModule, "Stance Bar", "Stance/shapeshift bar positioning and styling")
+end
+
 -- ============================================================================
 -- CONFIGURATION FUNCTIONS
 -- ============================================================================

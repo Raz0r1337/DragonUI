@@ -228,8 +228,76 @@ addon.Options.args.modules = {
                 StaticPopup_Show("DRAGONUI_RELOAD_UI")
             end,
             order = 25
-        }
+        },
+
+        -- ====================================================================
+        -- ADVANCED SECTION - All Registered Modules
+        -- ====================================================================
+        advanced_header = {
+            type = 'header',
+            name = "Advanced - Individual Module Control",
+            order = 100
+        },
+        
+        advanced_description = {
+            type = 'description',
+            name = "|cffFF6600Warning:|r These are individual module controls. The options above may control multiple modules at once. Changes here will be reflected above and vice versa.\n",
+            order = 101
+        },
     }
 }
+
+-- ============================================================================
+-- DYNAMIC ADVANCED MODULE TOGGLES
+-- ============================================================================
+-- Generate toggles for ALL registered modules from ModuleRegistry.
+-- This runs after modules have registered themselves.
+
+local function GenerateAdvancedModuleOptions()
+    local MR = addon.ModuleRegistry
+    if not MR or not MR.loadOrder then return end
+    
+    local orderBase = 110
+    
+    for i, moduleName in ipairs(MR.loadOrder) do
+        local info = MR:GetInfo(moduleName)
+        if info then
+            local optionKey = "advanced_" .. moduleName
+            
+            addon.Options.args.modules.args[optionKey] = {
+                type = 'toggle',
+                name = info.displayName or moduleName,
+                desc = (info.description and info.description ~= "") 
+                    and info.description 
+                    or ("Enable/disable the " .. (info.displayName or moduleName) .. " module."),
+                get = function()
+                    return MR:IsEnabled(moduleName)
+                end,
+                set = function(_, val)
+                    -- Update database
+                    if not addon.db.profile.modules then
+                        addon.db.profile.modules = {}
+                    end
+                    if not addon.db.profile.modules[moduleName] then
+                        addon.db.profile.modules[moduleName] = {}
+                    end
+                    addon.db.profile.modules[moduleName].enabled = val
+                    
+                    -- Show reload prompt
+                    StaticPopup_Show("DRAGONUI_RELOAD_UI")
+                end,
+                order = orderBase + i
+            }
+        end
+    end
+end
+
+-- Schedule generation for after all modules have registered
+-- This uses a frame's OnUpdate to run once after initial load
+local advancedOptionsFrame = CreateFrame("Frame")
+advancedOptionsFrame:SetScript("OnUpdate", function(self)
+    self:SetScript("OnUpdate", nil)  -- Run only once
+    GenerateAdvancedModuleOptions()
+end)
 
 print("|cFF00FF00[DragonUI]|r Modules options loaded")

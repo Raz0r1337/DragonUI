@@ -25,6 +25,11 @@ local MainbarsModule = {
 }
 addon.MainbarsModule = MainbarsModule  -- Expose globally for external access
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("mainbars", MainbarsModule, "Main Bars", "Main action bars, status bars, scaling and positioning")
+end
+
 -- ============================================================================
 -- CONFIGURATION FUNCTIONS (ALWAYS AVAILABLE)
 -- ============================================================================

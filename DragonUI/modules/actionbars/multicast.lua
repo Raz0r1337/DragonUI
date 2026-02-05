@@ -22,6 +22,11 @@ local MulticastModule = {
     frames = {}                -- Track created frames
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("multicast", MulticastModule, "Multicast", "Totem and possess bar positioning and styling")
+end
+
 -- ============================================================================
 -- CONFIGURATION FUNCTIONS
 -- ============================================================================

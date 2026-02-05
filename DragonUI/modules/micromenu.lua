@@ -30,6 +30,11 @@ local MicromenuModule = {
     eventFrames = {} -- Track event handler frames
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("micromenu", MicromenuModule, "Micro Menu", "Micro menu and bags system styling and positioning")
+end
+
 -- ============================================================================
 -- CONFIGURATION FUNCTIONS
 -- ============================================================================

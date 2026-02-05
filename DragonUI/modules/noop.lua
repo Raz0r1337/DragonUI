@@ -10,6 +10,11 @@ local NoopModule = {
     pendingApply = false
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("noop", NoopModule, "Hide Blizzard", "Hide default Blizzard UI elements")
+end
+
 -- Forward declare the apply function
 local ApplyNoopChanges
 

@@ -36,6 +36,11 @@ local ButtonsModule = {
     pendingRefresh = false  -- Flag to indicate pending refresh after combat
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("buttons", ButtonsModule, "Buttons", "Action button styling and enhancements")
+end
+
 -- ============================================================================
 -- CONFIGURATION FUNCTIONS
 -- ============================================================================

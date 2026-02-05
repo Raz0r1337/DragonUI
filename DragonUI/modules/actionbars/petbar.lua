@@ -44,6 +44,11 @@ local PetbarModule = {
     eventFrame = nil
 }
 
+-- Register with ModuleRegistry (if available)
+if addon.RegisterModule then
+    addon:RegisterModule("petbar", PetbarModule, "Pet Bar", "Pet action bar positioning and styling")
+end
+
 -- ============================================================================
 -- DYNAMIC CONFIG SYSTEM (reads from DragonUI database)
 -- ============================================================================
