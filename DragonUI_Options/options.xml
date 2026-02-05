@@ -1,0 +1,39 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+    <!--
+    ================================================================================
+    DragonUI - Options Loader
+    ================================================================================
+    Load order matters! Core must be loaded first to provide registration system.
+    ================================================================================
+    -->
+    
+    <!-- Core options system (provides RegisterOptionsGroup) -->
+    <Script file="core.lua"/>
+    
+    <!-- General options (editor mode, keybind buttons) -->
+    <Script file="general.lua"/>
+    
+    <!-- Module toggles -->
+    <Script file="modules.lua"/>
+    
+    <!-- Action bars configuration -->
+    <Script file="actionbars.lua"/>
+    
+    <!-- Micro menu and bags -->
+    <Script file="micromenu.lua"/>
+    
+    <!-- Quest tracker -->
+    <Script file="questtracker.lua"/>
+    
+    <!-- Minimap -->
+    <Script file="minimap.lua"/>
+    
+    <!-- Cast bars -->
+    <Script file="castbars.lua"/>
+    
+    <!-- Unit frames -->
+    <Script file="unitframes.lua"/>
+    
+    <!-- Profiles (must be registered after DB initialization) -->
+    <Script file="profiles.lua"/>
+</Ui>

@@ -1,0 +1,37 @@
+## Interface: 30300
+## Title: |cff1784d1DragonUI|r |cffffffffOptions|r
+## Notes: Configuration UI for DragonUI
+## Author: DragonUI Team
+## Version: 1.0
+## LoadOnDemand: 1
+## Dependencies: DragonUI
+
+# Core options system
+core.lua
+
+# General options (editor mode, keybind buttons)
+general.lua
+
+# Module toggles
+modules.lua
+
+# Action bars configuration
+actionbars.lua
+
+# Micro menu, bags, xp/rep bars, gryphons, additional bars
+micromenu.lua
+
+# Quest tracker
+questtracker.lua
+
+# Minimap
+minimap.lua
+
+# Cast bars
+castbars.lua
+
+# Unit frames
+unitframes.lua
+
+# Profiles
+profiles.lua
