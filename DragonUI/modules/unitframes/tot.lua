@@ -2,6 +2,7 @@ local addon = select(2, ...)
 
 -- ============================================================================
 -- DRAGONUI TARGET OF TARGET FRAME MODULE - WoW 3.3.5a
+-- Improved private server compatibility by xius
 -- ============================================================================
 
 local Module = {
@@ -61,7 +62,60 @@ local updateCache = {
 -- ============================================================================
 
 local function GetConfig()
-    return addon:GetConfigValue("unitframe", "tot") or {}
+    -- Try multiple ways to get config (improved private server compatibility)
+    if addon.GetConfigValue then
+        return addon:GetConfigValue("unitframe", "tot") or {}
+    elseif addon.db and addon.db.profile and addon.db.profile.unitframe and addon.db.profile.unitframe.tot then
+        return addon.db.profile.unitframe.tot
+    end
+    return {}
+end
+
+local function IsEnabled()
+    local config = GetConfig()
+    -- Default to true if not explicitly set to false
+    if config.enabled == nil then
+        return true
+    end
+    return config.enabled
+end
+
+-- Helper function to determine what unit the ToT frame should display
+local function GetToTUnit()
+    if not UnitExists("target") then
+        return nil
+    end
+    
+    -- When targeting yourself, targettarget IS your own target
+    -- But we need to make sure we're showing it
+    if UnitExists("targettarget") then
+        return "targettarget"
+    end
+    
+    return nil
+end
+
+-- Check if ToT frame should be visible
+-- Show when you have a target AND (you have a targettarget OR you're targeting yourself)
+local function ShouldShowToT()
+    if not UnitExists("target") then
+        return false
+    end
+    
+    local hasTargetTarget = UnitExists("targettarget")
+    local targetingSelf = UnitIsUnit("target", "player")
+    
+    -- Always show if targettarget exists
+    if hasTargetTarget then
+        return true
+    end
+    
+    -- Also show when targeting yourself (even if you have no target)
+    if targetingSelf then
+        return true
+    end
+    
+    return false
 end
 
 -- ============================================================================
@@ -185,18 +239,19 @@ end
 -- ============================================================================
 
 local function UpdateClassification()
-    if not UnitExists("targettarget") or not frameElements.elite then
+    local totUnit = GetToTUnit()
+    if not totUnit or not frameElements.elite then
         if frameElements.elite then
             frameElements.elite:Hide()
         end
         return
     end
 
-    local classification = UnitClassification("targettarget")
+    local classification = UnitClassification(totUnit)
     local coords = nil
 
     -- Check vehicle first
-    if UnitVehicleSeatCount and UnitVehicleSeatCount("targettarget") > 0 then
+    if UnitVehicleSeatCount and UnitVehicleSeatCount(totUnit) > 0 then
         frameElements.elite:Hide()
         return
     end
@@ -209,40 +264,52 @@ local function UpdateClassification()
     elseif classification == "rare" then
         coords = BOSS_COORDS.rare
     else
-        local name = UnitName("targettarget")
+        local name = UnitName(totUnit)
         if name and addon.unitframe and addon.unitframe.famous and addon.unitframe.famous[name] then
             coords = BOSS_COORDS.elite
         end
     end
 
     if coords then
-        frameElements.elite:SetTexture(TEXTURES.BOSS) --  AÑADIDO: SetTexture
+        frameElements.elite:SetTexture(TEXTURES.BOSS)
 
-        --  APLICAR FLIP HORIZONTAL A TODAS LAS DECORACIONES
+        -- Apply horizontal flip to all decorations
         local left, right, top, bottom = coords[1], coords[2], coords[3], coords[4]
-        frameElements.elite:SetTexCoord(right, left, top, bottom) --  FLIPPED: right, left en lugar de left, right
+        frameElements.elite:SetTexCoord(right, left, top, bottom)
 
-        --  USAR VALORES CORREGIDOS DEL DEBUG
-        frameElements.elite:SetSize(51, 51) -- En lugar de coords[5], coords[6]
-        frameElements.elite:SetPoint("CENTER", TargetFrameToTPortrait, "CENTER", -4, -2) -- En lugar de coords[7], coords[8]
-        frameElements.elite:SetDrawLayer("OVERLAY", 11) --  FORZAR DRAW LAYER
+        frameElements.elite:SetSize(51, 51)
+        frameElements.elite:SetPoint("CENTER", TargetFrameToTPortrait, "CENTER", -4, -2)
+        frameElements.elite:SetDrawLayer("OVERLAY", 11)
         frameElements.elite:Show()
-        frameElements.elite:SetAlpha(1) --  ASEGURAR VISIBILIDAD
+        frameElements.elite:SetAlpha(1)
     else
         frameElements.elite:Hide()
     end
 end
 
 -- ============================================================================
--- FRAME INITIALIZATION (IGUAL QUE TARGET/FOCUS)
+-- FRAME INITIALIZATION
 -- ============================================================================
 
 local function InitializeFrame()
     if Module.configured then
         return
     end
+    
+    -- Check if ToT is enabled in config
+    if not IsEnabled() then
+        -- Hide ToT if disabled
+        if TargetFrameToT then
+            TargetFrameToT:Hide()
+        end
+        SetCVar("showTargetOfTarget", "0")
+        return
+    end
+    
+    -- Force-enable Blizzard's ToT frame
+    SetCVar("showTargetOfTarget", "1")
 
-    -- Verificar que ToT existe
+    -- Verify ToT exists
     if not TargetFrameToT then
         return
     end
@@ -250,7 +317,7 @@ local function InitializeFrame()
     -- Get configuration
     local config = GetConfig()
 
-    -- Posicionar el frame de Blizzard (no causa taint si lo hacemos solo una vez al inicio)
+    -- Position Blizzard frame (only once at init to avoid taint)
     if not Module.configured then
         TargetFrameToT:ClearAllPoints()
         TargetFrameToT:SetPoint(config.anchor or "BOTTOMRIGHT", TargetFrame, config.anchorParent or "BOTTOMRIGHT", config.x or 22, config.y or -15)
@@ -348,11 +415,14 @@ local function InitializeFrame()
     -- Setup bar hooks
     SetupBarHooks()
     
+    -- CRITICAL: Show the main ToT frame
+    TargetFrameToT:Show()
+    
     Module.configured = true
 end
 
 -- ============================================================================
--- EVENT HANDLING (IGUAL QUE TARGET/FOCUS)
+-- EVENT HANDLING
 -- ============================================================================
 
 local function OnEvent(self, event, ...)
@@ -363,27 +433,76 @@ local function OnEvent(self, event, ...)
             Module.totFrame:SetSize(120, 47)
             Module.totFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 370, -80)
             Module.initialized = true
+            
+            -- Force-enable or disable Blizzard ToT based on config
+            if IsEnabled() then
+                SetCVar("showTargetOfTarget", "1")
+            else
+                SetCVar("showTargetOfTarget", "0")
+            end
         end
 
     elseif event == "PLAYER_ENTERING_WORLD" then
         InitializeFrame()
-        if UnitExists("targettarget") then
-
+        
+        -- If initialization failed (frame doesn't exist yet), schedule a retry
+        if not Module.configured and IsEnabled() then
+            local retryFrame = CreateFrame("Frame")
+            local retryCount = 0
+            retryFrame:SetScript("OnUpdate", function(self, elapsed)
+                retryCount = retryCount + 1
+                if Module.configured or retryCount > 50 then  -- Stop after ~3 seconds
+                    self:SetScript("OnUpdate", nil)
+                    return
+                end
+                
+                -- Try to initialize every frame for first 3 seconds
+                if TargetFrameToT and not Module.configured then
+                    InitializeFrame()
+                end
+            end)
+        end
+        
+        if IsEnabled() and ShouldShowToT() then
+            -- Ensure frame is visible
+            if TargetFrameToT then
+                TargetFrameToT:Show()
+            end
             UpdateClassification()
         end
 
     elseif event == "PLAYER_TARGET_CHANGED" then
-        -- Target cambió, forzar update del ToT
-
+        -- Target changed, force update ToT
+        if not IsEnabled() then return end
+        
+        -- Show or hide based on whether we should show ToT
+        if TargetFrameToT then
+            if ShouldShowToT() then
+                TargetFrameToT:Show()
+            else
+                TargetFrameToT:Hide()
+            end
+        end
+        
         UpdateClassification()
         if Module.textSystem then
             Module.textSystem.update()
         end
 
     elseif event == "UNIT_TARGET" then
+        if not IsEnabled() then return end
+        
         local unit = ...
-        if unit == "target" then -- El target del target cambió
-
+        if unit == "target" or unit == "player" then
+            -- Show or hide based on whether we should show ToT
+            if TargetFrameToT then
+                if ShouldShowToT() then
+                    TargetFrameToT:Show()
+                else
+                    TargetFrameToT:Hide()
+                end
+            end
+            
             UpdateClassification()
             if Module.textSystem then
                 Module.textSystem.update()
@@ -391,15 +510,19 @@ local function OnEvent(self, event, ...)
         end
 
     elseif event == "UNIT_CLASSIFICATION_CHANGED" then
+        if not IsEnabled() then return end
+        
         local unit = ...
         if unit == "targettarget" then
             UpdateClassification()
         end
 
     elseif event == "UNIT_FACTION" then
+        if not IsEnabled() then return end
+        
         local unit = ...
         if unit == "targettarget" then
-            -- No tenemos name background como target, pero podrías agregarlo
+            -- Could add name background color change here if needed
         end
     end
 end
@@ -417,16 +540,36 @@ if not Module.eventsFrame then
 end
 
 -- ============================================================================
--- PUBLIC API (IGUAL QUE TARGET/FOCUS)
+-- PUBLIC API
 -- ============================================================================
 
 local function RefreshFrame()
+    if not IsEnabled() then
+        -- Hide ToT if disabled
+        if TargetFrameToT then
+            TargetFrameToT:Hide()
+        end
+        SetCVar("showTargetOfTarget", "0")
+        return
+    end
+    
+    -- Force-enable if enabled
+    SetCVar("showTargetOfTarget", "1")
+    
     if not Module.configured then
         InitializeFrame()
+    else
+        -- Show/hide based on whether we should show ToT
+        if TargetFrameToT then
+            if ShouldShowToT() then
+                TargetFrameToT:Show()
+            else
+                TargetFrameToT:Hide()
+            end
+        end
     end
 
-    if UnitExists("targettarget") then
-
+    if ShouldShowToT() then
         UpdateClassification()
         if Module.textSystem then
             Module.textSystem.update()

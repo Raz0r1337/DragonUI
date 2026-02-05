@@ -2,7 +2,7 @@ local addon = select(2, ...)
 
 -- ============================================================================
 -- DRAGONUI FOCUS OF TARGET FRAME MODULE - WoW 3.3.5a
--- CLONADO EXACTO DE TOT.LUA PERO PARA FOCUS
+-- Improved private server compatibility by xius
 -- ============================================================================
 
 local Module = {
@@ -14,13 +14,13 @@ local Module = {
 }
 
 -- ============================================================================
--- CONFIGURATION & CONSTANTS (IGUAL QUE TOT)
+-- CONFIGURATION & CONSTANTS
 -- ============================================================================
 
--- Cache Blizzard frames (FOCUS EN LUGAR DE TARGET)
+-- Cache Blizzard frames
 local FocusFrameToT = _G.FocusFrameToT
 
--- Texture paths (IGUAL que ToT)
+-- Texture paths
 local TEXTURES = {
     BACKGROUND = "Interface\\AddOns\\DragonUI\\Textures\\UI-HUD-UnitFrame-TargetofTarget-PortraitOn-BACKGROUND",
     BORDER = "Interface\\AddOns\\DragonUI\\Textures\\UI-HUD-UnitFrame-TargetofTarget-PortraitOn-BORDER",
@@ -28,14 +28,14 @@ local TEXTURES = {
     BOSS = "Interface\\AddOns\\DragonUI\\Textures\\uiunitframeboss2x"
 }
 
--- Boss classifications (IGUAL que ToT)
+-- Boss classifications
 local BOSS_COORDS = {
     elite = {0.001953125, 0.314453125, 0.322265625, 0.630859375, 60, 59, 3, 1},
     rare = {0.00390625, 0.31640625, 0.64453125, 0.953125, 60, 59, 3, 1},
     rareelite = {0.001953125, 0.388671875, 0.001953125, 0.31835937, 74, 61, 10, 1}
 }
 
--- Power types (IGUAL que ToT)
+-- Power types
 local POWER_MAP = {
     [0] = "Mana",
     [1] = "Rage",
@@ -44,25 +44,73 @@ local POWER_MAP = {
     [6] = "RunicPower"
 }
 
--- Frame elements storage (IGUAL que ToT)
+-- Frame elements storage
 local frameElements = {
     background = nil,
     border = nil,
     elite = nil
 }
 
--- Update throttling (IGUAL que ToT)
+-- Update throttling
 local updateCache = {
     lastHealthUpdate = 0,
     lastPowerUpdate = 0
 }
 
 -- ============================================================================
--- UTILITY FUNCTIONS (IGUAL QUE TOT)
+-- UTILITY FUNCTIONS
 -- ============================================================================
 
 local function GetConfig()
-    return addon:GetConfigValue("unitframe", "fot") or {}
+    -- Try multiple ways to get config (improved private server compatibility)
+    if addon.GetConfigValue then
+        return addon:GetConfigValue("unitframe", "fot") or {}
+    elseif addon.db and addon.db.profile and addon.db.profile.unitframe and addon.db.profile.unitframe.fot then
+        return addon.db.profile.unitframe.fot
+    end
+    return {}
+end
+
+local function IsEnabled()
+    local config = GetConfig()
+    -- Default to true if not explicitly set to false
+    if config.enabled == nil then
+        return true
+    end
+    return config.enabled
+end
+
+-- Helper function to determine what unit the FoT frame should display
+local function GetFoTUnit()
+    if not UnitExists("focus") then
+        return nil
+    end
+    
+    if UnitExists("focustarget") then
+        return "focustarget"
+    end
+    
+    return nil
+end
+
+-- Check if FoT frame should be visible
+local function ShouldShowFoT()
+    if not UnitExists("focus") then
+        return false
+    end
+    
+    local hasFocusTarget = UnitExists("focustarget")
+    local focusingSelf = UnitIsUnit("focus", "player")
+    
+    if hasFocusTarget then
+        return true
+    end
+    
+    if focusingSelf then
+        return true
+    end
+    
+    return false
 end
 
 -- ============================================================================
@@ -182,22 +230,23 @@ local function SetupBarHooks()
 end
 
 -- ============================================================================
--- CLASSIFICATION SYSTEM (IGUAL QUE TOT PERO PARA FOCUS)
+-- CLASSIFICATION SYSTEM
 -- ============================================================================
 
 local function UpdateClassification()
-    if not UnitExists("focustarget") or not frameElements.elite then
+    local fotUnit = GetFoTUnit()
+    if not fotUnit or not frameElements.elite then
         if frameElements.elite then
             frameElements.elite:Hide()
         end
         return
     end
 
-    local classification = UnitClassification("focustarget")
+    local classification = UnitClassification(fotUnit)
     local coords = nil
 
     -- Check vehicle first
-    if UnitVehicleSeatCount and UnitVehicleSeatCount("focustarget") > 0 then
+    if UnitVehicleSeatCount and UnitVehicleSeatCount(fotUnit) > 0 then
         frameElements.elite:Hide()
         return
     end
@@ -210,7 +259,7 @@ local function UpdateClassification()
     elseif classification == "rare" then
         coords = BOSS_COORDS.rare
     else
-        local name = UnitName("focustarget")
+        local name = UnitName(fotUnit)
         if name and addon.unitframe and addon.unitframe.famous and addon.unitframe.famous[name] then
             coords = BOSS_COORDS.elite
         end
@@ -219,11 +268,10 @@ local function UpdateClassification()
     if coords then
         frameElements.elite:SetTexture(TEXTURES.BOSS)
 
-        -- APLICAR FLIP HORIZONTAL A TODAS LAS DECORACIONES
+        -- Apply horizontal flip to all decorations
         local left, right, top, bottom = coords[1], coords[2], coords[3], coords[4]
-        frameElements.elite:SetTexCoord(right, left, top, bottom) -- FLIPPED
+        frameElements.elite:SetTexCoord(right, left, top, bottom)
 
-        -- USAR VALORES CORREGIDOS DEL DEBUG
         frameElements.elite:SetSize(51, 51)
         frameElements.elite:SetPoint("CENTER", FocusFrameToTPortrait, "CENTER", -4, -2)
         frameElements.elite:SetDrawLayer("OVERLAY", 11)
@@ -235,28 +283,37 @@ local function UpdateClassification()
 end
 
 -- ============================================================================
--- FRAME INITIALIZATION (IGUAL QUE TOT PERO PARA FOCUS)
+-- FRAME INITIALIZATION
 -- ============================================================================
 
 local function InitializeFrame()
     if Module.configured then
         return
     end
+    
+    -- Check if FoT is enabled in config
+    if not IsEnabled() then
+        if FocusFrameToT then
+            FocusFrameToT:Hide()
+        end
+        return
+    end
 
-    -- Verificar que FoT existe
+    -- Verify FoT exists
     if not FocusFrameToT then
-
         return
     end
 
     -- Get configuration
     local config = GetConfig()
 
-    -- Position and scale (ANCLADO AL FOCUS FRAME)
-    FocusFrameToT:ClearAllPoints()
-    FocusFrameToT:SetPoint(config.anchor or "BOTTOMRIGHT", FocusFrame, config.anchorParent or "BOTTOMRIGHT",
-        config.x or -8, config.y or -30)
-    FocusFrameToT:SetScale(config.scale or 1.0)
+    -- Position and scale (anchored to Focus Frame)
+    if not Module.configured then
+        FocusFrameToT:ClearAllPoints()
+        FocusFrameToT:SetPoint(config.anchor or "BOTTOMRIGHT", FocusFrame, config.anchorParent or "BOTTOMRIGHT",
+            config.x or -8, config.y or -30)
+        FocusFrameToT:SetScale(config.scale or 1.0)
+    end
 
     -- Hide Blizzard elements
     local toHide = {FocusFrameToTTextureFrameTexture, FocusFrameToTBackground}
@@ -295,7 +352,7 @@ local function InitializeFrame()
         frameElements.elite:Hide()
     end
 
-    -- Configure health bar (IGUAL que ToT)
+    -- Configure health bar
     FocusFrameToTHealthBar:Hide()
     FocusFrameToTHealthBar:ClearAllPoints()
     FocusFrameToTHealthBar:SetParent(FocusFrameToT)
@@ -309,7 +366,7 @@ local function InitializeFrame()
     FocusFrameToTHealthBar:SetPoint('LEFT', FocusFrameToTPortrait, 'RIGHT', 1 + 1, 0)
     FocusFrameToTHealthBar:Show()
 
-    -- Configure power bar (IGUAL que ToT)
+    -- Configure power bar
     FocusFrameToTManaBar:Hide()
     FocusFrameToTManaBar:ClearAllPoints()
     FocusFrameToTManaBar:SetParent(FocusFrameToT)
@@ -323,7 +380,7 @@ local function InitializeFrame()
     FocusFrameToTManaBar:SetPoint('LEFT', FocusFrameToTPortrait, 'RIGHT', 1 - 2 - 1.5 + 1, 2 - 10 - 1)
     FocusFrameToTManaBar:Show()
 
-    -- Configure name text (IGUAL que ToT)
+    -- Configure name text
     if FocusFrameToTTextureFrameName then
         FocusFrameToTTextureFrameName:ClearAllPoints()
         FocusFrameToTTextureFrameName:SetPoint('LEFT', FocusFrameToTPortrait, 'RIGHT', 3, 13)
@@ -336,7 +393,7 @@ local function InitializeFrame()
         FocusFrameToTTextureFrameName:SetTextColor(1.0, 0.82, 0.0, 1.0)
         FocusFrameToTTextureFrameName:SetDrawLayer("BORDER", 1)
 
-        -- TRUNCADO AUTOMÁTICO COMO RETAILUI
+        -- Auto truncation
         FocusFrameToTTextureFrameName:SetWidth(65)
         FocusFrameToTTextureFrameName:SetJustifyH("LEFT")
     end
@@ -349,12 +406,15 @@ local function InitializeFrame()
 
     -- Setup bar hooks
     SetupBarHooks()
+    
+    -- CRITICAL: Show the main FoT frame
+    FocusFrameToT:Show()
 
     Module.configured = true
 end
 
 -- ============================================================================
--- EVENT HANDLING (IGUAL QUE TOT PERO PARA FOCUS)
+-- EVENT HANDLING
 -- ============================================================================
 
 local function OnEvent(self, event, ...)
@@ -369,20 +429,62 @@ local function OnEvent(self, event, ...)
 
     elseif event == "PLAYER_ENTERING_WORLD" then
         InitializeFrame()
-        if UnitExists("focustarget") then
+        
+        -- If initialization failed (frame doesn't exist yet), schedule a retry
+        if not Module.configured and IsEnabled() then
+            local retryFrame = CreateFrame("Frame")
+            local retryCount = 0
+            retryFrame:SetScript("OnUpdate", function(self, elapsed)
+                retryCount = retryCount + 1
+                if Module.configured or retryCount > 50 then
+                    self:SetScript("OnUpdate", nil)
+                    return
+                end
+                
+                if FocusFrameToT and not Module.configured then
+                    InitializeFrame()
+                end
+            end)
+        end
+        
+        if IsEnabled() and ShouldShowFoT() then
+            if FocusFrameToT then
+                FocusFrameToT:Show()
+            end
             UpdateClassification()
         end
 
     elseif event == "PLAYER_FOCUS_CHANGED" then
-        -- Focus cambió, forzar update del FoT
+        if not IsEnabled() then return end
+        
+        -- Show or hide based on whether we should show FoT
+        if FocusFrameToT then
+            if ShouldShowFoT() then
+                FocusFrameToT:Show()
+            else
+                FocusFrameToT:Hide()
+            end
+        end
+        
         UpdateClassification()
         if Module.textSystem then
             Module.textSystem.update()
         end
 
     elseif event == "UNIT_TARGET" then
+        if not IsEnabled() then return end
+        
         local unit = ...
-        if unit == "focus" then -- El target del focus cambió
+        if unit == "focus" then
+            -- Show or hide based on whether we should show FoT
+            if FocusFrameToT then
+                if ShouldShowFoT() then
+                    FocusFrameToT:Show()
+                else
+                    FocusFrameToT:Hide()
+                end
+            end
+            
             UpdateClassification()
             if Module.textSystem then
                 Module.textSystem.update()
@@ -390,15 +492,19 @@ local function OnEvent(self, event, ...)
         end
 
     elseif event == "UNIT_CLASSIFICATION_CHANGED" then
+        if not IsEnabled() then return end
+        
         local unit = ...
         if unit == "focustarget" then
             UpdateClassification()
         end
 
     elseif event == "UNIT_FACTION" then
+        if not IsEnabled() then return end
+        
         local unit = ...
         if unit == "focustarget" then
-            -- No tenemos name background como target, pero podrías agregarlo
+            -- Could add name background color change here if needed
         end
     end
 end
@@ -416,15 +522,31 @@ if not Module.eventsFrame then
 end
 
 -- ============================================================================
--- PUBLIC API (IGUAL QUE TOT)
+-- PUBLIC API
 -- ============================================================================
 
 local function RefreshFrame()
+    if not IsEnabled() then
+        if FocusFrameToT then
+            FocusFrameToT:Hide()
+        end
+        return
+    end
+    
     if not Module.configured then
         InitializeFrame()
+    else
+        -- Show/hide based on whether we should show FoT
+        if FocusFrameToT then
+            if ShouldShowFoT() then
+                FocusFrameToT:Show()
+            else
+                FocusFrameToT:Hide()
+            end
+        end
     end
 
-    if UnitExists("focustarget") then
+    if ShouldShowFoT() then
         UpdateClassification()
         if Module.textSystem then
             Module.textSystem.update()
