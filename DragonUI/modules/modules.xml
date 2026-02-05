@@ -7,10 +7,9 @@
     <Script file="buttons.lua"/>
     <Script file="cooldowns.lua"/>
     <Script file="mainbars.lua"/>
-    <Script file="stance.lua"/>
-    <Script file="vehicle.lua"/>
-    <Script file="petbar.lua"/>
-    <Script file="multicast.lua"/>
+    
+    <!-- Action Bar Sub-modules (stance, vehicle, petbar, multicast) -->
+    <Include file="actionbars\actionbars.xml"/>
     
     <!-- Micro Menu & Bag module -->
     <Script file="micromenu.lua"/>
