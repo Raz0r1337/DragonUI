@@ -97,7 +97,7 @@ local defaults = {
             anchor = "TOPRIGHT",
             x = -210,
             y = -255,
-            show_header = false
+            show_header = true
         },
         -- ACTIONBAR SETTINGS
         mainbars = {
@@ -437,6 +437,9 @@ local defaults = {
             keybinding = {
                 enabled = true, -- Enable LibKeyBound integration for intuitive keybinding (hover + key press)
                 auto_register_action_buttons = true -- Automatically make action buttons bindable
+            },
+            questtracker = {
+                enabled = true -- Enable DragonUI quest tracker positioning and styling
             }
         }
     }
