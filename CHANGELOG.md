@@ -1,23 +1,26 @@
 # Changelog
 
-All notable changes to DragonUI experimental branch.
+## 2026-02-05
 
-## [Unreleased]
-
-### Structure
-- Separated options into `DragonUI_Options` addon (loads on demand)
-- New `core/` folder with centralized API, movers, and commands
-- Action bar modules consolidated in `modules/actionbars/`
-- Module Registry system for standardized module management
-- CombatQueue system for safe combat operations
-
-### Fixed
-- **ToT/ToF**: Not working on some private servers (thanks xius)
-- **Bag icons**: Displaying incorrectly (thanks @mikki33)
-- **Quest tracker**: Visual fixes and header sizing (thanks @mikki33)
-- **Quest tracker**: Integrated with Editor Mode
-- **Modules**: Standardized initialization patterns (mainbars, petbar, multicast)
+### Added
+- `DragonUI_Options` as separate addon (loads on demand for faster startup)
+- `core/api.lua` with centralized utility functions
+- `core/movers.lua` with unified frame movement system
+- `core/commands.lua` with slash command handling
+- `core/module_base.lua` with standardized module template
+- CombatQueue system for safe combat-deferred operations
+- Module Registry system for tracking and managing modules
+- Quest tracker now works in Editor Mode
 
 ### Changed
-- Options panel loads on demand (faster addon startup)
-- Improved combat lockdown handling across modules
+- Core utilities reorganized into `core/` folder
+- Action bar modules consolidated in `modules/actionbars/`
+- Options divided into modular files (general, actionbars, unitframes, etc.)
+- Standardized module initialization patterns across all modules
+
+### Fixed
+- Target of Target not working on The Bronzebeard server (thanks xius)
+- Bag icons displaying incorrectly (thanks mikki33)
+- Quest tracker visual fixes (thanks mikki33)
+- Combat lockdown handling improved across modules
+- `mainbars.lua` module scope issue (MainbarsModule now at file level)
