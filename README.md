@@ -1,13 +1,15 @@
-# 🐉 DragonUI - Experimental Branch 
+# 🐉 DragonUI - Experimental
 
-Addon structure reorganization to facilitate future development.
+Dragonflight UI for WotLK 3.3.5a.
 
-## Main changes
+> ⚠️ **Experimental branch** - New development base with restructured codebase.
 
-- `DragonUI_Options/` - Separate addon for the configuration panel
-- `core/` - Centralized utilities, movers, commands and API
-- `modules/actionbars/` - Consolidated action bar modules
-- Standardized module registry system
+## Installation
 
-This branch serves as the new development base.
+Copy `DragonUI` and `DragonUI_Options` folders to `Interface/AddOns/`
+
+## Commands
+
+- `/dragonui` - Open configuration
+- `/duiedit` - Toggle editor mode
 
