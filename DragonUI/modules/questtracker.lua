@@ -36,88 +36,150 @@ end
 -- =============================================================================
 local function GetQuestTrackerConfig()
     if not (addon.db and addon.db.profile and addon.db.profile.questtracker) then
-        return -100, -37, "TOPRIGHT", true -- defaults con show_header = true
+        return -100, -37, "TOPRIGHT", true -- defaults with show_header = true
     end
     local config = addon.db.profile.questtracker
     return config.x or -100, config.y or -37, config.anchor or "TOPRIGHT", config.show_header ~= false
 end
 
 -- =============================================================================
--- REPLACE BLIZZARD FRAME 
+-- TIMER FUNCTIONS FOR 3.3.5 COMPATIBILITY
+-- =============================================================================
+local timerFrames = {}
+local function ScheduleTimer(delay, func)
+    local timerFrame = CreateFrame("Frame")
+    local elapsed = 0
+    timerFrame:SetScript("OnUpdate", function(self, delta)
+        elapsed = elapsed + delta
+        if elapsed >= delay then
+            func()
+            self:Hide()
+            self:SetScript("OnUpdate", nil)
+            timerFrames[self] = nil
+        end
+    end)
+    timerFrame:Show()
+    timerFrames[timerFrame] = true
+end
+
+-- =============================================================================
+-- REPLACE BLIZZARD FRAME (WITH DELAY FIX)
 -- =============================================================================
 local function ReplaceBlizzardFrame(frame)
     local watchFrame = WatchFrame
     if not watchFrame then return end
 
-    -- SIMPLIFICADO: Solo reposicionar, NO modificar estructura interna
-    -- Esto previene romper el estado interno de WatchFrame
+    -- Hide default frame immediately to prevent visual glitches
+    watchFrame:SetAlpha(0)
+    watchFrame:EnableMouse(false)
+    
+    -- SIMPLIFIED: Only reposition, DO NOT modify internal structure
     watchFrame:SetMovable(true)
     watchFrame:SetUserPlaced(true)
     watchFrame:ClearAllPoints()
     watchFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    
+    -- Show again after a short delay (critical fix for quest display)
+    ScheduleTimer(0.1, function()
+        watchFrame:SetAlpha(1)
+        watchFrame:EnableMouse(true)
+    end)
 end
 
 -- =============================================================================
--- QUEST TRACKER STYLING (simplified - no hooks)
+-- QUEST COUNTING FUNCTIONS (FIXED - includes IsQuestWatched check)
 -- =============================================================================
-local function WatchFrame_Collapse(self)
-    self:SetWidth(WATCHFRAME_EXPANDEDWIDTH)
+local function GetTrackedQuestsCount()
+    local count = 0
+    local success, numWatches = pcall(GetNumQuestWatches)
+    if success and numWatches then
+        for i = 1, numWatches do
+            local questIndex = GetQuestIndexForWatch(i)
+            if questIndex and IsQuestWatched(questIndex) then
+                count = count + 1
+            end
+        end
+    end
+    return count
 end
 
--- Función para aplicar el styling del header de forma independiente
+-- =============================================================================
+-- QUEST TRACKER STYLING (NON-INTRUSIVE APPROACH)
+-- =============================================================================
 local function ApplyQuestTrackerStyling()
     local watchFrame = WatchFrame
     if not watchFrame or not watchFrame:IsShown() then return end
     if not WatchFrameCollapseExpandButton then return end
 
-    -- Contar objetivos mostrados actualmente
-    local totalObjectives = 0
-    local success, numWatches = pcall(GetNumQuestWatches)
-    if success and numWatches then
-        for i = 1, numWatches do
-            local questIndex = GetQuestIndexForWatch(i)
-            if questIndex then
-                totalObjectives = totalObjectives + 1
-            end
-        end
-    end
+    -- Use fixed quest counting
+    local trackedQuestsCount = GetTrackedQuestsCount()
 
-    -- Crear/actualizar background
+    -- Create/update background
     watchFrame.background = watchFrame.background or watchFrame:CreateTexture(nil, 'BACKGROUND')
     local background = watchFrame.background
-    background:SetPoint('RIGHT', WatchFrameCollapseExpandButton, 'RIGHT', 0, 0)
 
-    pcall(SetAtlasTexture, background, 'QuestTracker-Header')
-    background:SetSize(watchFrame:GetWidth(), 36)
+    -- Correct texture positioning
+    background:ClearAllPoints()
+    background:SetPoint('TOPLEFT', watchFrame, 'TOPLEFT', -8, 4)
+    background:SetPoint('BOTTOMRIGHT', WatchFrameCollapseExpandButton, 'BOTTOMRIGHT', 8, -4)
 
+    local success, err = pcall(SetAtlasTexture, background, 'QuestTracker-Header')
+    if not success then
+        return
+    end
+    background:SetAlpha(0.9)
+
+    -- Get show_header setting
     local _, _, _, showHeader = GetQuestTrackerConfig()
-    if totalObjectives > 0 and showHeader then
+
+    -- Show background only when there are quests and header is enabled
+    if trackedQuestsCount > 0 and showHeader then
         background:Show()
-        background:SetAlpha(1)
     else
         background:Hide()
     end
 end
 
+-- =============================================================================
+-- ENHANCED UPDATE FUNCTION WITH PROTECTION
+-- =============================================================================
+local updateInProgress = false
+local lastUpdateTime = 0
+
 local function ForceUpdateQuestTracker()
     if InCombatLockdown() then return end
-
-    -- AÑADIR: Forzar actualización real de Blizzard
-    if WatchFrame and WatchFrame:IsVisible() then
-        pcall(function()
-            -- Esto es seguro - solo llamamos a la función original de Blizzard
-            if WatchFrame_Update then
-                WatchFrame_Update() -- Sin parámetros, usa self automáticamente
-            end
-        end)
+    if updateInProgress then return end
+    
+    local now = GetTime()
+    if now - lastUpdateTime < 0.05 then return end -- Faster updates (20/sec max)
+    
+    updateInProgress = true
+    lastUpdateTime = now
+    
+    -- Restore collapse/expand state before updating
+    if WatchFrame and WatchFrame.userCollapsed then
+        if WatchFrame_Collapse then
+            WatchFrame_Collapse(WatchFrame)
+        end
+    elseif WatchFrame then
+        if WatchFrame_Expand then
+            WatchFrame_Expand(WatchFrame)
+        end
     end
-
-    -- Luego aplicar nuestro styling
+    
+    -- Force Blizzard tracker update
+    if WatchFrame_Update then
+        pcall(WatchFrame_Update)
+    end
+    
+    -- Then apply our styling
     pcall(ApplyQuestTrackerStyling)
+    
+    updateInProgress = false
 end
 
 -- =============================================================================
--- CONFIG SYSTEM (DragonUI style using database)
+-- POSITION UPDATE
 -- =============================================================================
 local function UpdateQuestTrackerPosition()
     if InCombatLockdown() then return end
@@ -134,9 +196,9 @@ end
 -- =============================================================================
 function addon.RefreshQuestTracker()
     if InCombatLockdown() then return end
+    if not IsModuleEnabled() then return end
+    
     UpdateQuestTrackerPosition()
-
-    -- Forzar actualización completa del tracker
     ForceUpdateQuestTracker()
 end
 
@@ -162,8 +224,8 @@ function QuestTrackerModule:Initialize()
 
     -- Position the frame
     UpdateQuestTrackerPosition()
-
-    -- Replace Blizzard frame 
+    
+    -- Replace the frame immediately upon initialization
     ReplaceBlizzardFrame(self.questTrackerFrame)
 
     self.initialized = true
@@ -200,39 +262,60 @@ function QuestTrackerModule:RestoreSystem()
         WatchFrame:ClearAllPoints()
         local p = self.originalWatchFramePoint
         WatchFrame:SetPoint(p[1], p[2] or UIParent, p[3], p[4], p[5])
+        WatchFrame:SetAlpha(1)
+        WatchFrame:EnableMouse(true)
     end
     
     -- Hide our frame's background
-    if self.questTrackerFrame and self.questTrackerFrame.background then
-        self.questTrackerFrame.background:Hide()
+    if WatchFrame and WatchFrame.background then
+        WatchFrame.background:Hide()
     end
     
     self.applied = false
 end
 
--- Función separada para instalar hooks de forma segura
+-- =============================================================================
+-- HOOK SYSTEM WITH PROTECTION (ENHANCED)
+-- =============================================================================
+local hooksInstalled = false
+
 local function InstallQuestTrackerHooks()
-    -- Verificar que WatchFrame existe y está completamente inicializado
-    if not WatchFrame then
-        return
+    -- Check that WatchFrame exists and is fully initialized
+    if not WatchFrame or hooksInstalled then return end
+
+    -- Hook WatchFrame_Collapse for width adjustment
+    if WatchFrame_Collapse then
+        hooksecurefunc('WatchFrame_Collapse', function(self)
+            if self then
+                self:SetWidth(WATCHFRAME_EXPANDEDWIDTH or 204)
+            end
+        end)
     end
 
-    -- SOLO hook de WatchFrame_Collapse para el ancho
-    -- NO hookear WatchFrame_Update porque causa errores en Blizzard
-    hooksecurefunc('WatchFrame_Collapse', WatchFrame_Collapse)
-
-    -- Hook adicionales para asegurar que las quests se muestren
-    hooksecurefunc('AddQuestWatch', function()
-        if not InCombatLockdown() then
-            ForceUpdateQuestTracker()
-        end
+    -- Additional hooks to ensure quests are displayed correctly
+    hooksecurefunc('AddQuestWatch', function(questIndex)
+        ScheduleTimer(0.05, ForceUpdateQuestTracker)
     end)
 
-    hooksecurefunc('RemoveQuestWatch', function()
-        if not InCombatLockdown() then
-            ForceUpdateQuestTracker()
-        end
+    hooksecurefunc('RemoveQuestWatch', function(questIndex)
+        ScheduleTimer(0.05, ForceUpdateQuestTracker)
     end)
+    
+    -- Add hook for abandoning quests
+    if AbandonQuest then
+        hooksecurefunc('AbandonQuest', function()
+            ScheduleTimer(0.05, ForceUpdateQuestTracker)
+        end)
+    end
+    
+    -- Add hook for quest log updates
+    if QuestLog_Update then
+        hooksecurefunc('QuestLog_Update', function()
+            ScheduleTimer(0.05, ForceUpdateQuestTracker)
+        end)
+    end
+    
+    hooksInstalled = true
 end
 
 -- =============================================================================
@@ -253,7 +336,7 @@ function QuestTrackerModule:ShowEditorTest()
             -- Save position to DragonUI database
             local point, _, relativePoint, x, y = frame:GetPoint()
             if addon.db and addon.db.profile then
-                -- Initialize questtracker config if not exists
+                -- Initialize questtracker config if it doesn't exist
                 if not addon.db.profile.questtracker then
                     addon.db.profile.questtracker = {}
                 end
@@ -279,40 +362,38 @@ function QuestTrackerModule:HideEditorTest(savePosition)
 end
 
 -- =============================================================================
--- EVENT SYSTEM 
+-- EVENT SYSTEM (WITH DELAYED HOOK INSTALLATION)
 -- =============================================================================
-local hooksInstalled = false
-
 local function OnPlayerEnteringWorld()
     -- Check if module is enabled
     if not IsModuleEnabled() then return end
     
-    if QuestTrackerModule.questTrackerFrame then
-        ReplaceBlizzardFrame(QuestTrackerModule.questTrackerFrame)
-
-        -- Instalar hooks SOLO UNA VEZ, después de que WatchFrame esté completamente listo
-        if not hooksInstalled then
+    -- Set up hooks after world load completion with delay (critical fix)
+    if not hooksInstalled then
+        ScheduleTimer(1.0, function()
             InstallQuestTrackerHooks()
-            hooksInstalled = true
-        end
-
-        -- Forzar actualización al entrar al mundo
-        ForceUpdateQuestTracker()
+            ForceUpdateQuestTracker()
+        end)
     end
 end
 
--- Agregar eventos adicionales para actualizar el tracker
-local lastUpdate = 0
+-- Quest log update handler with change detection
+local lastQuestUpdate = 0
+local previousQuestCount = 0
+
 local function OnQuestLogUpdate()
     -- Check if module is enabled
     if not IsModuleEnabled() then return end
     
     local now = GetTime()
-    if now - lastUpdate < 0.1 then return end -- Max 10 updates/seg
-    lastUpdate = now
-
-    if not InCombatLockdown() then
-        ForceUpdateQuestTracker()
+    if now - lastQuestUpdate < 0.05 then return end
+    lastQuestUpdate = now
+    
+    -- Only update when quest count actually changes
+    local currentQuestCount = GetTrackedQuestsCount()
+    if currentQuestCount ~= previousQuestCount then
+        previousQuestCount = currentQuestCount
+        ScheduleTimer(0.05, ForceUpdateQuestTracker)
     end
 end
 
@@ -326,7 +407,7 @@ end, 'PLAYER_LOGIN')
 -- Register PLAYER_ENTERING_WORLD 
 addon.package:RegisterEvents(OnPlayerEnteringWorld, 'PLAYER_ENTERING_WORLD')
 
--- Registrar evento de actualización del log de quests
+-- Register quest log update event
 addon.package:RegisterEvents(OnQuestLogUpdate, 'QUEST_LOG_UPDATE')
 
 -- Profile change handler
