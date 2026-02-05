@@ -344,6 +344,147 @@ function addon:GetEditableFrameInfo(frameName)
 end
 
 -- ============================================================================
+-- COMBAT QUEUE SYSTEM (ElvUI Pattern)
+-- ============================================================================
+-- Central system for deferring operations that cannot run during combat lockdown.
+-- Pattern: Check InCombatLockdown() -> if true, queue operation -> execute after combat
+-- Reference: ElvUI ActionBars.lua PLAYER_REGEN_ENABLED handler
+
+addon.CombatQueue = addon.CombatQueue or {
+    -- Pending operations table: { [id] = { func, args } }
+    pending = {},
+    -- Is the event frame registered?
+    isRegistered = false,
+    -- Event frame for PLAYER_REGEN_ENABLED
+    eventFrame = nil,
+}
+
+local CQ = addon.CombatQueue
+
+-- Initialize the combat queue event frame
+local function InitializeCombatQueueFrame()
+    if CQ.eventFrame then return end
+    
+    CQ.eventFrame = CreateFrame("Frame", "DragonUI_CombatQueueFrame", UIParent)
+    CQ.eventFrame:Hide()
+    CQ.eventFrame:SetScript("OnEvent", function(self, event)
+        if event == "PLAYER_REGEN_ENABLED" then
+            addon.CombatQueue:ProcessQueue()
+        end
+    end)
+end
+
+-- Add an operation to the combat queue
+-- @param id: Unique identifier for this operation (prevents duplicates)
+-- @param func: Function to call when combat ends
+-- @param ...: Arguments to pass to the function
+function CQ:Add(id, func, ...)
+    if not id or not func then
+        addon:Error("CombatQueue:Add requires id and func")
+        return false
+    end
+    
+    -- Initialize frame if needed
+    InitializeCombatQueueFrame()
+    
+    -- Store the operation with its arguments
+    self.pending[id] = { func = func, args = {...} }
+    
+    -- Register for PLAYER_REGEN_ENABLED if not already
+    if not self.isRegistered then
+        self.eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+        self.isRegistered = true
+        addon:Debug("CombatQueue: Registered PLAYER_REGEN_ENABLED")
+    end
+    
+    addon:Debug("CombatQueue: Queued operation -", id)
+    return true
+end
+
+-- Remove an operation from the queue (if no longer needed)
+-- @param id: Identifier of the operation to remove
+function CQ:Remove(id)
+    if self.pending[id] then
+        self.pending[id] = nil
+        addon:Debug("CombatQueue: Removed operation -", id)
+    end
+    
+    -- If queue is empty, unregister the event
+    if not next(self.pending) and self.isRegistered then
+        self.eventFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        self.isRegistered = false
+    end
+end
+
+-- Check if an operation is in the queue
+-- @param id: Identifier to check
+function CQ:HasPending(id)
+    return self.pending[id] ~= nil
+end
+
+-- Process all queued operations (called on PLAYER_REGEN_ENABLED)
+function CQ:ProcessQueue()
+    addon:Debug("CombatQueue: Processing", addon:tcount(self.pending), "queued operations")
+    
+    -- Process all pending operations
+    for id, operation in pairs(self.pending) do
+        local success, err = pcall(function()
+            operation.func(unpack(operation.args))
+        end)
+        
+        if not success then
+            addon:Error("CombatQueue: Failed to execute", id, "-", err)
+        else
+            addon:Debug("CombatQueue: Executed -", id)
+        end
+    end
+    
+    -- Clear all pending operations
+    self.pending = {}
+    
+    -- Unregister the event
+    if self.isRegistered then
+        self.eventFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        self.isRegistered = false
+        addon:Debug("CombatQueue: Unregistered PLAYER_REGEN_ENABLED")
+    end
+end
+
+-- Execute immediately if out of combat, queue if in combat
+-- @param id: Unique identifier for this operation
+-- @param func: Function to call
+-- @param ...: Arguments to pass to the function
+-- @return true if executed immediately, false if queued
+function CQ:ExecuteOrQueue(id, func, ...)
+    if InCombatLockdown() then
+        self:Add(id, func, ...)
+        return false
+    else
+        -- Execute immediately
+        local args = {...}
+        local success, err = pcall(function()
+            func(unpack(args))
+        end)
+        
+        if not success then
+            addon:Error("CombatQueue: Immediate execution failed -", id, "-", err)
+        end
+        return true
+    end
+end
+
+-- Convenience function for modules to check and queue
+-- Returns true if operation can proceed (not in combat)
+-- @param moduleId: Module name for the queue ID
+-- @param operationName: Name of the operation (combined with moduleId)
+-- @param func: Function to call when combat ends
+-- @param ...: Arguments
+function addon:SafeExecute(moduleId, operationName, func, ...)
+    local queueId = moduleId .. "_" .. operationName
+    return CQ:ExecuteOrQueue(queueId, func, ...)
+end
+
+-- ============================================================================
 -- PRINT / DEBUG UTILITIES
 -- ============================================================================
 

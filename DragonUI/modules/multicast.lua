@@ -252,14 +252,15 @@ local function InitializeMulticast()
     if not IsModuleEnabled() then return end
     
     -- CRÍTICO: Verificar combate antes de mostrar frames
+    -- Use centralized CombatQueue system (ElvUI pattern)
     if InCombatLockdown() then
-        -- Defer until after combat
-        local frame = CreateFrame("Frame")
-        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        frame:SetScript("OnEvent", function(self)
-            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-            InitializeMulticast()
-        end)
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("multicast_init", function()
+                if IsModuleEnabled() then
+                    InitializeMulticast()
+                end
+            end)
+        end
         return
     end
     
@@ -289,14 +290,15 @@ local function RestoreMulticastSystem()
     if not MulticastModule.applied then return end
 
     -- CRÍTICO: NO modificar frames protegidos en combate
+    -- Use centralized CombatQueue system (ElvUI pattern)
     if InCombatLockdown() then
-        -- Schedule for after combat
-        local frame = CreateFrame("Frame")
-        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        frame:SetScript("OnEvent", function(self)
-            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-            RestoreMulticastSystem()
-        end)
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("multicast_restore", function()
+                if MulticastModule.applied then
+                    RestoreMulticastSystem()
+                end
+            end)
+        end
         return
     end
 
@@ -386,14 +388,15 @@ local function ApplyMulticastSystem()
     if MulticastModule.applied or not IsModuleEnabled() then return end
 
     -- CRÍTICO: NO modificar frames protegidos en combate
+    -- Use centralized CombatQueue system (ElvUI pattern)
     if InCombatLockdown() then
-        -- Schedule for after combat
-        local frame = CreateFrame("Frame")
-        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        frame:SetScript("OnEvent", function(self)
-            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-            ApplyMulticastSystem()
-        end)
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("multicast_apply", function()
+                if IsModuleEnabled() and not MulticastModule.applied then
+                    ApplyMulticastSystem()
+                end
+            end)
+        end
         return
     end
 
@@ -519,14 +522,15 @@ end
 function addon.RefreshMulticast(fullRefresh)
     if not IsModuleEnabled() then return end
 
+    -- Use centralized CombatQueue system (ElvUI pattern)
     if InCombatLockdown() or UnitAffectingCombat("player") then
-        -- Schedule refresh after combat
-        local frame = CreateFrame("Frame")
-        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        frame:SetScript("OnEvent", function(self)
-            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-            addon.RefreshMulticast(fullRefresh)
-        end)
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("multicast_refresh", function()
+                if IsModuleEnabled() then
+                    addon.RefreshMulticast(fullRefresh)
+                end
+            end)
+        end
         return
     end
 
@@ -591,14 +595,13 @@ end
 local function OnProfileChanged()
     -- Delay to ensure profile data is fully loaded
     DelayedCall(0.2, function()
+        -- Use centralized CombatQueue system (ElvUI pattern)
         if InCombatLockdown() or UnitAffectingCombat("player") then
-            -- Schedule for after combat if in combat
-            local frame = CreateFrame("Frame")
-            frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-            frame:SetScript("OnEvent", function(self)
-                self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-                OnProfileChanged()
-            end)
+            if addon.CombatQueue then
+                addon.CombatQueue:Add("multicast_profile", function()
+                    OnProfileChanged()
+                end)
+            end
             return
         end
 
@@ -628,16 +631,17 @@ local function RegisterEvents()
             DelayedCall(0.3, function()
                 if IsModuleEnabled() then
                     -- CRÍTICO: Solo aplicar si NO estamos en combate
+                    -- Use centralized CombatQueue system (ElvUI pattern)
                     if not InCombatLockdown() then
                         ApplyMulticastSystem()
                     else
-                        -- Defer until after combat
-                        local frame = CreateFrame("Frame")
-                        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-                        frame:SetScript("OnEvent", function(self)
-                            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-                            ApplyMulticastSystem()
-                        end)
+                        if addon.CombatQueue then
+                            addon.CombatQueue:Add("multicast_login", function()
+                                if IsModuleEnabled() then
+                                    ApplyMulticastSystem()
+                                end
+                            end)
+                        end
                     end
                     
                     -- Register profile callbacks

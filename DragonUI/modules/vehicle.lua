@@ -515,11 +515,15 @@ local function ApplyVehicleSystem()
     if VehicleModule.applied or not IsModuleEnabled() then return end
     
     -- CRITICAL: Don't modify secure frames during combat (ElvUI pattern)
+    -- Use centralized CombatQueue system
     if InCombatLockdown() then
         VehicleModule.pendingApply = true
-        -- Register event dynamically - will be unregistered after execution
-        if VehicleModule.eventFrame then
-            VehicleModule.eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("vehicle_apply", function()
+                if IsModuleEnabled() and VehicleModule.pendingApply then
+                    ApplyVehicleSystem()
+                end
+            end)
         end
         return
     end

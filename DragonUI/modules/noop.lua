@@ -10,18 +10,17 @@ local NoopModule = {
     pendingApply = false
 }
 
--- Function to apply all noop changes
-local function ApplyNoopChanges()
-    -- CRITICAL: Don't modify secure frames during combat (ElvUI pattern)
-    if InCombatLockdown() then
-        NoopModule.pendingApply = true
-        -- Register event dynamically - will be unregistered after execution
-        if NoopModule.eventFrame then
-            NoopModule.eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        end
-        return false
-    end
-    
+-- Forward declare the apply function
+local ApplyNoopChanges
+
+-- Check if noop module is enabled
+local function IsNoopEnabled()
+    return addon.db and addon.db.profile and addon.db.profile.modules and 
+           addon.db.profile.modules.noop and addon.db.profile.modules.noop.enabled
+end
+
+-- Actual implementation of noop changes (called when not in combat)
+local function ApplyNoopChangesImpl()
     MainMenuBar:EnableMouse(false)
     PetActionBarFrame:EnableMouse(false)
     ShapeshiftBarFrame:EnableMouse(false)
@@ -102,13 +101,26 @@ local function ApplyNoopChanges()
     
     NoopModule.applied = true
     NoopModule.pendingApply = false
-    return true
 end
 
--- Check if noop module is enabled
-local function IsNoopEnabled()
-    return addon.db and addon.db.profile and addon.db.profile.modules and 
-           addon.db.profile.modules.noop and addon.db.profile.modules.noop.enabled
+-- Function to apply all noop changes (uses CombatQueue if in combat)
+ApplyNoopChanges = function()
+    -- Use central CombatQueue system (ElvUI pattern)
+    if InCombatLockdown() then
+        NoopModule.pendingApply = true
+        -- Queue the operation - will execute after combat ends
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("noop_apply", function()
+                if IsNoopEnabled() and NoopModule.pendingApply then
+                    ApplyNoopChangesImpl()
+                end
+            end)
+        end
+        return false
+    end
+    
+    ApplyNoopChangesImpl()
+    return true
 end
 
 -- Initialize noop when addon and config are ready
@@ -118,11 +130,10 @@ local function InitializeNoop()
     end
 end
 
--- Event frame to handle initialization and combat deferral
+-- Event frame to handle initialization
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("ADDON_LOADED")
 initFrame:RegisterEvent("PLAYER_LOGIN")
--- NOTE: PLAYER_REGEN_ENABLED is registered dynamically only when needed
 initFrame:SetScript("OnEvent", function(self, event, addonName)
     if event == "ADDON_LOADED" and addonName == "DragonUI" then
         -- Config should be available now
@@ -133,16 +144,10 @@ initFrame:SetScript("OnEvent", function(self, event, addonName)
         -- Backup check in case config wasn't ready before
         InitializeNoop()
         self:UnregisterEvent("PLAYER_LOGIN")
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        -- Combat ended - apply pending changes if needed
-        self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-        if NoopModule.pendingApply and IsNoopEnabled() then
-            ApplyNoopChanges()
-        end
     end
 end)
 
--- Store frame reference for registering events later
+-- Store frame reference
 NoopModule.eventFrame = initFrame
 
 -- Public API for options
