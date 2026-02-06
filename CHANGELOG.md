@@ -3,21 +3,22 @@
 ## 2026-02-06
 
 ### Added
-- **Class Portrait** - New option to show class icons instead of 3D portraits (Player, Target, Focus)
-- **Totem Bar Options** - Size and spacing sliders, auto-anchoring based on visible action bars
+- Class Portrait option for Player, Target, Focus (shows class icons instead of 3D portraits)
+- Totem bar size/spacing options with auto-anchoring to visible action bars
+
+### Changed  
+- Editor Mode: Complete visual rework with DragonflightUI-style overlays
+- Editor Mode: New highlight/selected states for all draggable frames
+- Editor Mode: Stance and Totem bars now integrated into editor system
+- Editor Mode: All modules (except ToT/ToF) now use the new system
 
 ### Fixed
-- **Stance & Totem Bars** - No longer disappear after `/reload` or break when changing settings
-- **Stance Bar Options** - Size and spacing sliders now work correctly  
-- **Party Frames** - Horizontal orientation now works properly
-- **Sidebar Action Bars** - Editor overlay now follows when switching vertical/horizontal
-- **Castbar Advanced Mode** - Time numbers now display correctly
-
-### Improved
-- **Editor Mode Rework** - Complete visual overhaul with Dragonflight-style overlays
-  - All modules (except ToT/ToF) now use the new editor system
-  - New textures and highlight/selected states
-  - Stance and Totem bars now draggable in Editor Mode
+- Stance & Totem bars disappearing after `/reload`
+- Stance & Totem bars breaking when changing settings
+- Stance & Totem size/spacing options now work correctly
+- Party frames horizontal mode
+- Sidebar editor overlay follows orientation changes
+- Castbar advanced mode time display
 
 ## 2026-02-05
 
