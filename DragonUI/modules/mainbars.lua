@@ -281,6 +281,8 @@ local function InitializeMainbars()
     -- ============================================================================
 
    function MainMenuBarMixin:actionbutton_setup()
+    -- Phase 3D: Defensive combat guard — secure frame operations must not run in combat
+    if InCombatLockdown() then return end
     for _, obj in ipairs({MainMenuBar:GetChildren(), MainMenuBarArtFrame:GetChildren()}) do
         obj:SetParent(pUiMainBar)
     end

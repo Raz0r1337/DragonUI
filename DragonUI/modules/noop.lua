@@ -26,6 +26,8 @@ end
 
 -- Actual implementation of noop changes (called when not in combat)
 local function ApplyNoopChangesImpl()
+    -- Phase 3D: Defensive combat guard — secure frame operations must not run in combat
+    if InCombatLockdown() then return end
     MainMenuBar:EnableMouse(false)
     PetActionBarFrame:EnableMouse(false)
     ShapeshiftBarFrame:EnableMouse(false)

@@ -172,7 +172,11 @@ local function vehiclebar_power_setup()
     VehicleMenuBarLeaveButton:SetHighlightTexture('Interface\\Vehicles\\UI-Vehicles-Button-Highlight')
     VehicleMenuBarLeaveButton:GetHighlightTexture():SetTexCoord(0.130625, 0.879375, 0.130625, 0.879375)
     VehicleMenuBarLeaveButton:GetHighlightTexture():SetBlendMode('ADD')
-    VehicleMenuBarLeaveButton:SetScript('OnClick', VehicleExit)
+    -- Phase 3D: Use HookScript on Blizzard secure button to avoid taint
+    if not VehicleMenuBarLeaveButton.DragonUIClickHooked then
+        VehicleMenuBarLeaveButton:HookScript('OnClick', VehicleExit)
+        VehicleMenuBarLeaveButton.DragonUIClickHooked = true
+    end
 
     VehicleMenuBarHealthBar:SetParent(vehiclebar)
     VehicleMenuBarHealthBarOverlay:SetParent(VehicleMenuBarHealthBar)
