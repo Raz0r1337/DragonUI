@@ -23,6 +23,14 @@ local function ApplyWidgetPosition()
         return
     end
 
+    -- Phase 3A: Guard secure TargetFrame operations against combat lockdown
+    if InCombatLockdown() then
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("target_position", ApplyWidgetPosition)
+        end
+        return
+    end
+
     local widgetConfig = addon.db and addon.db.profile.widgets and addon.db.profile.widgets.target
     
     if widgetConfig then
@@ -685,9 +693,12 @@ local function InitializeFrame()
     -- Apply configuration
     local config = GetConfig()
 
-    TargetFrame:ClearAllPoints()
-    TargetFrame:SetClampedToScreen(false)
-    TargetFrame:SetScale(config.scale or 1)
+    -- Phase 3A: Guard secure TargetFrame operations against combat lockdown
+    if not InCombatLockdown() then
+        TargetFrame:ClearAllPoints()
+        TargetFrame:SetClampedToScreen(false)
+        TargetFrame:SetScale(config.scale or 1)
+    end
 
     --  APLICAR POSICIÓN DESDE WIDGETS SIEMPRE
     ApplyWidgetPosition()
@@ -1071,10 +1082,13 @@ local function RefreshFrame()
     --  APLICAR CONFIGURACIÓN INMEDIATAMENTE (incluyendo scale)
     local config = GetConfig()
     
-    --  APLICAR SCALE INMEDIATAMENTE
-    TargetFrame:SetScale(config.scale or 1)
+    -- Phase 3A: Guard secure TargetFrame operations against combat lockdown
+    if not InCombatLockdown() then
+        --  APLICAR SCALE INMEDIATAMENTE
+        TargetFrame:SetScale(config.scale or 1)
+    end
     
-    --  APLICAR POSICIÓN DESDE WIDGETS INMEDIATAMENTE
+    --  APLICAR POSICIÓN DESDE WIDGETS INMEDIATAMENTE (has its own combat guard)
     ApplyWidgetPosition()
 
     -- Only update dynamic content
@@ -1108,8 +1122,11 @@ local function ResetFrame()
 
     -- Re-apply position using widgets system
     local config = GetConfig()
-    TargetFrame:ClearAllPoints()
-    TargetFrame:SetScale(config.scale or 1)
+    -- Phase 3A: Guard secure TargetFrame operations against combat lockdown
+    if not InCombatLockdown() then
+        TargetFrame:ClearAllPoints()
+        TargetFrame:SetScale(config.scale or 1)
+    end
     ApplyWidgetPosition()
     
     

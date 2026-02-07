@@ -424,23 +424,16 @@ end
 
 -- Frame update handler for animations
 local function PlayerFrame_OnUpdate(self, elapsed)
-    --  PROTEGER CON pcall PARA EVITAR CRASHES
-    local success, err = pcall(function()
-        -- Rest icon animation
-        if PlayerRestIcon and PlayerRestIcon:IsVisible() then
-            AnimateTexCoords(PlayerRestIcon, 512, 512, 64, 64, 42, elapsed, 0.09)
-        end
-
-        -- Combat Flash pulse animation
-        AnimateCombatFlashPulse(elapsed)
-
-        -- Elite Status pulse animation
-        AnimateEliteStatusPulse(elapsed)
-    end)
-
-    if not success then
-
+    -- Rest icon animation
+    if PlayerRestIcon and PlayerRestIcon:IsVisible() then
+        AnimateTexCoords(PlayerRestIcon, 512, 512, 64, 64, 42, elapsed, 0.09)
     end
+
+    -- Combat Flash pulse animation
+    AnimateCombatFlashPulse(elapsed)
+
+    -- Elite Status pulse animation
+    AnimateEliteStatusPulse(elapsed)
 end
 
 -- Override Blizzard status update to prevent glow interference
@@ -1974,11 +1967,14 @@ hooksecurefunc("PlayerFrame_ToPlayerArt", function()
         UpdateLeadershipIcons()
         
         -- Con delay: segundo intento más robusto usando OnUpdate (compatible con 3.3.5a)
-        local delayFrame = CreateFrame("Frame")
-        local attempts = 0
-        delayFrame:SetScript("OnUpdate", function(self, elapsed)
-            attempts = attempts + 1
-            if attempts >= 3 then -- Después de 3 frames (~0.1s)
+        -- Phase 3: Reuse persistent frame to avoid memory leak on repeated vehicle exits
+        if not Module.vehicleDelayFrame then
+            Module.vehicleDelayFrame = CreateFrame("Frame")
+        end
+        Module.vehicleDelayAttempts = 0
+        Module.vehicleDelayFrame:SetScript("OnUpdate", function(self, elapsed)
+            Module.vehicleDelayAttempts = (Module.vehicleDelayAttempts or 0) + 1
+            if Module.vehicleDelayAttempts >= 3 then -- Después de 3 frames (~0.1s)
                 -- Re-aplicar completamente el frame
                 ChangePlayerframe()
                 

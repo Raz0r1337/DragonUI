@@ -33,6 +33,14 @@ local function ApplyWidgetPosition()
         return
     end
 
+    -- Phase 3A: Guard secure FocusFrame operations against combat lockdown
+    if InCombatLockdown() then
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("focus_position", ApplyWidgetPosition)
+        end
+        return
+    end
+
     local widgetConfig = addon.db and addon.db.profile.widgets and addon.db.profile.widgets.focus
     
     if widgetConfig then
@@ -350,16 +358,16 @@ end)
             if not UnitExists("focus") then return end
             local texture = self:GetStatusBarTexture()
             if texture then
-                texture:SetVertexColor(1, 1, 1) -- Forzar blanco siempre
+                texture:SetVertexColor(1, 1, 1, 1) -- Force white always
             end
         end)
         
-        -- Hook adicional para SetStatusBarColor para prevenir cambios de color
+        -- Additional hook for SetStatusBarColor to prevent color changes
         hooksecurefunc(FocusFrameManaBar, "SetStatusBarColor", function(self)
             if not UnitExists("focus") then return end
             local texture = self:GetStatusBarTexture()
             if texture then
-                texture:SetVertexColor(1, 1, 1) -- Forzar blanco siempre
+                texture:SetVertexColor(1, 1, 1, 1) -- Force white always
             end
         end)
         
@@ -607,6 +615,8 @@ local function InitializeFrame()
     -- that resets FocusFrame scale/layout. We re-apply our configuration after it runs.
     if not Module.scaleHooked then
         hooksecurefunc("FocusFrame_SetSmallSize", function()
+            -- Phase 3A: Guard secure FocusFrame operations against combat lockdown
+            if InCombatLockdown() then return end
             local config = GetConfig()
             local correctScale = config.scale or 1
             -- Re-apply our scale after Blizzard resets it
@@ -902,10 +912,13 @@ local function RefreshFrame()
     -- Apply configuration immediately (including scale)
     local config = GetConfig()
     
-    -- Apply scale immediately
-    FocusFrame:SetScale(config.scale or 1)
+    -- Phase 3A: Guard secure FocusFrame operations against combat lockdown
+    if not InCombatLockdown() then
+        -- Apply scale immediately
+        FocusFrame:SetScale(config.scale or 1)
+    end
     
-    -- Apply position from widgets immediately
+    -- Apply position from widgets immediately (has its own combat guard)
     ApplyWidgetPosition()
     
     if UnitExists("focus") then
@@ -937,8 +950,11 @@ local function ResetFrame()
     
     -- Re-apply position using widgets system
     local config = GetConfig()
-    FocusFrame:ClearAllPoints()
-    FocusFrame:SetScale(config.scale or 1)
+    -- Phase 3A: Guard secure FocusFrame operations against combat lockdown
+    if not InCombatLockdown() then
+        FocusFrame:ClearAllPoints()
+        FocusFrame:SetScale(config.scale or 1)
+    end
     ApplyWidgetPosition()
 end
 

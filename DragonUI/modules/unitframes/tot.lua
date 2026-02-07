@@ -374,7 +374,8 @@ local function InitializeFrame()
     local config = GetConfig()
 
     -- Position Blizzard frame (only once at init to avoid taint)
-    if not Module.configured then
+    -- Phase 3A: Guard secure TargetFrameToT operations against combat lockdown
+    if not Module.configured and not InCombatLockdown() then
         TargetFrameToT:ClearAllPoints()
         TargetFrameToT:SetPoint(config.anchor or "BOTTOMRIGHT", TargetFrame, config.anchorParent or "BOTTOMRIGHT", config.x or 22, config.y or -15)
         TargetFrameToT:SetScale(config.scale or 1.0)
@@ -650,10 +651,13 @@ local function ResetFrame()
     addon:SetConfigValue("unitframe", "tot", "y", -15)
     addon:SetConfigValue("unitframe", "tot", "scale", 1.0)
 
-    -- Apply to Blizzard frame
-    TargetFrameToT:ClearAllPoints()
-    TargetFrameToT:SetPoint("BOTTOMRIGHT", TargetFrame, "BOTTOMRIGHT", 22, -15)
-    TargetFrameToT:SetScale(1.0)
+    -- Phase 3A: Guard secure frame operations against combat lockdown
+    if not InCombatLockdown() then
+        -- Apply to Blizzard frame
+        TargetFrameToT:ClearAllPoints()
+        TargetFrameToT:SetPoint("BOTTOMRIGHT", TargetFrame, "BOTTOMRIGHT", 22, -15)
+        TargetFrameToT:SetScale(1.0)
+    end
 end
 
 -- Export API

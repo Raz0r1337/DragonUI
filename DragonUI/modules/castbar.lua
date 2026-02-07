@@ -230,8 +230,12 @@ local function ShowBlizzardCastbar(unitType)
     end
     
     frame:SetAlpha(1)
+    -- Phase 3A: Restore visibility — frame was hidden by HideBlizzardCastbar
+    frame:Show()
     
     if unitType == "target" then
+        -- Phase 3A: Restore original size (was collapsed to 1x1 in HideBlizzardCastbar)
+        frame:SetSize(150, 10)
         frame:ClearAllPoints()
         frame:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", 25, -5)
     end
@@ -330,6 +334,9 @@ local function FadeOutCastbar(unitType, duration)
 end
 
 -- Show success flash and fade out
+-- Phase 3: Persistent flash timer frames per unitType to avoid memory leak
+local flashTimerFrames = {}
+
 local function ShowSuccessFlash(unitType)
     local frames = CastbarModule.frames[unitType]
     if not frames then
@@ -346,7 +353,11 @@ local function ShowSuccessFlash(unitType)
         frames.flash:SetAlpha(1.0)
         frames.flash:Show()
         
-        local flashFrame = CreateFrame("Frame")
+        -- Reuse persistent frame per unitType
+        if not flashTimerFrames[unitType] then
+            flashTimerFrames[unitType] = CreateFrame("Frame")
+        end
+        local flashFrame = flashTimerFrames[unitType]
         flashFrame.elapsed = 0
         flashFrame.unitType = unitType
         flashFrame:SetScript("OnUpdate", function(self, elapsed)
