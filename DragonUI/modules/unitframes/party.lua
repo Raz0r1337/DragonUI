@@ -697,6 +697,8 @@ local hoverStates = {}
 
 -- Forward declaration for CreateCustomTexts (used in update functions)
 local CreateCustomTexts
+local UpdateHealthText
+local UpdateManaText
 
 -- ===============================================================
 -- TEXT AND COLOR UPDATE FUNCTIONS

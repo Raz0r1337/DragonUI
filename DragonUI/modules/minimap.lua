@@ -124,11 +124,13 @@ local function SetupSecureHooks()
     end
     hooksecurefunc("SetTracking", MinimapModule.hooks.SetTracking)
 
-    -- Hook para Minimap_UpdateRotationSetting si existe
+    -- Hook for Minimap_UpdateRotationSetting if it exists
+    -- Uses indirection via MinimapModule.UpdateRotation to avoid infinite recursion
+    -- (calling the global from a post-hook would re-trigger the hook)
     if Minimap_UpdateRotationSetting then
         MinimapModule.hooks.Minimap_UpdateRotationSetting = function()
-            if MinimapModule.applied then
-                Minimap_UpdateRotationSetting()
+            if MinimapModule.applied and MinimapModule.UpdateRotation then
+                MinimapModule.UpdateRotation()
             end
         end
         hooksecurefunc("Minimap_UpdateRotationSetting", MinimapModule.hooks.Minimap_UpdateRotationSetting)
@@ -743,7 +745,9 @@ local function RemoveBlizzardFrames()
     StylePVPBattlefieldFrame()
 end
 
-local function Minimap_UpdateRotationSetting()
+-- Stored on module table so the hooksecurefunc post-hook can reference it
+-- without calling the global (which would cause infinite recursion)
+MinimapModule.UpdateRotation = function()
     local minimapBorder = MinimapBorder
     if GetCVar("rotateMinimap") == "1" then
         if MinimapModule.borderFrame then

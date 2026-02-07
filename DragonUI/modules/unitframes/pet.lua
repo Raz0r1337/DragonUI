@@ -239,7 +239,16 @@ local function SetupStatusBar(bar, point, size, texture)
     if texture then
         bar:GetStatusBarTexture():SetTexture(texture)
         bar:SetStatusBarColor(1, 1, 1, 1)
-        bar.SetStatusBarColor = noop
+        -- Phase 2.5: hooksecurefunc instead of direct override to avoid taint
+        if not bar.DragonUI_ColorHooked then
+            hooksecurefunc(bar, "SetStatusBarColor", function(self)
+                local tex = self:GetStatusBarTexture()
+                if tex then
+                    tex:SetVertexColor(1, 1, 1, 1)
+                end
+            end)
+            bar.DragonUI_ColorHooked = true
+        end
     end
 end
 
