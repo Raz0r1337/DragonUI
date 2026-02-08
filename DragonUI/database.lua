@@ -126,8 +126,8 @@ local defaults = {
             -- Grayscale icons configuration
             grayscale = {
                 scale_menu = 1.5,
-                x_position = 5,
-                y_position = -54,
+                x_position = 20,
+                y_position = -44,
                 icon_spacing = 15 -- Gap between icons
             },
 

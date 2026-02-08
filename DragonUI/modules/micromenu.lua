@@ -904,7 +904,7 @@ local function ApplyMicromenuSystem()
         -- PASO 2: Solo background (como otros botones)
         if not button.DragonUIBackground then
             local microTexture = 'Interface\\AddOns\\DragonUI\\Textures\\Micromenu\\uimicromenu2x'
-            local dx, dy = -1, -1 -- OPRAVA: Sjednocení vertikálního posunu
+            local dx, dy = -1, 1
             local offX, offY = button:GetPushedTextOffset()
             local sizeX, sizeY = button:GetSize()
 
@@ -1258,8 +1258,9 @@ local function ApplyMicromenuSystem()
             -- Create container frame
             local microMenuFrame = addon.CreateUIFrame(240, 40, "MicroMenu")
 
-            -- Define conditional offset
-            local menuXOffset = isAscensionServer and -170 or -140
+            -- Define conditional offset (mode-dependent for correct visual positioning)
+            local menuXOffset = isAscensionServer and -170 or (useGrayscale and -100 or -140)
+            local menuYOffset = useGrayscale and -40 or -70
 
             -- Apply position from widgets DB or use fallback
             local microMenuConfig = addon.db and addon.db.profile.widgets and addon.db.profile.widgets.micromenu
@@ -1277,24 +1278,24 @@ local function ApplyMicromenuSystem()
             -- Anchor the real menu to the container frame
             menu:SetParent(UIParent)
             menu:ClearAllPoints()
-            menu:SetPoint("CENTER", microMenuFrame, "CENTER", menuXOffset, -70) -- Use variable
+            menu:SetPoint("CENTER", microMenuFrame, "CENTER", menuXOffset, menuYOffset)
 
             -- Hook for the menu to follow the container when moved
             microMenuFrame:HookScript("OnDragStop", function(self)
                 menu:ClearAllPoints()
-                menu:SetPoint("CENTER", self, "CENTER", menuXOffset, -70) -- Use variable
+                menu:SetPoint("CENTER", self, "CENTER", menuXOffset, menuYOffset)
             end)
 
             microMenuFrame:HookScript("OnShow", function(self)
                 menu:ClearAllPoints()
-                menu:SetPoint("CENTER", self, "CENTER", menuXOffset, -70) -- Use variable
+                menu:SetPoint("CENTER", self, "CENTER", menuXOffset, menuYOffset)
             end)
 
             -- Continuous hook to maintain position
             microMenuFrame:HookScript("OnUpdate", function(self)
                 if not menu:GetPoint() then
                     menu:ClearAllPoints()
-                    menu:SetPoint("CENTER", self, "CENTER", menuXOffset, -70) -- Use variable
+                    menu:SetPoint("CENTER", self, "CENTER", menuXOffset, menuYOffset)
                 end
             end)
 
@@ -1309,7 +1310,7 @@ local function ApplyMicromenuSystem()
 
                     -- Update real menu position
                     menu:ClearAllPoints()
-                    menu:SetPoint("CENTER", microMenuFrame, "CENTER", menuXOffset, -70) -- Use variable
+                    menu:SetPoint("CENTER", microMenuFrame, "CENTER", menuXOffset, menuYOffset)
                 end
             end
 
@@ -1431,7 +1432,7 @@ local function ApplyMicromenuSystem()
                     -- Add background
                     if not button.DragonUIBackground then
                         local backgroundTexture = 'Interface\\AddOns\\DragonUI\\Textures\\Micromenu\\uimicromenu2x'
-                        local dx, dy = -1, -1
+                        local dx, dy = -1, 1
                         local offX, offY = button:GetPushedTextOffset()
                         local sizeX, sizeY = button:GetSize()
 
@@ -1572,12 +1573,14 @@ local function ApplyMicromenuSystem()
                 xOffset + config.x_position, config.y_position)
         end
 
-        -- Define conditional offset
-        local menuXOffset = isAscensionServer and -170 or -140
+        -- Define conditional offset (mode-dependent)
+        local useGrayscaleForOffset = addon.db.profile.micromenu.grayscale_icons
+        local menuXOffset = isAscensionServer and -170 or (useGrayscaleForOffset and -100 or -140)
+        local menuYOffset = useGrayscaleForOffset and -40 or -70
 
         -- Ensure the menu follows the container with corrected positioning
         _G.pUiMicroMenu:ClearAllPoints()
-        _G.pUiMicroMenu:SetPoint("CENTER", frameInfo.frame, "CENTER", menuXOffset, -70)
+        _G.pUiMicroMenu:SetPoint("CENTER", frameInfo.frame, "CENTER", menuXOffset, menuYOffset)
     else
         -- Fallback to old method if no container
         local useGrayscale = addon.db.profile.micromenu.grayscale_icons
