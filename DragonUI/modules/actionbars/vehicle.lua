@@ -13,15 +13,20 @@ local _G = getfenv(0);
 -- ============================================================================
 -- VEHICLE MODULE FOR DRAGONUI
 -- ============================================================================
+-- Approach: RetailUI pattern — do NOT kill VehicleMenuBar, let Blizzard
+-- handle vehicle transitions natively. We reskin in-place and overlay
+-- our custom art when artstyle=true.
+-- ============================================================================
 
 -- Module state tracking
 local VehicleModule = {
     initialized = false,
     applied = false,
-    pendingApply = false,    -- Deferred apply if in combat
-    stateDrivers = {},       -- Track registered state drivers
-    events = {},             -- Track registered events
-    frames = {}              -- Track created frames
+    pendingApply = false,
+    stateDrivers = {},
+    events = {},
+    hooks = {},
+    frames = {}
 }
 
 -- Register with ModuleRegistry (if available)
@@ -29,16 +34,14 @@ if addon.RegisterModule then
     addon:RegisterModule("vehicle", VehicleModule, "Vehicle", "Vehicle interface enhancements")
 end
 
--- Frame variables (only created when enabled)
-local pUiMainBar = nil;
-local vehicleType = nil;
-local vehicleBarBackground = nil;
-local vehiclebar = nil;
-local vehicleExit = nil;
-local vehicleLeave = nil;
+-- Frame variables
+local pUiMainBar = nil
+local vehicleBarBackground = nil
+local vehiclebar = nil
+local vehicleExitButton = nil
 
 -- ============================================================================
--- CONFIGURATION FUNCTIONS
+-- CONFIGURATION
 -- ============================================================================
 
 local function GetModuleConfig()
@@ -56,123 +59,137 @@ local function IsMainbarsModuleEnabled()
 end
 
 local function CheckDependencies()
-    -- Vehicle module requires mainbars module to be enabled
     if not IsMainbarsModuleEnabled() then
         return false
     end
-    
-    -- Check if pUiMainBar exists
     local mainBar = addon.pUiMainBar or _G.pUiMainBar
     if not mainBar then
         return false
     end
-    
     return true
 end
 
 -- ============================================================================
--- FRAME CREATION
+-- STANCE/BONUS BAR PAGE HANDLING
 -- ============================================================================
 
-local function CreateVehicleFrames()
-    if VehicleModule.frames.created then return end
-    
-    -- Get mainbar reference
-    pUiMainBar = addon.pUiMainBar or _G.pUiMainBar
-    if not pUiMainBar then
-        
-        return false
+local stance = {
+    ['DRUID'] = '[bonusbar:1,nostealth] 7; [bonusbar:1,stealth] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10;',
+    ['WARRIOR'] = '[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9;',
+    ['PRIEST'] = '[bonusbar:1] 7;',
+    ['ROGUE'] = '[bonusbar:1] 7; [form:3] 7;',
+    ['DEFAULT'] = '[bonusbar:5] 11; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6;',
+}
+
+local function getbarpage()
+    local condition = stance['DEFAULT']
+    local page = stance[class]
+    if page then
+        condition = condition..' '..page
     end
-    
-    vehicleType = UnitVehicleSkin('player')
-    
+    condition = condition..' 1'
+    return condition
+end
+
+-- ============================================================================
+-- VEHICLE EXIT BUTTON (always created — standalone leave vehicle button)
+-- ============================================================================
+
+local function CreateVehicleExitButton()
+    if vehicleExitButton then return end
+
+    vehicleExitButton = CreateFrame(
+        'CheckButton',
+        'DragonUI_VehicleExitButton',
+        UIParent,
+        'SecureHandlerClickTemplate,SecureHandlerStateTemplate'
+    )
+
+    local btnsize = config.additional.size or 30
+    vehicleExitButton:SetSize(btnsize, btnsize)
+
+    -- Position: relative to stance bar if exists, else main bar
+    local parent = addon.pUiStanceBar or _G.pUiStanceBar or pUiMainBar
+    if parent then
+        vehicleExitButton:SetParent(parent)
+    end
+
+    local x_pos = config.additional.vehicle and config.additional.vehicle.x_position or -40
+    vehicleExitButton:SetPoint('TOPLEFT', x_pos, -5)
+
+    -- Textures
+    vehicleExitButton:SetNormalTexture('Interface\\Vehicles\\UI-Vehicles-Button-Exit-Up')
+    vehicleExitButton:GetNormalTexture():SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
+    vehicleExitButton:SetPushedTexture('Interface\\Vehicles\\UI-Vehicles-Button-Exit-Down')
+    vehicleExitButton:GetPushedTexture():SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
+    vehicleExitButton:SetHighlightTexture('Interface\\Vehicles\\UI-Vehicles-Button-Highlight')
+    vehicleExitButton:GetHighlightTexture():SetTexCoord(0.130625, 0.879375, 0.130625, 0.879375)
+    vehicleExitButton:GetHighlightTexture():SetBlendMode('ADD')
+
+    -- Scripts
+    vehicleExitButton:RegisterForClicks('AnyUp')
+    vehicleExitButton:SetScript('OnEnter', function(self)
+        GameTooltip_AddNewbieTip(self, LEAVE_VEHICLE, 1.0, 1.0, 1.0, nil)
+    end)
+    vehicleExitButton:SetScript('OnLeave', GameTooltip_Hide)
+    vehicleExitButton:SetScript('OnClick', function(self)
+        VehicleExit()
+        self:SetChecked(true)
+    end)
+    vehicleExitButton:SetScript('OnShow', function(self)
+        self:SetChecked(false)
+    end)
+
+    vehicleExitButton:Hide()
+
+    -- Direct state driver: show only during vehicle UI
+    VehicleModule.stateDrivers.vehicleExitVisibility = {frame = vehicleExitButton, state = 'visibility'}
+    RegisterStateDriver(vehicleExitButton, 'visibility', '[vehicleui] show; hide')
+
+    VehicleModule.frames.vehicleExitButton = vehicleExitButton
+end
+
+-- ============================================================================
+-- CUSTOM VEHICLE ART (artstyle=true only)
+-- ============================================================================
+
+local function CreateVehicleArtFrames()
+    if vehicleBarBackground then return end
+
     vehicleBarBackground = CreateFrame(
         'Frame',
         'DragonUI_VehicleBarBackground',
         UIParent,
         'VehicleBarUiTemplate'
     )
-    
+    vehicleBarBackground:SetScale(config.mainbars.scale_vehicle or 1)
+    vehicleBarBackground:Hide()
+
+    -- vehiclebar: content container (buttons, health, power go here)
+    -- Inherits visibility from parent — do NOT explicitly Hide() it
     vehiclebar = CreateFrame(
         'Frame',
         'DragonUI_VehicleBar',
         vehicleBarBackground,
         'SecureHandlerStateTemplate'
     )
-    
-    vehicleExit = CreateFrame(
-        'CheckButton',
-        'DragonUI_VehicleExit',
-        UIParent,
-        'SecureHandlerClickTemplate,SecureHandlerStateTemplate'
-    )
-    
-    vehicleLeave = CreateFrame(
-        'CheckButton',
-        'DragonUI_VehicleLeaveButton',
-        UIParent,
-        'SecureHandlerClickTemplate'
-    )
-    
-    -- Set initial properties
-    vehicleBarBackground:SetScale(config.mainbars.scale_vehicle)
-    vehiclebar:ClearAllPoints()
     vehiclebar:SetAllPoints(vehicleBarBackground)
-    
-    -- Hide frames by default
-    vehicleBarBackground:Hide()
-    vehiclebar:Hide()
-    vehicleExit:Hide()
-    vehicleLeave:Hide()
-    
-    -- Store frames for cleanup
-    VehicleModule.frames = {
-        created = true,
-        vehicleBarBackground = vehicleBarBackground,
-        vehiclebar = vehiclebar,
-        vehicleExit = vehicleExit,
-        vehicleLeave = vehicleLeave
-    }
-    
-    return true
-end
+    -- NOTE: vehiclebar is NOT hidden — it inherits visibility from vehicleBarBackground
 
-local function CleanupVehicleFrames()
-    -- Clean up global frames that might conflict
-    local globalFrames = {
-        'mixin2template',
-        'pUiVehicleBar',
-        'vehicleExit',
-        'pUiVehicleLeaveButton'
-    }
-    
-    for _, frameName in ipairs(globalFrames) do
-        local frame = _G[frameName]
-        if frame and frame.Hide then
-            frame:Hide()
-            frame:SetParent(nil)
-            if frame.UnregisterAllEvents then
-                frame:UnregisterAllEvents()
-            end
-            _G[frameName] = nil
-        end
-    end
+    VehicleModule.frames.vehicleBarBackground = vehicleBarBackground
+    VehicleModule.frames.vehiclebar = vehiclebar
 end
-
--- ============================================================================
--- VEHICLE SETUP FUNCTIONS
--- ============================================================================
 
 local function vehiclebar_power_setup()
     if not vehiclebar then return end
-    
+
     VehicleMenuBarLeaveButton:SetParent(vehiclebar)
     VehicleMenuBarLeaveButton:SetSize(47, 50)
     VehicleMenuBarLeaveButton:SetClearPoint('BOTTOMRIGHT', -178, 14)
     VehicleMenuBarLeaveButton:SetHighlightTexture('Interface\\Vehicles\\UI-Vehicles-Button-Highlight')
     VehicleMenuBarLeaveButton:GetHighlightTexture():SetTexCoord(0.130625, 0.879375, 0.130625, 0.879375)
     VehicleMenuBarLeaveButton:GetHighlightTexture():SetBlendMode('ADD')
-    -- Phase 3D: Use HookScript on Blizzard secure button to avoid taint
+
     if not VehicleMenuBarLeaveButton.DragonUIClickHooked then
         VehicleMenuBarLeaveButton:HookScript('OnClick', VehicleExit)
         VehicleMenuBarLeaveButton.DragonUIClickHooked = true
@@ -207,15 +224,15 @@ end
 
 local function vehiclebar_mechanical_setup()
     if not vehicleBarBackground then return end
-    
+
     vehicleBarBackground.OrganicUi:Hide()
     vehicleBarBackground.MechanicUi:Show()
-    
+
     VehicleMenuBarLeaveButton:SetNormalTexture(addon._dir..'mechanical2')
     VehicleMenuBarLeaveButton:GetNormalTexture():SetTexCoord(45/512, 84/512, 185/512, 224/512)
     VehicleMenuBarLeaveButton:SetPushedTexture(addon._dir..'mechanical2')
     VehicleMenuBarLeaveButton:GetPushedTexture():SetTexCoord(2/512, 40/512, 185/512, 223/512)
-    
+
     VehicleMenuBarHealthBar:SetSize(38, 84)
     VehicleMenuBarPowerBar:SetSize(38, 84)
     VehicleMenuBarPowerBar:SetClearPoint('BOTTOMRIGHT', -94, 6)
@@ -228,7 +245,7 @@ local function vehiclebar_mechanical_setup()
     VehicleMenuBarHealthBarOverlay:SetTexCoord(4/512, 44/512, 263/512, 354/512)
     VehicleMenuBarPowerBarOverlay:SetTexture(addon._dir..'mechanical2')
     VehicleMenuBarPowerBarOverlay:SetTexCoord(4/512, 44/512, 263/512, 354/512)
-    
+
     VehicleMenuBarPitchUpButton:SetParent(vehicleBarBackground.MechanicUi)
     VehicleMenuBarPitchUpButton:SetSize(32, 31)
     VehicleMenuBarPitchUpButton:SetClearPoint('BOTTOMLEFT', 156, 46)
@@ -248,12 +265,12 @@ local function vehiclebar_mechanical_setup()
     VehicleMenuBarPitchSlider:SetParent(vehicleBarBackground.MechanicUi)
     VehicleMenuBarPitchSlider:SetSize(20, 82)
     VehicleMenuBarPitchSlider:SetClearPoint('BOTTOMLEFT', 124, 2)
-    
+
     local bg1 = _G['DragonUI_VehicleBarBackgroundBACKGROUND1']
     if bg1 then
         bg1:SetDrawLayer('BACKGROUND', -1)
     end
-    
+
     VehicleMenuBarPitchSliderBG:SetTexture([[Interface\Vehicles\UI-Vehicles-Endcap]])
     VehicleMenuBarPitchSliderBG:SetTexCoord(0.46875, 0.50390625, 0.31640625, 0.62109375)
     VehicleMenuBarPitchSliderBG:SetVertexColor(0, 0.85, 0.99)
@@ -262,14 +279,14 @@ local function vehiclebar_mechanical_setup()
     VehicleMenuBarPitchSliderMarker:SetTexture([[Interface\Vehicles\UI-Vehicles-Endcap]])
     VehicleMenuBarPitchSliderMarker:SetTexCoord(0.46875, 0.50390625, 0.45, 0.55)
     VehicleMenuBarPitchSliderMarker:SetVertexColor(1, 0, 0)
-    
+
     VehicleMenuBarPitchSliderOverlayThing:SetPoint('TOPLEFT', -5, 2)
     VehicleMenuBarPitchSliderOverlayThing:SetPoint('BOTTOMRIGHT', 3, -4)
 end
 
 local function vehiclebar_organic_setup()
     if not vehicleBarBackground then return end
-    
+
     vehicleBarBackground.OrganicUi:Show()
     vehicleBarBackground.MechanicUi:Hide()
     VehicleMenuBarHealthBar:SetSize(38, 74)
@@ -300,135 +317,35 @@ end
 
 local function vehiclebutton_position()
     if not vehiclebar then return end
-    
-    local button
-    if vehiclebar:IsShown() or (vehicleBarBackground and vehicleBarBackground:IsShown()) then
-        for index=1, VEHICLE_MAX_ACTIONBUTTONS do
-            button = _G['VehicleMenuBarActionButton'..index]
-            if button then
-                button:ClearAllPoints()
-                button:SetParent(vehiclebar)
-                button:SetSize(52, 52)
-                button:Show()
-                if index == 1 then
-                    button:SetPoint('BOTTOMLEFT', vehiclebar, 'BOTTOMRIGHT', -594, 21)
-                else
-                    local previous = _G['VehicleMenuBarActionButton'..(index-1)]
-                    if previous then
-                        button:SetPoint('LEFT', previous, 'RIGHT', 6, 0)
-                    end
+    if InCombatLockdown() then return end
+
+    for index = 1, VEHICLE_MAX_ACTIONBUTTONS do
+        local button = _G['VehicleMenuBarActionButton'..index]
+        if button then
+            button:ClearAllPoints()
+            button:SetParent(vehiclebar)
+            button:SetSize(52, 52)
+            button:Show()
+            if index == 1 then
+                button:SetPoint('BOTTOMLEFT', vehiclebar, 'BOTTOMRIGHT', -594, 21)
+            else
+                local previous = _G['VehicleMenuBarActionButton'..(index-1)]
+                if previous then
+                    button:SetPoint('LEFT', previous, 'RIGHT', 6, 0)
                 end
             end
         end
     end
 end
 
-local function vehiclebutton_state(self)
-    if not self then return end
-    
-    local button
-    for index=1, VEHICLE_MAX_ACTIONBUTTONS do
-        button = _G['VehicleMenuBarActionButton'..index]
-        if button then
-            self:SetFrameRef('VehicleMenuBarActionButton'..index, button)
-        end
-    end	
-    self:SetAttribute('_onstate-vehicleupdate', [[
-        if newstate == 's1' then
-            self:GetParent():Show()
-        else
-            self:GetParent():Hide()
-        end
-    ]])
-    
-    VehicleModule.stateDrivers.vehiclebarUpdate = {frame = self, state = 'vehicleupdate'}
-    RegisterStateDriver(self, 'vehicleupdate', '[vehicleui] s1; s2')
-end
-
 -- ============================================================================
--- VEHICLE LEAVE BUTTON SETUP
+-- ARTSTYLE EVENT HANDLING
 -- ============================================================================
 
-local function SetupVehicleLeaveButton()
-    if not vehicleLeave or not pUiMainBar then return end
-    
-    local stanceBar = addon.pUiStanceBar or _G.pUiStanceBar
-    if stanceBar then
-        vehicleLeave:SetParent(stanceBar)
-    else
-        vehicleLeave:SetParent(pUiMainBar)
-    end
-    
-    vehicleLeave:SetSize(config.additional.size, config.additional.size)
-    vehicleLeave:SetPoint('TOPLEFT', config.additional.vehicle.x_position, -5)
-    vehicleLeave:SetNormalTexture('Interface\\Vehicles\\UI-Vehicles-Button-Exit-Up')
-    vehicleLeave:GetNormalTexture():SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
-    vehicleLeave:SetPushedTexture('Interface\\Vehicles\\UI-Vehicles-Button-Exit-Down')
-    vehicleLeave:GetPushedTexture():SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
-    vehicleLeave:SetHighlightTexture('Interface\\Vehicles\\UI-Vehicles-Button-Highlight')
-    vehicleLeave:GetHighlightTexture():SetTexCoord(0.130625, 0.879375, 0.130625, 0.879375)
-    vehicleLeave:GetHighlightTexture():SetBlendMode('ADD')
-    vehicleLeave:RegisterForClicks('AnyUp')
-    vehicleLeave:SetScript('OnEnter', function(self)
-        GameTooltip_AddNewbieTip(self, LEAVE_VEHICLE, 1.0, 1.0, 1.0, nil)
-    end)
-    vehicleLeave:SetScript('OnLeave', GameTooltip_Hide)
-    vehicleLeave:SetScript('OnClick', function(self)
-        VehicleExit()
-        self:SetChecked(true)
-    end)
-    vehicleLeave:SetScript('OnShow', function(self)
-        self:SetChecked(false)
-    end)
-    
-    VehicleModule.stateDrivers.vehicleLeaveVisibility = {frame = vehicleLeave, state = 'visibility'}
-    RegisterStateDriver(vehicleLeave, 'visibility', '[vehicleui][target=vehicle,noexists] hide;show')
-end
-
-local function SetupVehicleExitButton()
-    if not vehicleExit or not pUiMainBar then return end
-    
-    local stanceBar = addon.pUiStanceBar or _G.pUiStanceBar
-    if stanceBar then
-        vehicleExit:SetParent(stanceBar)
-    else
-        vehicleExit:SetParent(pUiMainBar)
-    end
-    
-    vehicleExit:SetSize(config.additional.size, config.additional.size)
-    vehicleExit:SetPoint('TOPLEFT', config.additional.vehicle.x_position, -5)
-    vehicleExit:SetNormalTexture('Interface\\Vehicles\\UI-Vehicles-Button-Exit-Up')
-    vehicleExit:GetNormalTexture():SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
-    vehicleExit:SetPushedTexture('Interface\\Vehicles\\UI-Vehicles-Button-Exit-Down')
-    vehicleExit:GetPushedTexture():SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
-    vehicleExit:SetHighlightTexture('Interface\\Vehicles\\UI-Vehicles-Button-Highlight')
-    vehicleExit:GetHighlightTexture():SetTexCoord(0.130625, 0.879375, 0.130625, 0.879375)
-    vehicleExit:GetHighlightTexture():SetBlendMode('ADD')
-    vehicleExit:RegisterForClicks('AnyUp')
-    vehicleExit:SetScript('OnEnter', function(self)
-        GameTooltip_AddNewbieTip(self, LEAVE_VEHICLE, 1.0, 1.0, 1.0, nil)
-    end)
-    vehicleExit:SetScript('OnLeave', GameTooltip_Hide)
-    vehicleExit:SetScript('OnClick', function(self)
-        VehicleExit()
-        self:SetChecked(true)
-    end)
-    vehicleExit:SetScript('OnShow', function(self)
-        self:SetChecked(false)
-    end)
-end
-
--- ============================================================================
--- EVENT HANDLING
--- ============================================================================
-
-local function OnEvent(self, event, ...)
-    if event == 'PLAYER_LOGIN' then
-        vehiclebutton_state(self)
-    elseif event == 'PLAYER_ENTERING_WORLD' then
-        vehiclebutton_position()
-    elseif event == 'UNIT_ENTERED_VEHICLE' then
+local function OnVehicleEvent(self, event, ...)
+    if event == 'UNIT_ENTERED_VEHICLE' then
         vehiclebar_layout_setup()
+        vehiclebutton_position()
         if addon.vehiclebuttons_template then
             addon.vehiclebuttons_template()
         end
@@ -436,48 +353,102 @@ local function OnEvent(self, event, ...)
         UnitFrameManaBar_Update(VehicleMenuBarPowerBar, 'vehicle')
     elseif event == 'UNIT_DISPLAYPOWER' then
         UnitFrameManaBar_Update(VehicleMenuBarPowerBar, 'vehicle')
-        vehiclebutton_position()
     end
 end
 
 -- ============================================================================
--- STANCE/BONUS BAR HANDLING
+-- ARTSTYLE VISIBILITY STATE DRIVERS
 -- ============================================================================
+-- vehiclebar inherits visibility from vehicleBarBackground (SetAllPoints,
+-- NOT explicitly hidden) so buttons parented to it become visible when
+-- vehicleBarBackground is shown.
 
-local stance = {
-    ['DRUID'] = '[bonusbar:1,nostealth] 7; [bonusbar:1,stealth] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10;',
-    ['WARRIOR'] = '[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9;',
-    ['PRIEST'] = '[bonusbar:1] 7;',
-    ['ROGUE'] = '[bonusbar:1] 7; [form:3] 7;',
-    ['DEFAULT'] = '[bonusbar:5] 11; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6;',
-}
+local function SetupArtStyleStateDrivers()
+    if not vehicleBarBackground or not pUiMainBar then return end
 
-local function getbarpage()
-    local condition = stance['DEFAULT']
-    local page = stance[class]
-    if page then
-        condition = condition..' '..page
-    end
-    condition = condition..' 1'
-    return condition
+    -- Direct state driver on vehicleBarBackground: show/hide based on [vehicleui]
+    VehicleModule.stateDrivers.vehicleArtVisibility = {frame = vehicleBarBackground, state = 'visibility'}
+    RegisterStateDriver(vehicleBarBackground, 'visibility', '[vehicleui] show; hide')
+
+    -- Hide main bar during vehicle UI
+    VehicleModule.stateDrivers.mainBarVehicle = {frame = pUiMainBar, state = 'vehicleupdate'}
+    pUiMainBar:SetAttribute('_onstate-vehicleupdate', [[
+        if newstate == '1' then
+            self:Hide()
+        else
+            self:Show()
+        end
+    ]])
+    RegisterStateDriver(pUiMainBar, 'vehicleupdate', '[vehicleui] 1; 2')
 end
+
+-- ============================================================================
+-- BOTTOM BARS VISIBILITY DURING VEHICLE
+-- ============================================================================
+-- Since noop.lua removed bars from UIPARENT_MANAGED_FRAME_POSITIONS,
+-- Blizzard's native system can't hide them during vehicle. We handle it.
+
+local function SetupBottomBarVehicleVisibility()
+    local hider = VehicleModule.frames.bottomBarHider
+    if not hider then
+        hider = CreateFrame('Frame')
+        hider:RegisterEvent('UNIT_ENTERED_VEHICLE')
+        hider:RegisterEvent('UNIT_EXITED_VEHICLE')
+        hider:RegisterEvent('PLAYER_ENTERING_WORLD')
+        VehicleModule.frames.bottomBarHider = hider
+    end
+
+    hider:SetScript('OnEvent', function(self, event, unit)
+        if InCombatLockdown() then return end
+
+        if event == 'UNIT_ENTERED_VEHICLE' and unit == 'player' then
+            if MultiBarBottomLeft and MultiBarBottomLeft:IsShown() then
+                VehicleModule.frames.bottomLeftWasShown = true
+                MultiBarBottomLeft:Hide()
+            end
+            if MultiBarBottomRight and MultiBarBottomRight:IsShown() then
+                VehicleModule.frames.bottomRightWasShown = true
+                MultiBarBottomRight:Hide()
+            end
+        elseif event == 'UNIT_EXITED_VEHICLE' and unit == 'player' then
+            if VehicleModule.frames.bottomLeftWasShown and MultiBarBottomLeft then
+                MultiBarBottomLeft:Show()
+                VehicleModule.frames.bottomLeftWasShown = nil
+            end
+            if VehicleModule.frames.bottomRightWasShown and MultiBarBottomRight then
+                MultiBarBottomRight:Show()
+                VehicleModule.frames.bottomRightWasShown = nil
+            end
+        elseif event == 'PLAYER_ENTERING_WORLD' then
+            if UnitInVehicle('player') then
+                if MultiBarBottomLeft and MultiBarBottomLeft:IsShown() then
+                    VehicleModule.frames.bottomLeftWasShown = true
+                    MultiBarBottomLeft:Hide()
+                end
+                if MultiBarBottomRight and MultiBarBottomRight:IsShown() then
+                    VehicleModule.frames.bottomRightWasShown = true
+                    MultiBarBottomRight:Hide()
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================================
+-- BONUS BAR PAGE SWITCHING
+-- ============================================================================
 
 local function SetupBonusBarVehicle()
-    if not pUiMainBar or not vehicleExit then return end
-    
-    -- ✅ Pasar TODAS las referencias al entorno seguro primero
-    pUiMainBar:SetFrameRef('vehicleExit', vehicleExit)
-    
-    -- ✅ Obtener referencias a los ActionButtons también
+    if not pUiMainBar then return end
+
     for i = 1, 12 do
         local actionButton = _G['ActionButton'..i]
         if actionButton then
             pUiMainBar:SetFrameRef('ActionButton'..i, actionButton)
         end
     end
-    
+
     pUiMainBar:Execute([[
-        vehicleExit = self:GetFrameRef('vehicleExit')
         buttons = newtable()
         for i = 1, 12 do
             local button = self:GetFrameRef('ActionButton'..i)
@@ -486,45 +457,44 @@ local function SetupBonusBarVehicle()
             end
         end
     ]])
-    
+
     pUiMainBar:SetAttribute('_onstate-page', [[
         for i, button in ipairs(buttons) do
             button:SetAttribute('actionpage', tonumber(newstate))
         end
     ]])
-    
+
     VehicleModule.stateDrivers.bonusBarPage = {frame = pUiMainBar, state = 'page'}
     RegisterStateDriver(pUiMainBar, 'page', getbarpage())
 end
 
 -- ============================================================================
--- APPLY/RESTORE FUNCTIONS
+-- APPLY / RESTORE
 -- ============================================================================
-local function SetupVehicleExitStateDriver()
-    if not pUiMainBar or not vehicleExit then return end
-    
-    -- ✅ Pasar la referencia al entorno seguro ANTES del state driver
-    pUiMainBar:SetFrameRef('vehicleExitButton', vehicleExit)
-    pUiMainBar:Execute([[
-        vehicleExit = self:GetFrameRef('vehicleExitButton')
-    ]])
-    
-    -- ✅ Ahora configurar el state driver
-    VehicleModule.stateDrivers.vehicleExitBar = {frame = pUiMainBar, state = 'vehicle'}
-    pUiMainBar:SetAttribute('_onstate-vehicle', [[
-        if newstate == '1' then
-            vehicleExit:Show()
-        else
-            vehicleExit:Hide()
+
+local function CleanupVehicleFrames()
+    local globalFrames = {
+        'mixin2template',
+        'pUiVehicleBar',
+        'vehicleExit',
+        'pUiVehicleLeaveButton'
+    }
+    for _, frameName in ipairs(globalFrames) do
+        local frame = _G[frameName]
+        if frame and frame.Hide then
+            frame:Hide()
+            frame:SetParent(nil)
+            if frame.UnregisterAllEvents then
+                frame:UnregisterAllEvents()
+            end
+            _G[frameName] = nil
         end
-    ]])
-    RegisterStateDriver(pUiMainBar, 'vehicle', '[bonusbar:5] 1; 0')
+    end
 end
+
 local function ApplyVehicleSystem()
     if VehicleModule.applied or not IsModuleEnabled() then return end
-    
-    -- CRITICAL: Don't modify secure frames during combat (ElvUI pattern)
-    -- Use centralized CombatQueue system
+
     if InCombatLockdown() then
         VehicleModule.pendingApply = true
         if addon.CombatQueue then
@@ -536,118 +506,97 @@ local function ApplyVehicleSystem()
         end
         return
     end
-    
-    -- Check dependencies
+
     if not CheckDependencies() then
         return
     end
-    
-    -- Cleanup any existing frames first
+
+    pUiMainBar = addon.pUiMainBar or _G.pUiMainBar
     CleanupVehicleFrames()
-    
-    -- Create frames
-    if not CreateVehicleFrames() then
-        return
-    end
-    
-    -- Setup based on art style
+
+    -- 1. Vehicle exit button (direct state driver: [vehicleui] show; hide)
+    CreateVehicleExitButton()
+
+    -- 2. Bonus bar page switching (stance-based action page management)
+    SetupBonusBarVehicle()
+
+    -- 3. Hide bottom bars during vehicle UI
+    SetupBottomBarVehicleVisibility()
+
+    -- 4. Custom vehicle art (organic/mechanical) — only when artstyle=true
     if config.additional.vehicle.artstyle then
-        -- Register events
-        local events = {
-            'UNIT_ENTERING_VEHICLE',
-            'UNIT_EXITED_VEHICLE', 
+        CreateVehicleArtFrames()
+        vehiclebar_power_setup()
+
+        -- Register vehicle events for layout and health bar updates
+        local artEvents = {
             'UNIT_ENTERED_VEHICLE',
+            'UNIT_EXITED_VEHICLE',
             'UNIT_DISPLAYPOWER',
-            'PLAYER_LOGIN',
-            'PLAYER_ENTERING_WORLD'
         }
-        
-        for _, event in ipairs(events) do
+        for _, event in ipairs(artEvents) do
             vehiclebar:RegisterEvent(event)
             VehicleModule.events[event] = vehiclebar
         end
-        
-        vehiclebar:SetScript('OnEvent', OnEvent)
-        vehiclebar_power_setup()
-        
-        -- Setup main bar state driver
-        VehicleModule.stateDrivers.mainBarVehicle = {frame = pUiMainBar, state = 'vehicleupdate'}
-        pUiMainBar:SetAttribute('_onstate-vehicleupdate', [[
-            if newstate == '1' then
-                self:Hide()
-            else
-                self:Show()
-            end
-        ]])
-        RegisterStateDriver(pUiMainBar, 'vehicleupdate', '[vehicleui] 1; 2')
-    else
-        -- Hide art style vehicle bar
-        if vehicleBarBackground then
-            vehicleBarBackground:Hide()
-        end
-        SetupVehicleExitButton()
-        
-        -- ✅ FIX: Configurar correctamente el state driver
-        SetupVehicleExitStateDriver()
+        vehiclebar:SetScript('OnEvent', OnVehicleEvent)
+
+        -- State drivers: show art when [vehicleui], hide main bar
+        SetupArtStyleStateDrivers()
     end
-    
-    SetupVehicleLeaveButton()
-    SetupBonusBarVehicle()
-    
+
     VehicleModule.applied = true
     VehicleModule.pendingApply = false
 end
 
 local function RestoreVehicleSystem()
     if not VehicleModule.applied then return end
-    
-    -- CRITICAL: Don't modify secure frames during combat
-    if InCombatLockdown() then
-        return
-    end
-    
-    -- Unregister all events
-    for event, frame in pairs(VehicleModule.events) do
-        if frame and frame.UnregisterEvent then
-            frame:UnregisterEvent(event)
+    if InCombatLockdown() then return end
+
+    -- Unregister events
+    for key, frame in pairs(VehicleModule.events) do
+        if frame and type(frame) == "table" and frame.UnregisterAllEvents then
+            pcall(frame.UnregisterAllEvents, frame)
         end
     end
     VehicleModule.events = {}
-    
-    -- Unregister all state drivers  
+
+    -- Unregister state drivers
     for name, data in pairs(VehicleModule.stateDrivers) do
         if data.frame and UnregisterStateDriver then
-            UnregisterStateDriver(data.frame, data.state)
+            pcall(UnregisterStateDriver, data.frame, data.state)
         end
     end
     VehicleModule.stateDrivers = {}
-    
-    -- Hide and cleanup custom frames (skip boolean values)
-    for name, frame in pairs(VehicleModule.frames) do
-        if name ~= "created" and frame and type(frame) == "table" and frame.Hide then
-            frame:Hide()
-            frame:SetParent(nil)
-        end
+
+    -- Hide custom frames
+    if vehicleBarBackground then vehicleBarBackground:Hide() end
+    if vehicleExitButton then vehicleExitButton:Hide() end
+
+    -- Restore bottom bars
+    if VehicleModule.frames.bottomLeftWasShown and MultiBarBottomLeft then
+        MultiBarBottomLeft:Show()
     end
-    
-    -- Cleanup global frames
+    if VehicleModule.frames.bottomRightWasShown and MultiBarBottomRight then
+        MultiBarBottomRight:Show()
+    end
+
+    -- Unregister bottomBarHider events
+    if VehicleModule.frames.bottomBarHider then
+        VehicleModule.frames.bottomBarHider:UnregisterAllEvents()
+        VehicleModule.frames.bottomBarHider:SetScript('OnEvent', nil)
+    end
+
     CleanupVehicleFrames()
-    
-    -- Restore default vehicle UI
-    if VehicleMenuBar then
-        VehicleMenuBar:Show()
-    end
-    
-    -- Reset variables
+    if VehicleMenuBar then VehicleMenuBar:Show() end
+
     VehicleModule.frames = {}
     vehicleBarBackground = nil
     vehiclebar = nil
-    vehicleExit = nil
-    vehicleLeave = nil
+    vehicleExitButton = nil
     pUiMainBar = nil
-    
+
     VehicleModule.applied = false
-    
+    VehicleModule.hooks = {}
 end
 
 -- ============================================================================
@@ -659,7 +608,6 @@ function addon.RefreshVehicleSystem()
         if not VehicleModule.applied then
             ApplyVehicleSystem()
         else
-            -- If already applied, just refresh settings
             if addon.RefreshVehicle then
                 addon.RefreshVehicle()
             end
@@ -671,32 +619,52 @@ end
 
 function addon.RefreshVehicle()
     if not IsModuleEnabled() or not VehicleModule.applied then return end
-    
-    -- CRITICAL: Don't modify frames during combat
     if InCombatLockdown() then return end
-    
+
     local btnsize = config.additional.size
-    local barstyle = config.additional.vehicle.artstyle
     local x_position = config.additional.vehicle.x_position
-    
-    -- Update vehicle leave button if it exists
-    if vehicleLeave then
-        vehicleLeave:SetSize(btnsize, btnsize)
-        vehicleLeave:ClearAllPoints()
-        vehicleLeave:SetPoint('TOPLEFT', x_position, -5)
+
+    if vehicleExitButton then
+        vehicleExitButton:SetSize(btnsize, btnsize)
+        vehicleExitButton:ClearAllPoints()
+        vehicleExitButton:SetPoint('TOPLEFT', x_position, -5)
     end
-    
-    -- Update vehicle exit button if it exists
-    if vehicleExit then
-        vehicleExit:SetSize(btnsize, btnsize)
-        vehicleExit:ClearAllPoints()
-        vehicleExit:SetPoint('TOPLEFT', x_position, -5)
-    end
-    
-    -- Update vehicle bar background scale
+
     if vehicleBarBackground then
-        vehicleBarBackground:SetScale(config.mainbars.scale_vehicle)
+        vehicleBarBackground:SetScale(config.mainbars.scale_vehicle or 1)
     end
+end
+
+-- ============================================================================
+-- DEBUG COMMAND
+-- ============================================================================
+
+function addon.DebugVehicle()
+    local p = function(msg) print("|cff00ccff[DragonUI Vehicle]|r " .. msg) end
+    p("--- Vehicle Module Debug ---")
+    p("Module enabled: " .. tostring(IsModuleEnabled()))
+    p("Module applied: " .. tostring(VehicleModule.applied))
+    p("artstyle: " .. tostring(config.additional.vehicle.artstyle))
+    p("pUiMainBar: " .. tostring(pUiMainBar ~= nil) .. (pUiMainBar and (" shown=" .. tostring(pUiMainBar:IsShown())) or ""))
+    p("vehicleBarBackground: " .. tostring(vehicleBarBackground ~= nil) .. (vehicleBarBackground and (" shown=" .. tostring(vehicleBarBackground:IsShown())) or ""))
+    p("vehiclebar: " .. tostring(vehiclebar ~= nil) .. (vehiclebar and (" shown=" .. tostring(vehiclebar:IsShown()) .. " visible=" .. tostring(vehiclebar:IsVisible())) or ""))
+    p("vehicleExitButton: " .. tostring(vehicleExitButton ~= nil) .. (vehicleExitButton and (" shown=" .. tostring(vehicleExitButton:IsShown()) .. " visible=" .. tostring(vehicleExitButton:IsVisible()) .. " parent=" .. tostring(vehicleExitButton:GetParent() and vehicleExitButton:GetParent():GetName())) or ""))
+    p("UnitInVehicle: " .. tostring(UnitInVehicle("player")))
+    p("UnitHasVehicleUI: " .. tostring(UnitHasVehicleUI("player")))
+    p("GetBonusBarOffset: " .. tostring(GetBonusBarOffset()))
+    p("VehicleMenuBar: shown=" .. tostring(VehicleMenuBar and VehicleMenuBar:IsShown()) .. " alpha=" .. tostring(VehicleMenuBar and VehicleMenuBar:GetAlpha()))
+    if VehicleMenuBarActionButtonFrame then
+        p("VehicleMenuBarActionButtonFrame: shown=" .. tostring(VehicleMenuBarActionButtonFrame:IsShown()))
+    else
+        p("VehicleMenuBarActionButtonFrame: nil")
+    end
+    p("MultiBarBottomLeft shown: " .. tostring(MultiBarBottomLeft and MultiBarBottomLeft:IsShown()))
+    p("MultiBarBottomRight shown: " .. tostring(MultiBarBottomRight and MultiBarBottomRight:IsShown()))
+    p("State drivers:")
+    for name, data in pairs(VehicleModule.stateDrivers) do
+        p("  " .. name .. " -> " .. tostring(data.frame and data.frame:GetName()) .. " [" .. data.state .. "]")
+    end
+    p("--- End Debug ---")
 end
 
 -- ============================================================================
@@ -705,12 +673,8 @@ end
 
 local function WaitForDependencies(callback, attempts)
     attempts = attempts or 0
-    
-    if attempts > 20 then -- Give up after 10 seconds
-        
-        return
-    end
-    
+    if attempts > 20 then return end
+
     if CheckDependencies() then
         callback()
     else
@@ -720,26 +684,22 @@ local function WaitForDependencies(callback, attempts)
     end
 end
 
--- Auto-initialize when addon loads
 local initFrame = CreateFrame("Frame")
-VehicleModule.eventFrame = initFrame  -- Store reference for dynamic event registration
+VehicleModule.eventFrame = initFrame
 
 initFrame:RegisterEvent("ADDON_LOADED")
 initFrame:RegisterEvent("PLAYER_LOGIN")
--- NOTE: PLAYER_REGEN_ENABLED is registered dynamically only when needed (ElvUI pattern)
 initFrame:SetScript("OnEvent", function(self, event, addonName)
     if event == "ADDON_LOADED" and addonName == "DragonUI" then
         VehicleModule.initialized = true
         self:UnregisterEvent("ADDON_LOADED")
     elseif event == "PLAYER_LOGIN" then
-        -- Wait for dependencies and apply if enabled
         if IsModuleEnabled() then
             WaitForDependencies(function()
                 ApplyVehicleSystem()
             end)
         end
-        
-        -- Set up profile callbacks
+
         if addon.db then
             addon.db.RegisterCallback(addon, "OnProfileChanged", function()
                 addon.core:ScheduleTimer(function()
@@ -757,10 +717,9 @@ initFrame:SetScript("OnEvent", function(self, event, addonName)
                 end, 0.1)
             end)
         end
-        
+
         self:UnregisterEvent("PLAYER_LOGIN")
     elseif event == "PLAYER_REGEN_ENABLED" then
-        -- Combat ended - unregister first, then apply pending changes (ElvUI pattern)
         self:UnregisterEvent("PLAYER_REGEN_ENABLED")
         if VehicleModule.pendingApply and IsModuleEnabled() then
             VehicleModule.pendingApply = false

@@ -57,7 +57,7 @@ local function ApplyNoopChangesImpl()
         MainMenuBarArtFrame,
         BonusActionBarFrame,
         MainMenuBarOverlayFrame,
-        VehicleMenuBar,
+        -- VehicleMenuBar,  -- RetailUI pattern: handled separately below (keep events alive)
         -- VehicleMenuBarArtFrame,
         -- PossessBarFrame,
         PossessBackground1,
@@ -80,6 +80,11 @@ local function ApplyNoopChangesImpl()
         element:SetAlpha(0)
     end
     elements = nil
+    
+    -- RetailUI pattern: VehicleMenuBar keeps events alive so Blizzard vehicle
+    -- transitions work correctly. Only make invisible + non-interactive.
+    VehicleMenuBar:EnableMouse(false)
+    VehicleMenuBar:SetAlpha(0)
     
     local uiManagedFrames = {
         'MultiBarLeft',

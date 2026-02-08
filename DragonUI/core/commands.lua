@@ -175,6 +175,8 @@ local function SlashCommandHandler(input)
         ToggleKeybindMode()
     elseif cmd == "version" or cmd == "ver" then
         ShowVersion()
+    elseif cmd == "debugvehicle" then
+        if addon.DebugVehicle then addon.DebugVehicle() else addon:Print("Vehicle debug not available") end
     elseif cmd == "help" or cmd == "?" then
         ShowHelp()
     else
