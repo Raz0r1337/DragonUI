@@ -4,7 +4,7 @@
 
 ### Fixed
 - Vehicle UI completely rewritten and functional
-- Vehicle exit button now displays correctly
+- Vehicle exit button now displays correctly and can be repositioned in editor mode
 - Bottom bars properly hide/show when entering/leaving vehicles
 - Micro menu editor overlay now aligns correctly with icons in both colored and grayscale modes
 - Quest tracker invisible frame no longer blocks mouse clicks outside editor mode
