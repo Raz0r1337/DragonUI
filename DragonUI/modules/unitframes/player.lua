@@ -131,6 +131,121 @@ local function GetPlayerConfig()
     return UF.GetConfig("player")
 end
 
+-- Check if fat healthbar mode should be active
+-- Fat mode is disabled when dragon decoration is active (they use different border textures)
+local function IsFatHealthbarActive()
+    local config = GetPlayerConfig()
+    if not config or not config.fat_healthbar then return false end
+    -- Fat healthbar is incompatible with dragon decoration
+    local decorationType = config.dragon_decoration or "none"
+    if decorationType ~= "none" then return false end
+    return true
+end
+
+-- Get the correct BASE texture path (fat or normal)
+local function GetBaseTexture()
+    return IsFatHealthbarActive() and TEXTURES.BASE_FAT or TEXTURES.BASE
+end
+
+-- Get the correct BORDER texture path (fat or normal)
+local function GetBorderTexture()
+    return IsFatHealthbarActive() and TEXTURES.BORDER_FAT or TEXTURES.BORDER
+end
+
+-- Get fat mana bar configuration values
+local function GetFatManaConfig()
+    local config = GetPlayerConfig()
+    if not config then return 200, 8, false end
+    return config.fat_manabar_width or 200,
+           config.fat_manabar_height or 8,
+           config.fat_manabar_hidden or false
+end
+
+-- Create or get the fat mana bar anchor frame (for editor mode movability)
+local function GetOrCreateFatManaAnchor()
+    if Module.fatManaFrame then return Module.fatManaFrame end
+
+    local width, height = GetFatManaConfig()
+    Module.fatManaFrame = addon.CreateUIFrame(width, height + 4, "FatManaBar")
+    Module.fatManaFrame:SetFrameStrata("LOW")
+
+    return Module.fatManaFrame
+end
+
+-- Apply fat mana bar position from widget config
+local function ApplyFatManaPosition()
+    if not Module.fatManaFrame then return end
+
+    local widgetConfig = addon:GetConfigValue("widgets", "fat_manabar")
+    if not widgetConfig then
+        widgetConfig = { anchor = "TOPLEFT", posX = 187, posY = -9 }
+    end
+
+    Module.fatManaFrame:ClearAllPoints()
+    Module.fatManaFrame:SetPoint(
+        widgetConfig.anchor or "TOPLEFT", UIParent,
+        widgetConfig.anchor or "TOPLEFT",
+        widgetConfig.posX or 187, widgetConfig.posY or -9
+    )
+end
+
+-- Apply fat mana bar config (size, visibility, position)
+local function ApplyFatManaBar()
+    local fatMode = IsFatHealthbarActive()
+    local hasVehicleUI = UnitHasVehicleUI("player")
+
+    if not fatMode then
+        -- Normal mode: standard mana bar positioning (parented to portrait)
+        PlayerFrameManaBar:ClearAllPoints()
+        PlayerFrameManaBar:SetSize(hasVehicleUI and 117 or 125, hasVehicleUI and 9 or 8)
+        PlayerFrameManaBar:SetPoint('LEFT', PlayerPortrait, 'RIGHT', 1, -16.5)
+        PlayerFrameManaBar:Show()
+
+        -- Hide the fat anchor if it exists
+        if Module.fatManaFrame then
+            Module.fatManaFrame:SetSize(1, 1)
+        end
+        return
+    end
+
+    -- Fat mode: use configurable width/height and anchor frame
+    local width, height, hidden = GetFatManaConfig()
+
+    if hidden then
+        PlayerFrameManaBar:Hide()
+        if Module.fatManaFrame then
+            Module.fatManaFrame:SetSize(1, 1)
+        end
+        return
+    end
+
+    PlayerFrameManaBar:Show()
+
+    -- Create anchor if needed and apply position
+    local anchor = GetOrCreateFatManaAnchor()
+    anchor:SetSize(width, height + 4)
+    ApplyFatManaPosition()
+
+    -- Lazy-register in editor system if not already registered
+    if not Module.fatManaRegistered and addon.RegisterEditableFrame then
+        addon:RegisterEditableFrame({
+            name = "fat_manabar",
+            frame = anchor,
+            configPath = {"widgets", "fat_manabar"},
+            onHide = function()
+                ApplyFatManaBar()
+            end,
+            module = Module
+        })
+        Module.fatManaRegistered = true
+    end
+
+    -- Parent mana bar to anchor frame
+    PlayerFrameManaBar:ClearAllPoints()
+    PlayerFrameManaBar:SetSize(hasVehicleUI and 117 or width, hasVehicleUI and 9 or height)
+    PlayerFrameManaBar:SetPoint('CENTER', anchor, 'CENTER', 0, 0)
+end
+
 -- ============================================================================
 -- BLIZZARD FRAME MANAGEMENT
 -- ============================================================================
@@ -1019,23 +1134,31 @@ local function UpdatePlayerDragonDecoration()
             PlayerFrameManaBar:SetPoint('RIGHT', PlayerPortrait, 'RIGHT', 1 + normalWidth, -16.5)
         end
     else
-        -- Usar texturas normales del player cuando no hay decoración
+        -- No dragon decoration: use normal or fat textures based on config
+        local fatMode = IsFatHealthbarActive()
+        local baseTexture = GetBaseTexture()
+        local borderTexture = GetBorderTexture()
+
+        local HP_OFFSET = fatMode and 6 or 0
         if dragonFrame.PlayerFrameBackground then
-            dragonFrame.PlayerFrameBackground:SetTexture(TEXTURES.BASE)
+            dragonFrame.PlayerFrameBackground:SetTexture(baseTexture)
             dragonFrame.PlayerFrameBackground:SetTexCoord(0.7890625, 0.982421875, 0.001953125, 0.140625)
             dragonFrame.PlayerFrameBackground:SetSize(198, 71)
 
-            -- Restaurar posición original
             dragonFrame.PlayerFrameBackground:ClearAllPoints()
-            dragonFrame.PlayerFrameBackground:SetPoint('LEFT', PlayerFrameHealthBar, 'LEFT', -67, 0)
+            dragonFrame.PlayerFrameBackground:SetPoint('LEFT', PlayerFrameHealthBar, 'LEFT', -67, 0 + HP_OFFSET)
         end
         if dragonFrame.PlayerFrameBorder then
-            dragonFrame.PlayerFrameBorder:SetTexture(TEXTURES.BORDER)
+            dragonFrame.PlayerFrameBorder:SetTexture(borderTexture)
             dragonFrame.PlayerFrameBorder:SetTexCoord(0, 1, 0, 1)
 
-            -- Restaurar posición original
             dragonFrame.PlayerFrameBorder:ClearAllPoints()
-            dragonFrame.PlayerFrameBorder:SetPoint('LEFT', PlayerFrameHealthBar, 'LEFT', -67, -28.5)
+            dragonFrame.PlayerFrameBorder:SetPoint('LEFT', PlayerFrameHealthBar, 'LEFT', -67, -28.5 + HP_OFFSET)
+        end
+
+        -- Update combat glow texture to match fat/normal mode
+        if dragonFrame.DragonUICombatTexture then
+            dragonFrame.DragonUICombatTexture:SetTexture(baseTexture)
         end
 
         --  NUEVO: Mostrar PlayerFrameDeco cuando no hay decoración
@@ -1043,15 +1166,9 @@ local function UpdatePlayerDragonDecoration()
             dragonFrame.PlayerFrameDeco:Show()
         end
 
-        --  NUEVO: Restaurar tamaño normal de mana bar
-        if PlayerFrameManaBar then
-            local hasVehicleUI = UnitHasVehicleUI("player")
+        --  Adjust mana bar for fat/normal mode
+        ApplyFatManaBar()
 
-            PlayerFrameManaBar:ClearAllPoints()
-            PlayerFrameManaBar:SetSize(hasVehicleUI and 117 or 125, hasVehicleUI and 9 or 8)
-            -- Restaurar anclaje por la izquierda (posición original)
-            PlayerFrameManaBar:SetPoint('LEFT', PlayerPortrait, 'RIGHT', 1, -16.5)
-        end
     end
 
     -- Don't create dragon if decoration is disabled
@@ -1114,7 +1231,7 @@ local function CreatePlayerFrameTextures()
         combatFlashFrame:Hide()
 
         local combatTexture = combatFlashFrame:CreateTexture(nil, "OVERLAY")
-        combatTexture:SetTexture(TEXTURES.BASE)
+        combatTexture:SetTexture(GetBaseTexture())
         combatTexture:SetTexCoord(0.1943359375, 0.3818359375, 0.169921875, 0.30859375)
         combatTexture:SetAllPoints(combatFlashFrame)
         combatTexture:SetBlendMode("ADD")
@@ -1167,7 +1284,7 @@ local function CreatePlayerFrameTextures()
     if not dragonFrame.PlayerFrameBackground then
         local background = PlayerFrame:CreateTexture('DragonUIPlayerFrameBackground')
         background:SetDrawLayer('BACKGROUND', 2)
-        background:SetTexture(TEXTURES.BASE)
+        background:SetTexture(GetBaseTexture())
         background:SetTexCoord(0.7890625, 0.982421875, 0.001953125, 0.140625)
         background:SetSize(198, 71)
         background:SetPoint('LEFT', PlayerFrameHealthBar, 'LEFT', -67, 0)
@@ -1178,7 +1295,7 @@ local function CreatePlayerFrameTextures()
     if not dragonFrame.PlayerFrameBorder then
         local border = PlayerFrameHealthBar:CreateTexture('DragonUIPlayerFrameBorder')
         border:SetDrawLayer('OVERLAY', 5)
-        border:SetTexture(TEXTURES.BORDER)
+        border:SetTexture(GetBorderTexture())
         border:SetPoint('LEFT', PlayerFrameHealthBar, 'LEFT', -67, -28.5)
         dragonFrame.PlayerFrameBorder = border
     end
@@ -1391,23 +1508,29 @@ local function ChangePlayerframe()
     PlayerLevelText:ClearAllPoints()
     PlayerLevelText:SetPoint('BOTTOMRIGHT', PlayerFrameHealthBar, 'TOPRIGHT', -5, 3)
 
-    -- Configure health bar
+    -- Configure health bar (fat mode uses full-width bar)
+    local fatMode = IsFatHealthbarActive()
+    local HP_OFFSET = fatMode and 6 or 0
     PlayerFrameHealthBar:ClearAllPoints()
-    PlayerFrameHealthBar:SetSize(125, 20) -- Mismo tamaño siempre para consistencia
-    PlayerFrameHealthBar:SetPoint('LEFT', PlayerPortrait, 'RIGHT', 1, 0)
+    if fatMode then
+        PlayerFrameHealthBar:SetSize(hasVehicleUI and 117 or 125, 33) -- Taller in fat mode
+        PlayerFrameHealthBar:SetPoint('LEFT', PlayerPortrait, 'RIGHT', 1, -HP_OFFSET)
+    else
+        PlayerFrameHealthBar:SetSize(125, 20) -- Normal size
+        PlayerFrameHealthBar:SetPoint('LEFT', PlayerPortrait, 'RIGHT', 1, 0)
+    end
 
-    -- Configure mana bar
-    PlayerFrameManaBar:ClearAllPoints()
-    PlayerFrameManaBar:SetSize(125, hasVehicleUI and 9 or 8) -- Ancho consistente, altura dinámica
-    PlayerFrameManaBar:SetPoint('LEFT', PlayerPortrait, 'RIGHT', 1, -16.5)
+    -- Configure mana bar (fat mode uses anchor frame, normal uses inline position)
+    ApplyFatManaBar()
 
     -- Set power bar texture based on type
     local powerType, powerTypeString = UnitPowerType('player')
     local powerTexture = TEXTURES.POWER_BARS[powerTypeString] or TEXTURES.POWER_BARS.MANA
     PlayerFrameManaBar:GetStatusBarTexture():SetTexture(powerTexture)
 
-    -- Configure status and flash textures
-    PlayerStatusTexture:SetTexture(TEXTURES.BASE)
+    -- Configure status and flash textures (use fat texture if active)
+    local baseTexture = GetBaseTexture()
+    PlayerStatusTexture:SetTexture(baseTexture)
     PlayerStatusTexture:SetSize(192, 71)
     PlayerStatusTexture:SetTexCoord(0.1943359375, 0.3818359375, 0.169921875, 0.30859375)
     PlayerStatusTexture:ClearAllPoints()
@@ -1580,6 +1703,9 @@ local function RefreshPlayerFrame()
     --  APLICAR CONFIGURACIÓN INMEDIATAMENTE
     ApplyPlayerConfig()
 
+    --  RE-APPLY FRAME LAYOUT (health/mana bar sizes, positions - needed for fat healthbar toggle)
+    ChangePlayerframe()
+
     --  ACTUALIZAR CLASS COLOR
     UpdatePlayerHealthBarColor()
 
@@ -1688,6 +1814,21 @@ local function InitializePlayerFrame()
         end,
         module = Module
     })
+
+    -- Register fat mana bar anchor as editable frame (for editor mode movability)
+    if IsFatHealthbarActive() and not Module.fatManaRegistered then
+        local fatAnchor = GetOrCreateFatManaAnchor()
+        addon:RegisterEditableFrame({
+            name = "fat_manabar",
+            frame = fatAnchor,
+            configPath = {"widgets", "fat_manabar"},
+            onHide = function()
+                ApplyFatManaBar()
+            end,
+            module = Module
+        })
+        Module.fatManaRegistered = true
+    end
 
     -- Setup frame hooks
     if PlayerFrame and PlayerFrame.HookScript then

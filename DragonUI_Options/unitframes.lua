@@ -227,6 +227,88 @@ local unitframeOptions = {
                         end
                     end,
                     order = 12
+                },
+                player_header_healthbar = {
+                    type = 'header',
+                    name = "Health Bar Style",
+                    order = 20
+                },
+                fat_healthbar = {
+                    type = 'toggle',
+                    name = "Fat Health Bar",
+                    desc = "Full-width health bar that fills the entire frame area. Uses modified border texture that removes the inner divider line. |cffFF6600Note:|r Not compatible with Dragon Decoration - will be ignored if a dragon decoration is active.",
+                    get = function()
+                        return addon.db.profile.unitframe.player.fat_healthbar
+                    end,
+                    set = function(info, value)
+                        addon.db.profile.unitframe.player.fat_healthbar = value
+                        if addon.PlayerFrame and addon.PlayerFrame.RefreshPlayerFrame then
+                            addon.PlayerFrame.RefreshPlayerFrame()
+                        end
+                    end,
+                    order = 21
+                },
+                fat_manabar_hidden = {
+                    type = 'toggle',
+                    name = "Hide Mana Bar (Fat Mode)",
+                    desc = "Completely hide the mana bar when Fat Health Bar is active.",
+                    get = function()
+                        return addon.db.profile.unitframe.player.fat_manabar_hidden
+                    end,
+                    set = function(info, value)
+                        addon.db.profile.unitframe.player.fat_manabar_hidden = value
+                        if addon.PlayerFrame and addon.PlayerFrame.RefreshPlayerFrame then
+                            addon.PlayerFrame.RefreshPlayerFrame()
+                        end
+                    end,
+                    disabled = function()
+                        return not addon.db.profile.unitframe.player.fat_healthbar
+                    end,
+                    order = 22
+                },
+                fat_manabar_width = {
+                    type = 'range',
+                    name = "Mana Bar Width (Fat Mode)",
+                    desc = "Width of the mana bar when Fat Health Bar is active. Movable via Editor Mode.",
+                    min = 50,
+                    max = 300,
+                    step = 1,
+                    get = function()
+                        return addon.db.profile.unitframe.player.fat_manabar_width or 200
+                    end,
+                    set = function(info, value)
+                        addon.db.profile.unitframe.player.fat_manabar_width = value
+                        if addon.PlayerFrame and addon.PlayerFrame.RefreshPlayerFrame then
+                            addon.PlayerFrame.RefreshPlayerFrame()
+                        end
+                    end,
+                    disabled = function()
+                        return not addon.db.profile.unitframe.player.fat_healthbar
+                            or addon.db.profile.unitframe.player.fat_manabar_hidden
+                    end,
+                    order = 23
+                },
+                fat_manabar_height = {
+                    type = 'range',
+                    name = "Mana Bar Height (Fat Mode)",
+                    desc = "Height of the mana bar when Fat Health Bar is active.",
+                    min = 4,
+                    max = 30,
+                    step = 1,
+                    get = function()
+                        return addon.db.profile.unitframe.player.fat_manabar_height or 8
+                    end,
+                    set = function(info, value)
+                        addon.db.profile.unitframe.player.fat_manabar_height = value
+                        if addon.PlayerFrame and addon.PlayerFrame.RefreshPlayerFrame then
+                            addon.PlayerFrame.RefreshPlayerFrame()
+                        end
+                    end,
+                    disabled = function()
+                        return not addon.db.profile.unitframe.player.fat_healthbar
+                            or addon.db.profile.unitframe.player.fat_manabar_hidden
+                    end,
+                    order = 24
                 }
             }
         },

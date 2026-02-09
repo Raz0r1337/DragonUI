@@ -90,6 +90,11 @@ local defaults = {
                 anchor = "BOTTOM",
                 posX = 1,
                 posY = 7
+            },
+            fat_manabar = {
+                anchor = "TOPLEFT",
+                posX = 187,
+                posY = -9
             }
         },
         -- Quest Tracker
@@ -332,6 +337,10 @@ local defaults = {
                 alwaysShowAlternateManaText = false,
                 alternateManaFormat = "both",
                 show_runes = true, -- DK rune display (used by player.lua)
+                fat_healthbar = false, -- Full-width health bar (incompatible with dragon decoration)
+                fat_manabar_width = 200,
+                fat_manabar_height = 8,
+                fat_manabar_hidden = false,
             },
             target = {
                 classcolor = false,

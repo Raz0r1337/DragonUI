@@ -39,9 +39,11 @@ UF.TEXTURES = {
     -- Player frame (unique textures)
     player = {
         BASE          = "Interface\\Addons\\DragonUI\\Textures\\uiunitframe",
+        BASE_FAT      = "Interface\\Addons\\DragonUI\\Textures\\uiunitframe-fat",
         HEALTH_BAR    = "Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Health",
         HEALTH_STATUS = "Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Health-Status",
         BORDER        = "Interface\\Addons\\DragonUI\\Textures\\UI-HUD-UnitFrame-Player-PortraitOn-BORDER",
+        BORDER_FAT    = "Interface\\Addons\\DragonUI\\Textures\\UI-HUD-UnitFrame-Player-PortraitOn-BORDER-Fat",
         REST_ICON     = "Interface\\AddOns\\DragonUI\\Textures\\PlayerFrame\\PlayerRestFlipbook",
         RUNE_TEXTURE  = "Interface\\AddOns\\DragonUI\\Textures\\PlayerFrame\\ClassOverlayDeathKnightRunes",
         LFG_ICONS     = "Interface\\AddOns\\DragonUI\\Textures\\PlayerFrame\\LFGRoleIcons",
