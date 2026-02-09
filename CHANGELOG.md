@@ -1,6 +1,6 @@
 # 🐉 DragonUI - Experimental Changelog
 
-## 2026-02-09
+## 📅 2026-02-09
 
 ### Refactored
 - Unit frame system restructured with shared factories (`uf_core.lua`, `target_style.lua`, `small_frame.lua`)
@@ -13,7 +13,7 @@
 - Health bar class color no longer resets to green (race condition fix via `OnValueChanged` + `SetStatusBarColor` hooks)
 - Focus castbar default position adjusted to match target castbar spacing
 
-## 2026-02-08
+## 📅 2026-02-08
 
 ### Fixed
 - Vehicle UI completely rewritten and functional
@@ -33,7 +33,7 @@
 - All Blizzard frame modifications now use secure hooks (hooksecurefunc)
 - General cleanup of dead and duplicated code across multiple modules
 
-## 2026-02-06
+## 📅 2026-02-06
 
 ### Added
 - Class Portrait option for Player, Target, Focus (shows class icons instead of 3D portraits)
@@ -53,7 +53,7 @@
 - Sidebar editor overlay follows orientation changes
 - Castbar advanced mode time display
 
-## 2026-02-05
+## 📅 2026-02-05
 
 ### Added
 - `DragonUI_Options` as separate addon (loads on demand for faster startup)
