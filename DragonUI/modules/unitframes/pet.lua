@@ -2,6 +2,7 @@
 -- DRAGONUI PET FRAME MODULE - OPTIMIZED WITH TEXT SYSTEM
 -- ===============================================================
 local addon = select(2, ...)
+local UF = addon.UF
 local PetFrameModule = {}
 addon.PetFrameModule = PetFrameModule
 
@@ -16,22 +17,15 @@ local UnitPowerType = UnitPowerType
 local hooksecurefunc = hooksecurefunc
 
 -- ===============================================================
--- MODULE CONSTANTS
+-- MODULE CONSTANTS (from shared core)
 -- ===============================================================
-local TEXTURE_PATH = 'Interface\\Addons\\DragonUI\\Textures\\'
-local UNITFRAME_PATH = TEXTURE_PATH .. 'Unitframe\\'
-local ATLAS_TEXTURE = TEXTURE_PATH .. 'uiunitframe'
-local TOT_BASE = 'UI-HUD-UnitFrame-TargetofTarget-PortraitOn-'
-
-local POWER_TEXTURES = {
-    MANA = UNITFRAME_PATH .. TOT_BASE .. 'Bar-Mana',
-    FOCUS = UNITFRAME_PATH .. TOT_BASE .. 'Bar-Focus',
-    RAGE = UNITFRAME_PATH .. TOT_BASE .. 'Bar-Rage',
-    ENERGY = UNITFRAME_PATH .. TOT_BASE .. 'Bar-Energy',
-    RUNIC_POWER = UNITFRAME_PATH .. TOT_BASE .. 'Bar-RunicPower'
-}
-
-local COMBAT_TEX_COORDS = {0.3095703125, 0.4208984375, 0.3125, 0.404296875}
+local PET_TEX = UF.TEXTURES.pet
+local TEXTURE_PATH = PET_TEX.TEXTURE_PATH
+local UNITFRAME_PATH = PET_TEX.UNITFRAME_PATH
+local ATLAS_TEXTURE = PET_TEX.ATLAS_TEXTURE
+local TOT_BASE = PET_TEX.TOT_BASE
+local POWER_TEXTURES = PET_TEX.POWER_TEXTURES
+local COMBAT_TEX_COORDS = PET_TEX.COMBAT_TEX_COORDS
 
 -- ===============================================================
 -- ANIMACIONES COMBAT PULSE

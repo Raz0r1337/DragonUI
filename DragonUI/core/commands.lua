@@ -177,8 +177,154 @@ local function SlashCommandHandler(input)
         ShowVersion()
     elseif cmd == "debugvehicle" then
         if addon.DebugVehicle then addon.DebugVehicle() else addon:Print("Vehicle debug not available") end
+    elseif cmd == "debugshadow" then
+        -- Enumerate ALL visible children/textures of TargetFrame to find the shadow source
+        local function InspectFrame(frame, prefix, depth)
+            if not frame or depth > 3 then return end
+            local regions = { frame:GetRegions() }
+            for _, region in ipairs(regions) do
+                if region:IsShown() or (region.GetAlpha and region:GetAlpha() > 0) then
+                    local rtype = region:GetObjectType()
+                    local name = region:GetName() or "(unnamed)"
+                    local alpha = region:GetAlpha()
+                    local layer, sublevel = "", ""
+                    if region.GetDrawLayer then layer, sublevel = region:GetDrawLayer() end
+                    local w, h = region:GetWidth(), region:GetHeight()
+                    local tex = ""
+                    if region.GetTexture then tex = tostring(region:GetTexture() or "") end
+                    local shown = region:IsShown() and "SHOWN" or "hidden"
+                    local visible = region:IsVisible() and "VISIBLE" or "invisible"
+                    print(string.format("%s%s [%s] a=%.2f %s/%s %s %s %.0fx%.0f tex=%s",
+                        prefix, name, rtype, alpha, shown, visible,
+                        tostring(layer), tostring(sublevel), w, h, tex))
+                end
+            end
+            local children = { frame:GetChildren() }
+            for _, child in ipairs(children) do
+                local cname = child:GetName() or "(unnamed_frame)"
+                local calpha = child:GetAlpha()
+                local shown = child:IsShown() and "SHOWN" or "hidden"
+                local visible = child:IsVisible() and "VISIBLE" or "invisible"
+                print(string.format("%s> %s [Frame] a=%.2f %s/%s",
+                    prefix, cname, calpha, shown, visible))
+                InspectFrame(child, prefix .. "  ", depth + 1)
+            end
+        end
+        print("=== TargetFrame children (depth 3) ===")
+        InspectFrame(TargetFrame, "  ", 0)
+        if FocusFrame then
+            print("=== FocusFrame children (depth 3) ===")
+            InspectFrame(FocusFrame, "  ", 0)
+        end
     elseif cmd == "help" or cmd == "?" then
         ShowHelp()
+    elseif cmd == "shadowcolor" then
+        -- Tint DragonUI_TargetBG bright red/green to visualize its full extent
+        local bg = _G["DragonUI_TargetBG"]
+        if not bg then
+            print("BG texture not found")
+        else
+            if arg == "red" then
+                bg:SetVertexColor(1, 0, 0, 1)
+                print("|cFFFF0000BG tinted RED|r")
+            elseif arg == "green" then
+                bg:SetVertexColor(0, 1, 0, 1)
+                print("|cFF00FF00BG tinted GREEN|r")
+            elseif arg == "reset" then
+                bg:SetVertexColor(1, 1, 1, 1)
+                print("BG color reset")
+            elseif arg == "info" then
+                local l, b, w, h = bg:GetRect()
+                local p1, parent, p2, x, y = bg:GetPoint(1)
+                local np = bg:GetNumPoints()
+                print(string.format("Rect: left=%.1f bottom=%.1f w=%.1f h=%.1f", l or 0, b or 0, w or 0, h or 0))
+                print(string.format("Point1: %s -> %s %s (%.1f, %.1f)", p1 or "?", parent and parent:GetName() or "?", p2 or "?", x or 0, y or 0))
+                print(string.format("NumPoints: %d", np))
+                local tc = {bg:GetTexCoord()}
+                print(string.format("TexCoord: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
+                    tc[1] or 0, tc[2] or 0, tc[3] or 0, tc[4] or 0,
+                    tc[5] or 0, tc[6] or 0, tc[7] or 0, tc[8] or 0))
+            else
+                print("Usage: /dui shadowcolor red|green|reset|info")
+            end
+        end
+    elseif cmd == "shadowcrop" then
+        -- Real-time SetTexCoord adjustment on BG
+        local bg = _G["DragonUI_TargetBG"]
+        if not bg then
+            print("BG texture not found")
+        elseif not arg or arg == "" then
+            print("Usage: /dui shadowcrop <bottom_px> [right_px]")
+            print("  e.g. /dui shadowcrop 90 — show top 90 of 128 px height")
+            print("  e.g. /dui shadowcrop 90 200 — crop both bottom and right")
+            print("  /dui shadowcrop reset — restore full texture")
+        elseif arg == "reset" then
+            bg:SetTexCoord(0, 1, 0, 1)
+            bg:SetSize(256, 128)
+            print("BG reset to 256x128 full texture")
+        else
+            local b, r = arg:match("^(%d+)%s*(%d*)$")
+            b = tonumber(b)
+            r = tonumber(r) or 256
+            if b and b > 0 and b <= 128 and r > 0 and r <= 256 then
+                bg:SetTexCoord(0, r/256, 0, b/128)
+                bg:SetSize(r, b)
+                print(string.format("|cFFFFD700Crop applied:|r showing %dx%d of 256x128 (texcoord 0-%.3f, 0-%.3f)", r, b, r/256, b/128))
+            else
+                print("Invalid values. Height 1-128, Width 1-256")
+            end
+        end
+    elseif cmd == "shadowtest" then
+        -- Interactive element hiding to find the shadow source
+        -- Usage: /dui shadowtest <number> to toggle hiding element N
+        -- /dui shadowtest alone lists all elements with numbers
+        local elements = {}
+        local function Collect(frame, depth)
+            if not frame or depth > 3 then return end
+            for _, region in ipairs({frame:GetRegions()}) do
+                local name = region:GetName() or "(unnamed)"
+                local rtype = region:GetObjectType()
+                local shown = region:IsShown()
+                local visible = region:IsVisible()
+                local tex = ""
+                if region.GetTexture then tex = tostring(region:GetTexture() or "") end
+                table.insert(elements, {obj=region, name=name, type=rtype, shown=shown, visible=visible, tex=tex})
+            end
+            for _, child in ipairs({frame:GetChildren()}) do
+                local cname = child:GetName() or "(unnamed_frame)"
+                table.insert(elements, {obj=child, name=cname, type="Frame", shown=child:IsShown(), visible=child:IsVisible(), tex=""})
+                Collect(child, depth+1)
+            end
+        end
+        Collect(TargetFrame, 0)
+        
+        local n = tonumber(arg)
+        if not n then
+            -- List all elements
+            print("|cFF00FF00=== TargetFrame elements (use /dui shadowtest N to toggle) ===|r")
+            for i, e in ipairs(elements) do
+                local vis = e.visible and "|cFF00FF00VIS|r" or "|cFFFF0000inv|r"
+                local sh = e.shown and "SHOWN" or "hidden"
+                print(string.format("  |cFFFFD700%d|r. %s [%s] %s %s %s", i, e.name, e.type, sh, vis, e.tex))
+            end
+            print("|cFFFFD700Total:|r " .. #elements .. " elements")
+        else
+            -- Toggle hide/show element N
+            if n >= 1 and n <= #elements then
+                local e = elements[n]
+                if e.obj:IsShown() then
+                    e.obj:Hide()
+                    e.obj:SetAlpha(0)
+                    print(string.format("|cFFFF0000HIDDEN|r: %d. %s [%s]", n, e.name, e.type))
+                else
+                    e.obj:Show()
+                    e.obj:SetAlpha(1)
+                    print(string.format("|cFF00FF00SHOWN|r: %d. %s [%s]", n, e.name, e.type))
+                end
+            else
+                print("Invalid element number. Use /dui shadowtest to list.")
+            end
+        end
     else
         -- Unknown command
         addon:Print("Unknown command: " .. cmd)

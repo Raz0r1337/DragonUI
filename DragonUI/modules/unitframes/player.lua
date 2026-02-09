@@ -1,4 +1,5 @@
 local addon = select(2, ...)
+local UF = addon.UF
 
 -- ====================================================================
 -- DRAGONUI PLAYER FRAME MODULE - Optimized for WoW 3.3.5a
@@ -44,23 +45,8 @@ local PlayerRestGlow = _G.PlayerRestGlow
 local PlayerName = _G.PlayerName
 local PlayerLevelText = _G.PlayerLevelText
 
--- Texture paths configuration
-local TEXTURES = {
-    BASE = 'Interface\\Addons\\DragonUI\\Textures\\uiunitframe',
-    HEALTH_BAR = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Health',
-    HEALTH_STATUS = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Health-Status',
-    BORDER = 'Interface\\Addons\\DragonUI\\Textures\\UI-HUD-UnitFrame-Player-PortraitOn-BORDER',
-    REST_ICON = "Interface\\AddOns\\DragonUI\\Textures\\PlayerFrame\\PlayerRestFlipbook",
-    RUNE_TEXTURE = 'Interface\\AddOns\\DragonUI\\Textures\\PlayerFrame\\ClassOverlayDeathKnightRunes',
-    LFG_ICONS = "Interface\\AddOns\\DragonUI\\Textures\\PlayerFrame\\LFGRoleIcons",
-    POWER_BARS = {
-        MANA = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana',
-        RAGE = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Rage',
-        FOCUS = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Focus',
-        ENERGY = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-Energy',
-        RUNIC_POWER = 'Interface\\Addons\\DragonUI\\Textures\\Unitframe\\UI-HUD-UnitFrame-Player-PortraitOn-Bar-RunicPower'
-    }
-}
+-- Texture paths from shared core (single source of truth)
+local TEXTURES = UF.TEXTURES.player
 
 -- Coordenadas para glows elite/rare (target frame invertido)
 local ELITE_GLOW_COORDINATES = {
@@ -140,25 +126,9 @@ local ROLE_COORDS = {
 -- UTILITY FUNCTIONS
 -- ============================================================================
 
--- Get player configuration with fallback to defaults
+-- Get player configuration with defaults fallback via shared core
 local function GetPlayerConfig()
-    local config = addon:GetConfigValue("unitframe", "player") or {}
-    -- Usar defaults directamente de database
-    local dbDefaults = addon.defaults and addon.defaults.profile.unitframe.player or {}
-
-    -- Aplicar defaults de database para cualquier valor faltante
-    for key, value in pairs(dbDefaults) do
-        if config[key] == nil then
-            config[key] = value
-        end
-    end
-
-    -- Defaults específicos para runas DK si no están en database
-    if config.show_runes == nil then
-        config.show_runes = true -- Mostrar runas por defecto
-    end
-
-    return config
+    return UF.GetConfig("player")
 end
 
 -- ============================================================================

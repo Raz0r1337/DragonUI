@@ -2,6 +2,7 @@
 -- DRAGONUI PARTY FRAMES MODULE
 -- ===============================================================
 local addon = select(2, ...)
+local UF = addon.UF
 
 -- ===============================================================
 -- EARLY EXIT CHECK
@@ -43,18 +44,8 @@ PartyFrames.initialized = false
 -- CONSTANTS AND CONFIGURATION
 -- ===============================================================
 
--- Texture paths for our custom party frames
-local TEXTURES = {
-    healthBarStatus = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-Health-Status",
-    frame = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\uipartyframe",
-    border = "Interface\\Addons\\DragonUI\\Textures\\UI-HUD-UnitFrame-TargetofTarget-PortraitOn-BORDER",
-    healthBar = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-Health",
-    manaBar = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-Mana",
-    focusBar = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-Focus",
-    rageBar = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-Rage",
-    energyBar = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-Energy",
-    runicPowerBar = "Interface\\Addons\\DragonUI\\Textures\\Partyframe\\UI-HUD-UnitFrame-Party-PortraitOn-Bar-RunicPower"
-}
+-- Texture paths from shared core (single source of truth)
+local TEXTURES = UF.TEXTURES.party
 
 -- ===============================================================
 -- CENTRALIZED SYSTEM INTEGRATION
@@ -283,69 +274,15 @@ local function GetSettings()
     return settings
 end
 
--- Format numbers helper
+-- Format numbers helper — delegates to shared TextSystem
 local function FormatNumber(value)
-    if not value or value == 0 then
-        return "0"
-    end
-
-    -- Check for large number formatting setting
-    local shouldBreakUp = false
-    local settings = GetSettings()
-    
-    if settings and settings.breakUpLargeNumbers ~= nil then
-        shouldBreakUp = settings.breakUpLargeNumbers
-    elseif addon and addon.db and addon.db.profile and addon.db.profile.unitframe then
-        -- Fallback to general unitframe setting
-        local general = addon.db.profile.unitframe.general
-        if general and general.breakUpLargeNumbers ~= nil then
-            shouldBreakUp = general.breakUpLargeNumbers
-        else
-            shouldBreakUp = true -- Default to true
-        end
-    else
-        shouldBreakUp = true -- Default fallback
-    end
-
-    if shouldBreakUp then
-        if value >= 1000000 then
-            return string.format("%.1fm", value / 1000000)
-        elseif value >= 1000 then
-            return string.format("%.1fk", value / 1000)
-        end
-    end
-    return tostring(value)
+    if not value or value == 0 then return "0" end
+    return addon.TextSystem.AbbreviateLargeNumbers(value) or tostring(value)
 end
 
--- Safe text formatting (multiple formats without external dependencies)
+-- Text formatting — delegates to shared TextSystem
 local function GetFormattedText(current, max, textFormat, breakUpLargeNumbers)
-    if not current or not max or max == 0 then
-        return ""
-    end
-    
-    -- Handle boolean parameter properly
-    if breakUpLargeNumbers == nil then
-        breakUpLargeNumbers = true
-    end
-    
-    if textFormat == "percentage" then
-        local percent = math.floor((current / max) * 100)
-        return percent .. "%"
-    elseif textFormat == "numeric" then
-        return breakUpLargeNumbers and FormatNumber(current) or tostring(current)
-    elseif textFormat == "both" then
-        local percent = math.floor((current / max) * 100)
-        local formatted = breakUpLargeNumbers and FormatNumber(current) or tostring(current)
-        -- Sistema dual como TextSystem: devolver tabla con left y right separados
-        return {
-            left = percent .. "%",
-            right = formatted
-        }
-    else -- "formatted" (default)
-        local formattedCurrent = breakUpLargeNumbers and FormatNumber(current) or tostring(current)
-        local formattedMax = breakUpLargeNumbers and FormatNumber(max) or tostring(max)
-        return formattedCurrent .. "/" .. formattedMax
-    end
+    return addon.TextSystem.FormatStatusText(current, max, textFormat, breakUpLargeNumbers)
 end
 
 -- Calculate step based on orientation
@@ -397,28 +334,9 @@ local function GetPartyCoords(type)
     return 0, 1, 0, 1
 end
 
--- New function: Get power bar texture
+-- Power bar texture resolver (delegates to shared core)
 local function GetPowerBarTexture(unit)
-    if not unit or not UnitExists(unit) then
-        return TEXTURES.manaBar
-    end
-
-    local powerType = UnitPowerType(unit)
-
-    -- In 3.3.5a types are numbers, not strings
-    if powerType == 0 then -- MANA
-        return TEXTURES.manaBar
-    elseif powerType == 1 then -- RAGE
-        return TEXTURES.rageBar
-    elseif powerType == 2 then -- FOCUS
-        return TEXTURES.focusBar
-    elseif powerType == 3 then -- ENERGY
-        return TEXTURES.energyBar
-    elseif powerType == 6 then -- RUNIC_POWER (if it exists in 3.3.5a)
-        return TEXTURES.runicPowerBar
-    else
-        return TEXTURES.manaBar -- Default
-    end
+    return UF.GetPartyPowerBarTexture(unit)
 end
 
 -- ===============================================================

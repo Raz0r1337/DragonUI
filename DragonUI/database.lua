@@ -318,17 +318,20 @@ local defaults = {
 
         -- UNIT FRAMES SETTINGS
         unitframe = {
+            scale = 1.0, -- Global scale for all unit frames
             player = {
                 enabled = true,
                 breakUpLargeNumbers = true,
                 scale = 1.0,
                 classcolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
-                healthFormat = "both",
-                manaFormat = "both",
+                textFormat = "both",
+                showHealthTextAlways = false,
+                showManaTextAlways = false,
                 dragon_decoration = "none",
                 alwaysShowAlternateManaText = false,
-                alternateManaFormat = "both"
+                alternateManaFormat = "both",
+                show_runes = true, -- DK rune display (used by player.lua)
             },
             target = {
                 classcolor = false,
@@ -344,11 +347,12 @@ local defaults = {
             focus = {
                 classcolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
-                breakUpLargeNumbers = true, -- Changed to false - no commas by default
-                textFormat = 'both', -- Changed to 'numeric' - Current Value Only by default
-                showHealthTextAlways = false, -- true = always visible, false = only on hover
-                showManaTextAlways = false, -- true = always visible, false = only on hover
-                scale = 0.9
+                breakUpLargeNumbers = true,
+                textFormat = 'both',
+                showHealthTextAlways = false,
+                showManaTextAlways = false,
+                scale = 0.9,
+                override = false
             },
             pet = {
                 breakUpLargeNumbers = true,
@@ -357,8 +361,9 @@ local defaults = {
                 showManaTextAlways = false,
                 enableThreatGlow = false,
                 scale = 1.0,
-                override = true
-
+                override = true,
+                x = 0,
+                y = 0
             },
             party = {
                 enabled = true,

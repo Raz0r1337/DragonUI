@@ -1,5 +1,13 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
     
+    <!-- Shared core utilities — must load before all frame modules -->
+    <Script file="uf_core.lua"/>
+    
+    <!-- Shared factory for small companion frames (ToT/FoT) -->
+    <Script file="small_frame.lua"/>
+
+    <!-- Shared factory for target-style frames (Target/Focus) -->
+    <Script file="target_style.lua"/>
         
     <!-- Individual frame modules -->
     <Script file="player.lua"/>
