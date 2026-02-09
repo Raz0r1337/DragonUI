@@ -3,7 +3,7 @@
 ## 📅 2026-02-09
 
 ### Added
-- Fat Health Bar system for player frame with full-width health bar display (thanks @Arkoudokinigos)
+- Fat Health Bar system for player frame with full-width health bar display (thanks [CrimsonHollow](https://github.com/CrimsonHollow))
 - Configurable mana bar in fat mode (width, height, hide toggle, movable via Editor Mode)
 - **Note:** Fat Health Bar is currently incompatible with Dragon Decoration mode due to missing texture edits (will be addressed in future update)
 
