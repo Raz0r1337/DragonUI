@@ -1,5 +1,18 @@
 # 🐉 DragonUI - Experimental Changelog
 
+> **⚠️ Experimental Branch** — All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) — any feedback helps!
+
+## 📅 2026-02-11
+
+### Added
+- **Custom Options Panel** — New dark-themed, resizable panel with vertical tab navigation, profile management, and quick-launch buttons for Editor/KeyBind modes. Access legacy options via `/dragonui legacy`
+- **Fat Mana Bar Textures** — Selectable power bar textures (Blizzard, Flat, Smooth, Aluminium, LiteStep) with customizable Dragonflight-style power colors
+- Editor mode now hides fat mana bar anchor when fat mode is disabled
+
+### Fixed
+- Stance and totem bars now hide properly during vehicle UI
+- Minor positioning corrections (fat healthbar width, pet frame offset)
+
 ## 📅 2026-02-10
 
 ### Compatibility

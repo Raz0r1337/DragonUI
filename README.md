@@ -2,7 +2,7 @@
 
 Dragonflight UI for WotLK 3.3.5a.
 
-> ⚠️ **Experimental branch** - New development base with restructured codebase.
+> ⚠️ **Experimental branch** — Active development, may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) — any feedback helps!
 
 ## Installation
 
