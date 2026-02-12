@@ -5,7 +5,7 @@
 ## 📅 2026-02-12
 
 ### Added
-- **ToT/ToF Editor Mode** — Target of Target and Target of Focus frames now appear in editor mode with drag support. Dragging detaches them from parent; re-attach via options panel button
+- **ToT/ToF Editor Mode** - Target of Target and Target of Focus frames now appear in editor mode with drag support. Dragging detaches them from parent; re-attach via options panel button
 - Options panel shows attachment status (Attached/Detached) with re-attach button for ToT and ToF
 
 ### Fixed
