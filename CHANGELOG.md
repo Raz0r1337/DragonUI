@@ -2,6 +2,19 @@
 
 > **⚠️ Experimental Branch** — All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) — any feedback helps!
 
+## 📅 2026-02-12
+
+### Added
+- **ToT/ToF Editor Mode** — Target of Target and Target of Focus frames now appear in editor mode with drag support. Dragging detaches them from parent; re-attach via options panel button
+- Options panel shows attachment status (Attached/Detached) with re-attach button for ToT and ToF
+
+### Fixed
+- Rest glow now displays gold in normal and fat bar modes (was white due to wrong blend mode)
+- Editor mode buttons restyled to match options panel dark theme (grey + blue accent)
+- Sub-tab font size no longer flickers between 12→11 on tab switch (Castbar, Unit Frames)
+- Totem bar editor overlay now only visible for shamans
+
+
 ## 📅 2026-02-11
 
 ### Added
