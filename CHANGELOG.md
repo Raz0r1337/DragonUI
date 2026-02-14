@@ -70,7 +70,7 @@
 ### Added
 - Fat Health Bar system for player frame with full-width health bar display (thanks [CrimsonHollow](https://github.com/CrimsonHollow))
 - Configurable mana bar in fat mode (width, height, hide toggle, movable via Editor Mode)
-- **Note:** Fat Health Bar is currently incompatible with Dragon Decoration mode due to missing texture edits (will be addressed in future update)
+- **Note:** ~~Fat Health Bar is currently incompatible with Dragon Decoration mode due to missing texture edits (will be addressed in future update)~~
 
 ### Refactored
 - Unit frame system restructured with shared factories (`uf_core.lua`, `target_style.lua`, `small_frame.lua`)
