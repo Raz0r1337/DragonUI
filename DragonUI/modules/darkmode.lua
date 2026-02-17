@@ -505,9 +505,9 @@ local function DarkenBackpackCutout(tint)
         local cutout = backpack:CreateTexture(nil, "ARTWORK", nil, 7)
         cutout:SetTexture("Interface\\AddOns\\DragonUI\\assets\\bagslotCutout")
         local bw, bh = backpack:GetWidth(), backpack:GetHeight()
-        cutout:SetWidth(bw + 2)
-        cutout:SetHeight(bh + 2)
-        cutout:SetPoint("CENTER", backpack, "CENTER", 0.3, 0.3)
+        cutout:SetWidth(bw + 1)
+        cutout:SetHeight(bh + 1)
+        cutout:SetPoint("CENTER", backpack, "CENTER", 0.1, 0.1)
         cutout:Hide()
         backpack.__DragonUI_DarkCutout = cutout
     end
