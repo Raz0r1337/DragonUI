@@ -502,10 +502,12 @@ local function DarkenBackpackCutout(tint)
 
     -- Create the cutout overlay once, reuse on subsequent calls
     if not backpack.__DragonUI_DarkCutout then
-        local cutout = backpack:CreateTexture(nil, "OVERLAY", nil, 7)
+        local cutout = backpack:CreateTexture(nil, "ARTWORK", nil, 7)
         cutout:SetTexture("Interface\\AddOns\\DragonUI\\assets\\bagslotCutout")
-        cutout:SetPoint("TOPLEFT", backpack, "TOPLEFT", -0.2, 0)
-        cutout:SetPoint("BOTTOMRIGHT", backpack, "BOTTOMRIGHT", 0, -0.2)
+        local bw, bh = backpack:GetWidth(), backpack:GetHeight()
+        cutout:SetWidth(bw + 2)
+        cutout:SetHeight(bh + 2)
+        cutout:SetPoint("CENTER", backpack, "CENTER", 0.3, 0.3)
         cutout:Hide()
         backpack.__DragonUI_DarkCutout = cutout
     end
