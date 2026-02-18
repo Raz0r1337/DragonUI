@@ -477,7 +477,7 @@ end
                 "AchievementMicroButton" and name ~= "bagsFrame" and name ~= "MainMenuBarBackpackButton" and name ~=
                 "QuestLogMicroButton" and name ~= "SocialsMicroButton" and name ~= "PVPMicroButton" and name ~=
                 "LFGMicroButton" and name ~= "MainMenuMicroButton" and name ~= "HelpMicroButton" and name ~=
-                "MainMenuExpBar" and name ~= "ReputationWatchBar" then
+                "MainMenuExpBar" and name ~= "ReputationWatchBar" and name ~= "KeyRingButton" then
 
                 for j = 1, child:GetNumRegions() do
                     local region = select(j, child:GetRegions())
