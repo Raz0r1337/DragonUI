@@ -713,13 +713,17 @@ end
 
     -- Helper: check if XP bar should be visible.
     -- Instead of hardcoding level caps (which break on custom servers),
-    -- we check UnitXPMax: if 0, the player can't gain XP (max level or
-    -- XP disabled).  This works on any server regardless of configured cap.
+    -- we check UnitXPMax and UnitXP directly:
+    --   • Standard servers at max level: UnitXPMax returns 0  → hidden
+    --   • Custom servers at max level:   UnitXPMax returns 1, UnitXP > 1 (e.g. 53/1) → hidden
+    --   • Normal leveling:               UnitXPMax returns e.g. 10000, UnitXP < 10000 → shown
     -- We don't rely on MainMenuExpBar:IsShown() because noop kills the
     -- Blizzard events that manage that state.
     local function IsXpBarVisible()
         local maxXP = UnitXPMax("player")
-        return maxXP ~= nil and maxXP > 0
+        if not maxXP or maxXP <= 0 then return false end
+        local currXP = UnitXP("player") or 0
+        return currXP < maxXP
     end
 
     -- Helper: check if both XP and Rep bars are visible simultaneously
