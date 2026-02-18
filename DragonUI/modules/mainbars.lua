@@ -951,6 +951,58 @@ end
         return f
     end
 
+    -- Refresh ExhaustionTick for DragonflightUI style
+    -- Extracted so it can be called from ConnectBarsToEditor AND on level-up /
+    -- XP-change events (the tick self-hides when fully rested but never
+    -- re-shows on its own because OnUpdate gets nilled out).
+    local function UpdateDfuiExhaustionTick()
+        if not ExhaustionTick or not dfXpBar then return end
+
+        local cfg = GetXpRepConfig() or {}
+        local showTick = addon.db and addon.db.profile and addon.db.profile.style
+            and addon.db.profile.style.exhaustion_tick
+        local exhaustionThreshold = GetXPExhaustion()
+        local currXP = UnitXP("player")
+        local maxXP = UnitXPMax("player")
+        if not maxXP or maxXP == 0 then maxXP = 1 end
+        local remainingXP = maxXP - currXP
+        local isFullyRested = exhaustionThreshold and exhaustionThreshold >= remainingXP
+
+        if showTick and exhaustionThreshold and exhaustionThreshold > 0 and not isFullyRested then
+            local barW = cfg.bar_width or 466
+            ExhaustionTick:SetParent(dfXpBar)
+            ExhaustionTick:SetFrameStrata("HIGH")
+            ExhaustionTick:SetFrameLevel(20)
+            local tickPos = math.min(((currXP + exhaustionThreshold) / maxXP) * barW, barW)
+            tickPos = math.max(tickPos, 0)
+            ExhaustionTick:ClearAllPoints()
+            ExhaustionTick:SetPoint("CENTER", dfXpBar, "LEFT", tickPos, 0)
+            ExhaustionTick:SetScript("OnUpdate", function(self, elapsed)
+                if not self.timer then return end
+                self.timer = self.timer - elapsed
+                if self.timer > 0 then return end
+                self.timer = 1
+                local et = GetXPExhaustion()
+                if not et or et <= 0 then self:Hide() return end
+                local cx = UnitXP("player")
+                local mx = UnitXPMax("player")
+                if not mx or mx == 0 then return end
+                if et >= (mx - cx) then self:Hide() return end
+                local bw = dfXpBar:GetWidth()
+                if not bw or bw == 0 then return end
+                local tp = math.min(((cx + et) / mx) * bw, bw)
+                tp = math.max(tp, 0)
+                self:ClearAllPoints()
+                self:SetPoint("CENTER", dfXpBar, "LEFT", tp, 0)
+            end)
+            ExhaustionTick.timer = 0
+            ExhaustionTick:Show()
+        else
+            ExhaustionTick:Hide()
+            ExhaustionTick:SetScript("OnUpdate", nil)
+        end
+    end
+
     -- Update the DragonflightUI XP bar values and visuals
     local function UpdateDragonflightUIXPBar()
         if not dfXpBar then return end
@@ -1383,51 +1435,8 @@ end
             repBar:SetScale(cfg.repbar_scale or 1.0)
             repBar:SetFrameStrata("MEDIUM")
 
-            -- Exhaustion tick for DragonflightUI: parent to custom XP bar
-            if ExhaustionTick and dfXpBar then
-                local showTick = addon.db and addon.db.profile and addon.db.profile.style
-                    and addon.db.profile.style.exhaustion_tick
-                local exhaustionThreshold = GetXPExhaustion()
-                local currXP = UnitXP("player")
-                local maxXP = UnitXPMax("player")
-                if not maxXP or maxXP == 0 then maxXP = 1 end
-                local remainingXP = maxXP - currXP
-                local isFullyRested = exhaustionThreshold and exhaustionThreshold >= remainingXP
-
-                if showTick and exhaustionThreshold and exhaustionThreshold > 0 and not isFullyRested then
-                    local barW = cfg.bar_width or 466
-                    ExhaustionTick:SetParent(dfXpBar)
-                    ExhaustionTick:SetFrameStrata("HIGH")
-                    ExhaustionTick:SetFrameLevel(20)
-                    local tickPos = math.min(((currXP + exhaustionThreshold) / maxXP) * barW, barW)
-                    tickPos = math.max(tickPos, 0)
-                    ExhaustionTick:ClearAllPoints()
-                    ExhaustionTick:SetPoint("CENTER", dfXpBar, "LEFT", tickPos, 0)
-                    ExhaustionTick:SetScript("OnUpdate", function(self, elapsed)
-                        if not self.timer then return end
-                        self.timer = self.timer - elapsed
-                        if self.timer > 0 then return end
-                        self.timer = 1
-                        local et = GetXPExhaustion()
-                        if not et or et <= 0 then self:Hide() return end
-                        local cx = UnitXP("player")
-                        local mx = UnitXPMax("player")
-                        if not mx or mx == 0 then return end
-                        if et >= (mx - cx) then self:Hide() return end
-                        local bw = dfXpBar:GetWidth()
-                        if not bw or bw == 0 then return end
-                        local tp = math.min(((cx + et) / mx) * bw, bw)
-                        tp = math.max(tp, 0)
-                        self:ClearAllPoints()
-                        self:SetPoint("CENTER", dfXpBar, "LEFT", tp, 0)
-                    end)
-                    ExhaustionTick.timer = 0
-                    ExhaustionTick:Show()
-                else
-                    ExhaustionTick:Hide()
-                    ExhaustionTick:SetScript("OnUpdate", nil)
-                end
-            end
+            -- Exhaustion tick for DragonflightUI: delegated to UpdateDfuiExhaustionTick()
+            UpdateDfuiExhaustionTick()
 
         else -- retailui
             -- Hide custom bars if they exist
@@ -2166,6 +2175,9 @@ end
             if style == "dragonflightui" then
                 UpdateDragonflightUIXPBar()
                 UpdateDragonflightUIRepBar()
+                -- Re-evaluate exhaustion tick: it self-hides when fully rested
+                -- (OnUpdate = nil) and won't re-show without an explicit refresh
+                UpdateDfuiExhaustionTick()
             else
                 ApplyRetailUIExpRepBarStyling()
             end
@@ -2175,6 +2187,9 @@ end
         elseif event == "UPDATE_EXHAUSTION" or event == "PLAYER_XP_UPDATE" then
             if style == "dragonflightui" then
                 UpdateDragonflightUIXPBar()
+                -- Refresh tick — exhaustion amount changed, tick may need to
+                -- show/hide or reposition (e.g. became fully rested or woke up)
+                UpdateDfuiExhaustionTick()
             else
                 ApplyRetailUIExpRepBarStyling()
             end
