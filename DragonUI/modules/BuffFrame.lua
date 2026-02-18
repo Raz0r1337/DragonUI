@@ -18,11 +18,12 @@ end
 local buffFrame = nil
 local toggleButton = nil
 local dragonUIBuffFrame = nil  --  OUR CUSTOM FRAME
+local buffsHiddenByToggle = false  -- Track if user manually hid buffs via toggle
 
 -- DEFAULT BUFF FRAME POSITION (must match database.lua defaults)
 local BUFF_DEFAULT_ANCHOR = "TOPRIGHT"
-local BUFF_DEFAULT_POSX = -300
-local BUFF_DEFAULT_POSY = -39
+local BUFF_DEFAULT_POSX = -270
+local BUFF_DEFAULT_POSY = -15
 
 -- Y position when a GM ticket or GM chat panel is open
 local BUFF_TICKET_POSY = -60
@@ -38,7 +39,6 @@ local buffFramePositionLocked = false
 -- Uses a saved flag instead of coordinate comparison to avoid stale profile values
 local function IsBuffFrameAtDefaultPosition()
     if not addon.db or not addon.db.profile or not addon.db.profile.widgets or not addon.db.profile.widgets.buffs then
-        return true
     end
     return not addon.db.profile.widgets.buffs.custom_position
 end
@@ -63,7 +63,13 @@ local function ReplaceBlizzardFrame(frame)
     toggleButton:SetHighlightTexture(highlightTexture)
 
     toggleButton:SetScript("OnClick", function(self)
-        if self.toggle then
+        self.toggle = not self.toggle
+        if not self.toggle then
+            -- HIDE buffs
+            buffsHiddenByToggle = true
+            if addon.db and addon.db.profile and addon.db.profile.buffs then
+                addon.db.profile.buffs.buffs_hidden = true
+            end
             local normalTexture = self:GetNormalTexture()
             SetAtlasTexture(normalTexture, 'CollapseButton-Left')
             local highlightTexture = toggleButton:GetHighlightTexture()
@@ -76,6 +82,11 @@ local function ReplaceBlizzardFrame(frame)
                 end
             end
         else
+            -- SHOW buffs
+            buffsHiddenByToggle = false
+            if addon.db and addon.db.profile and addon.db.profile.buffs then
+                addon.db.profile.buffs.buffs_hidden = false
+            end
             local normalTexture = self:GetNormalTexture()
             SetAtlasTexture(normalTexture, 'CollapseButton-Right')
             local highlightTexture = toggleButton:GetHighlightTexture()
@@ -88,8 +99,6 @@ local function ReplaceBlizzardFrame(frame)
                 end
             end
         end
-
-        self.toggle = not self.toggle
     end)
 
     local consolidatedBuffFrame = ConsolidatedBuffs
@@ -219,8 +228,125 @@ function BuffFrameModule:Enable()
     original_BuffFrame_SetPoint(BuffFrame, "TOPRIGHT", dragonUIBuffFrame, "TOPRIGHT", 0, 0)
     BuffFrameModule:UpdatePosition()
     
-    -- Hook UIParent_ManageFramePositions: this fires when ticket opens/closes.
-    -- We update our frame position so it shifts down for tickets at default pos.
+    -- ========================================================================
+    -- HELPER: Find buff layout info (first buff, last-row-start buff, row count)
+    -- Used by both buff row-2 fix and debuff anchoring.
+    -- ========================================================================
+    local function GetBuffLayoutInfo()
+        local slack = BuffFrame.numEnchants or 0
+        local perRow = BUFFS_PER_ROW or 16
+        local firstBuff = nil
+        local lastRowStart = nil
+        local numVisible = 0
+        for i = 1, BUFF_ACTUAL_DISPLAY do
+            local btn = _G["BuffButton" .. i]
+            if btn and btn:IsShown() and not btn.consolidated then
+                numVisible = numVisible + 1
+                if numVisible == 1 then
+                    firstBuff = btn
+                    lastRowStart = btn
+                end
+                local idx = numVisible + slack
+                if idx > 1 and math.fmod(idx, perRow) == 1 then
+                    lastRowStart = btn  -- first buff of a new row
+                end
+            end
+        end
+        return firstBuff, lastRowStart, numVisible
+    end
+
+    -- ========================================================================
+    -- HELPER: Re-anchor ConsolidatedBuffs to our toggle button.
+    -- Blizzard code (UIParent_ManageFramePositions, etc.) may reposition
+    -- ConsolidatedBuffs; this restores our custom placement.
+    -- ========================================================================
+    local function RestoreConsolidatedBuffsAnchor()
+        local cb = _G.ConsolidatedBuffs
+        if cb and toggleButton then
+            cb:ClearAllPoints()
+            cb:SetPoint("LEFT", toggleButton, "RIGHT", 6, 0)
+        end
+    end
+
+    -- ========================================================================
+    -- HELPER: Fix debuff positioning (first debuff below last buff row)
+    -- ========================================================================
+    local function FixDebuffPositions()
+        if not buffFramePositionLocked then return end
+        local firstBuff, lastRowStart, numVisible = GetBuffLayoutInfo()
+        local anchor = lastRowStart or firstBuff
+        -- First debuff: anchor below the last buff row, right-aligned
+        local firstDebuff = _G["DebuffButton1"]
+        if firstDebuff then
+            firstDebuff:ClearAllPoints()
+            if anchor then
+                firstDebuff:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", 0, -60)
+            elseif dragonUIBuffFrame then
+                -- No buffs visible — anchor directly below the buff frame
+                firstDebuff:SetPoint("TOPRIGHT", dragonUIBuffFrame, "BOTTOMRIGHT", 0, -60)
+            end
+        end
+    end
+
+    -- ========================================================================
+    -- HOOK: BuffFrame_UpdateAllBuffAnchors — fix second-row buff alignment
+    -- Blizzard anchors row 2 to ConsolidatedBuffs. Since we reposition
+    -- ConsolidatedBuffs next to the toggle button, the second row gets
+    -- misaligned. Post-hook re-anchors row 2 to the first buff of row 1.
+    -- ========================================================================
+    if not BuffFrameModule._hookedBuffAnchors then
+        BuffFrameModule._hookedBuffAnchors = true
+        hooksecurefunc("BuffFrame_UpdateAllBuffAnchors", function()
+            if not buffFramePositionLocked then return end
+            local firstBuff, _, numVisible = GetBuffLayoutInfo()
+            if not firstBuff then return end
+            -- Re-anchor row 2 start
+            local slack = BuffFrame.numEnchants or 0
+            local perRow = BUFFS_PER_ROW or 16
+            local count = 0
+            for i = 1, BUFF_ACTUAL_DISPLAY do
+                local btn = _G["BuffButton" .. i]
+                if btn and btn:IsShown() and not btn.consolidated then
+                    count = count + 1
+                    local idx = count + slack
+                    if idx == perRow + 1 then
+                        btn:ClearAllPoints()
+                        btn:SetPoint("TOPRIGHT", firstBuff, "BOTTOMRIGHT", 0, -15)
+                    end
+                end
+            end
+            -- If user toggled buffs off, re-hide them after Blizzard re-showed them
+            if buffsHiddenByToggle then
+                for i = 1, BUFF_ACTUAL_DISPLAY do
+                    local btn = _G["BuffButton" .. i]
+                    if btn then
+                        btn:Hide()
+                    end
+                end
+            end
+        end)
+    end
+
+    -- ========================================================================
+    -- HOOK: DebuffButton_UpdateAnchors — fix debuff positioning
+    -- Blizzard anchors the first debuff to ConsolidatedBuffs BOTTOMRIGHT.
+    -- Since we moved ConsolidatedBuffs, debuffs end up too far right.
+    -- This hook re-anchors the first debuff below the last buff row.
+    -- ========================================================================
+    if not BuffFrameModule._hookedDebuffAnchors then
+        BuffFrameModule._hookedDebuffAnchors = true
+        hooksecurefunc("DebuffButton_UpdateAnchors", function(buttonName, index)
+            if not buffFramePositionLocked then return end
+            if index ~= 1 then return end  -- only fix the first debuff; rest chain from it
+            FixDebuffPositions()
+        end)
+    end
+
+    -- ========================================================================
+    -- HOOK: UIParent_ManageFramePositions — fires on ticket open/close.
+    -- We update our frame position AND re-anchor ConsolidatedBuffs + debuffs
+    -- so nothing drifts horizontally.
+    -- ========================================================================
     if not BuffFrameModule._hookedManagePositions then
         BuffFrameModule._hookedManagePositions = true
         hooksecurefunc("UIParent_ManageFramePositions", function()
@@ -228,6 +354,10 @@ function BuffFrameModule:Enable()
             if not addon.db or not addon.db.profile or not addon.db.profile.buffs
                or not addon.db.profile.buffs.enabled then return end
             BuffFrameModule:UpdatePosition()
+            -- Restore ConsolidatedBuffs anchor (Blizzard may have moved it)
+            RestoreConsolidatedBuffsAnchor()
+            -- Force debuff re-anchor so they track the new buff position
+            FixDebuffPositions()
         end)
     end
     
@@ -238,11 +368,15 @@ function BuffFrameModule:Enable()
             hooksecurefunc(TicketStatusFrame, "Show", function()
                 if dragonUIBuffFrame and IsBuffFrameAtDefaultPosition() then
                     BuffFrameModule:UpdatePosition()
+                    RestoreConsolidatedBuffsAnchor()
+                    FixDebuffPositions()
                 end
             end)
             hooksecurefunc(TicketStatusFrame, "Hide", function()
                 if dragonUIBuffFrame and IsBuffFrameAtDefaultPosition() then
                     BuffFrameModule:UpdatePosition()
+                    RestoreConsolidatedBuffsAnchor()
+                    FixDebuffPositions()
                 end
             end)
         end
@@ -250,11 +384,15 @@ function BuffFrameModule:Enable()
             hooksecurefunc(GMChatStatusFrame, "Show", function()
                 if dragonUIBuffFrame and IsBuffFrameAtDefaultPosition() then
                     BuffFrameModule:UpdatePosition()
+                    RestoreConsolidatedBuffsAnchor()
+                    FixDebuffPositions()
                 end
             end)
             hooksecurefunc(GMChatStatusFrame, "Hide", function()
                 if dragonUIBuffFrame and IsBuffFrameAtDefaultPosition() then
                     BuffFrameModule:UpdatePosition()
+                    RestoreConsolidatedBuffsAnchor()
+                    FixDebuffPositions()
                 end
             end)
         end
@@ -274,10 +412,25 @@ function BuffFrameModule:Enable()
                 ShowToggleButtonIf(GetUnitBuffCount("player", 16) > 0)
                 BuffFrameModule:UpdatePosition()
                 
+                -- Restore buff toggle state from saved profile
+                if addon.db and addon.db.profile and addon.db.profile.buffs
+                   and addon.db.profile.buffs.buffs_hidden then
+                    buffsHiddenByToggle = true
+                    toggleButton.toggle = false
+                    local normalTex = toggleButton:GetNormalTexture()
+                    SetAtlasTexture(normalTex, 'CollapseButton-Left')
+                    local highlightTex = toggleButton:GetHighlightTexture()
+                    SetAtlasTexture(highlightTex, 'CollapseButton-Left')
+                    for index = 1, BUFF_ACTUAL_DISPLAY do
+                        local button = _G['BuffButton' .. index]
+                        if button then button:Hide() end
+                    end
+                end
+                
                 -- Reposition the GM ticket frame so it doesn't overlap the minimap
                 if TicketStatusFrame then
                     TicketStatusFrame:ClearAllPoints()
-                    TicketStatusFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -300, -5)
+                    TicketStatusFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -270, -5)
                 end
             elseif event == "UNIT_AURA" then
                 if unit == 'vehicle' then

@@ -449,14 +449,15 @@ local function vehiclebutton_position()
     if InCombatLockdown() then return end
 
     -- Center vehicle buttons within the visible action area of the vehicle art.
-    -- The art frame is 800px wide, but the right portion (~160px) holds the
-    -- leave-button buckle and power bar area, so the action-button region is
-    -- shifted ~40px left of the frame center.
+    -- The art frame is 800px wide, but the usable area differs between organic
+    -- and mechanical vehicles:
+    --   Organic: symmetric endcaps, buttons shifted ~48px left of center
+    --   Mechanical: pitch controls on the left add ~40px, shift buttons right
     local btnSize = 52
     local btnGap = 6
     local numButtons = VEHICLE_MAX_ACTIONBUTTONS
     local totalWidth = numButtons * btnSize + (numButtons - 1) * btnGap
-    local artOffset = -48  -- compensate for asymmetric art layout
+    local artOffset = IsVehicleAimAngleAdjustable() and -20 or -48
     local startOffset = -(totalWidth / 2) + artOffset
 
     for index = 1, numButtons do

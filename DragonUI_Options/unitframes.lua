@@ -1078,23 +1078,41 @@ local unitframeOptions = {
                     end,
                     order = 4
                 },
-                padding = {
+                padding_vertical = {
                     type = 'range',
-                    name = "Padding",
-                    desc = "Space between party frames",
-                    min = 25,
+                    name = "Vertical Padding",
+                    desc = "Space between party frames in vertical mode",
+                    min = 10,
                     max = 150,
                     step = 1,
                     get = function()
-                        return addon.db.profile.unitframe.party.padding
+                        return addon.db.profile.unitframe.party.padding_vertical
                     end,
                     set = function(info, value)
-                        addon.db.profile.unitframe.party.padding = value
+                        addon.db.profile.unitframe.party.padding_vertical = value
                         if addon.RefreshPartyFrames then
                             addon.RefreshPartyFrames()
                         end
                     end,
                     order = 5
+                },
+                padding_horizontal = {
+                    type = 'range',
+                    name = "Horizontal Padding",
+                    desc = "Space between party frames in horizontal mode",
+                    min = 10,
+                    max = 150,
+                    step = 1,
+                    get = function()
+                        return addon.db.profile.unitframe.party.padding_horizontal
+                    end,
+                    set = function(info, value)
+                        addon.db.profile.unitframe.party.padding_horizontal = value
+                        if addon.RefreshPartyFrames then
+                            addon.RefreshPartyFrames()
+                        end
+                    end,
+                    order = 6
                 }
             }
         }

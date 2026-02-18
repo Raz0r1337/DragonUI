@@ -75,17 +75,16 @@ local function UpdatePartyAnchorSize()
     
     local settings = addon.db and addon.db.profile and addon.db.profile.unitframe and addon.db.profile.unitframe.party
     local orientation = settings and settings.orientation or 'vertical'
-    local padding = (settings and tonumber(settings.padding)) or 15
     local numMembers = MAX_PARTY_MEMBERS -- 4
     
     if orientation == 'horizontal' then
-        -- Horizontal: wide and short
+        local padding = (settings and tonumber(settings.padding_horizontal)) or 50
         local frameWidth = 120
         local frameHeight = 50
         local totalWidth = numMembers * frameWidth + (numMembers - 1) * padding
         PartyFrames.anchor:SetSize(totalWidth, frameHeight)
     else
-        -- Vertical: narrow and tall
+        local padding = (settings and tonumber(settings.padding_vertical)) or 30
         local frameWidth = 130
         local frameHeight = 50
         local totalHeight = numMembers * frameHeight + (numMembers - 1) * padding
@@ -158,7 +157,8 @@ function PartyFrames:LoadDefaultSettings()
             showHealthTextAlways = false,
             showManaTextAlways = false,
             orientation = 'vertical',
-            padding = 50,
+            padding_vertical = 30,
+            padding_horizontal = 50,
             scale = 1.0,
             override = false,
             anchor = 'TOPLEFT',
@@ -260,7 +260,8 @@ local function GetSettings()
             showHealthTextAlways = false,
             showManaTextAlways = false,
             orientation = 'vertical',
-            padding = 50,
+            padding_vertical = 30,
+            padding_horizontal = 50,
             scale = 1.0,
             override = false,
             anchor = 'TOPLEFT',
@@ -288,13 +289,14 @@ end
 -- Calculate step based on orientation
 local function GetPartyStep()
     local settings = GetSettings()
-    local pad = (settings and tonumber(settings.padding)) or 15
     local orientation = settings and settings.orientation or 'vertical'
     
     if orientation == 'horizontal' then
+        local pad = (settings and tonumber(settings.padding_horizontal)) or 50
         local base = 120  -- width of party frame
         return base + pad
     else
+        local pad = (settings and tonumber(settings.padding_vertical)) or 30
         local base = 49   -- height of party frame
         return base + pad
     end

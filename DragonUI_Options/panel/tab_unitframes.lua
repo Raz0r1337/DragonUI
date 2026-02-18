@@ -546,10 +546,19 @@ local function BuildPartySection(scroll)
     })
 
     C:AddSlider(s, {
-        label = "Padding",
-        desc = "Space between party frames.",
-        dbPath = "unitframe.party.padding",
-        min = 25, max = 150, step = 1,
+        label = "Vertical Padding",
+        desc = "Space between party frames in vertical mode.",
+        dbPath = "unitframe.party.padding_vertical",
+        min = 10, max = 150, step = 1,
+        width = 200,
+        callback = refreshParty,
+    })
+
+    C:AddSlider(s, {
+        label = "Horizontal Padding",
+        desc = "Space between party frames in horizontal mode.",
+        dbPath = "unitframe.party.padding_horizontal",
+        min = 10, max = 150, step = 1,
         width = 200,
         callback = refreshParty,
     })

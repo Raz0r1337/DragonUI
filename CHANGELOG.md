@@ -2,6 +2,15 @@
 
 > **⚠️ Experimental Branch** - All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) - any feedback helps!
 
+## 📅 2026-02-18
+
+### Fixed
+- Buff frame: buff/debuff positioning, second row alignment, and GM ticket interaction no longer break debuff layout
+- Buff toggle button: state now persists through aura updates and reloads
+- Party frames: separate vertical/horizontal padding options
+- Vehicle: mechanical vehicle button offset corrected
+- Stance bar: combat taint error on protected frame
+
 ## 📅 2026-02-17
 
 ### Fixed

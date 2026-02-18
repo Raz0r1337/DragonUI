@@ -93,6 +93,7 @@ local stanceBarInitialized = false;
 -- SIMPLE STATIC POSITIONING - NO DYNAMIC LOGIC
 local function stancebar_update()
     if not IsModuleEnabled() or not anchor then return end
+    if InCombatLockdown() then return end  -- Cannot modify secure frame in combat
     
     -- READ VALUES FROM DATABASE
     local stanceConfig = GetStanceConfig()

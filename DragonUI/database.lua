@@ -32,8 +32,8 @@ local defaults = {
             },
             buffs = {
                 anchor = "TOPRIGHT",
-                posX = -300,
-                posY = -39,
+                posX = -270,
+                posY = -15,
                 custom_position = false
             },
             pet = {
@@ -324,7 +324,8 @@ local defaults = {
         --  BUFFS SETTINGS (NEW)
         buffs = {
             enabled = true,
-            show_toggle_button = true
+            show_toggle_button = true,
+            buffs_hidden = false
         },
 
         -- CASTBAR SETTINGS
@@ -471,7 +472,8 @@ local defaults = {
                 showHealthTextAlways = false,
                 showManaTextAlways = false,
                 orientation = 'vertical',
-                padding = 50,
+                padding_vertical = 30,
+                padding_horizontal = 50,
                 scale = 1.0,
                 override = false,
                 anchor = 'TOPLEFT',
