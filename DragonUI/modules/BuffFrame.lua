@@ -105,7 +105,13 @@ local function ReplaceBlizzardFrame(frame)
     consolidatedBuffFrame:SetMovable(true)
     consolidatedBuffFrame:SetUserPlaced(true)
     consolidatedBuffFrame:ClearAllPoints()
-    consolidatedBuffFrame:SetPoint("LEFT", toggleButton, "RIGHT", 6, 0)
+    -- Anchor ConsolidatedBuffs at its natural TOPRIGHT of the buff area so that
+    -- the Blizzard anchor chain (ConsolidatedBuffs → TemporaryEnchantFrame →
+    -- TempEnchant1/2/3 → BuffButton1) flows correctly.  Previously this was
+    -- anchored to the toggle button, pushing TemporaryEnchantFrame far right
+    -- and causing weapon-enchant icons (rogue poisons etc.) to overlap the
+    -- toggle button.
+    consolidatedBuffFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
 end
 
 --  FUNCTION TO SHOW/HIDE THE BUTTON BASED ON BUFFS
@@ -262,9 +268,18 @@ function BuffFrameModule:Enable()
     -- ========================================================================
     local function RestoreConsolidatedBuffsAnchor()
         local cb = _G.ConsolidatedBuffs
-        if cb and toggleButton then
+        if cb and dragonUIBuffFrame then
             cb:ClearAllPoints()
-            cb:SetPoint("LEFT", toggleButton, "RIGHT", 6, 0)
+            cb:SetPoint("TOPRIGHT", dragonUIBuffFrame, "TOPRIGHT", 0, 0)
+        end
+        -- Also ensure TemporaryEnchantFrame follows ConsolidatedBuffs correctly
+        if TemporaryEnchantFrame and cb then
+            TemporaryEnchantFrame:ClearAllPoints()
+            if cb:IsShown() then
+                TemporaryEnchantFrame:SetPoint("TOPRIGHT", cb, "TOPLEFT", -6, 0)
+            else
+                TemporaryEnchantFrame:SetPoint("TOPRIGHT", cb, "TOPRIGHT", 0, 0)
+            end
         end
     end
 
@@ -289,33 +304,51 @@ function BuffFrameModule:Enable()
     end
 
     -- ========================================================================
-    -- HOOK: BuffFrame_UpdateAllBuffAnchors — fix second-row buff alignment
-    -- Blizzard anchors row 2 to ConsolidatedBuffs. Since we reposition
-    -- ConsolidatedBuffs next to the toggle button, the second row gets
-    -- misaligned. Post-hook re-anchors row 2 to the first buff of row 1.
+    -- HOOK: BuffFrame_UpdateAllBuffAnchors — ensure the Blizzard anchor chain
+    --   ConsolidatedBuffs → TemporaryEnchantFrame → BuffButton1 → …
+    -- stays consistent after Blizzard repositions everything.
+    -- Also fixes row-2 alignment and respects the buff toggle state.
     -- ========================================================================
     if not BuffFrameModule._hookedBuffAnchors then
         BuffFrameModule._hookedBuffAnchors = true
         hooksecurefunc("BuffFrame_UpdateAllBuffAnchors", function()
             if not buffFramePositionLocked then return end
+
+            -- 1) Re-anchor TemporaryEnchantFrame (weapon enchants: poisons,
+            --    sharpening stones, etc.) to follow ConsolidatedBuffs.
+            --    Blizzard's ConsolidatedBuffs OnShow/OnHide handlers set this,
+            --    but other code paths may move it; force it every update.
+            if TemporaryEnchantFrame and ConsolidatedBuffs then
+                TemporaryEnchantFrame:ClearAllPoints()
+                if ConsolidatedBuffs:IsShown() then
+                    TemporaryEnchantFrame:SetPoint("TOPRIGHT", ConsolidatedBuffs, "TOPLEFT", -6, 0)
+                else
+                    TemporaryEnchantFrame:SetPoint("TOPRIGHT", ConsolidatedBuffs, "TOPRIGHT", 0, 0)
+                end
+            end
+
+            -- 2) Fix row-2 start: Blizzard anchors it to ConsolidatedBuffs
+            --    BOTTOMRIGHT, which may not match our layout.  Re-anchor to
+            --    the first visible buff so rows stack correctly.
             local firstBuff, _, numVisible = GetBuffLayoutInfo()
-            if not firstBuff then return end
-            -- Re-anchor row 2 start
-            local slack = BuffFrame.numEnchants or 0
-            local perRow = BUFFS_PER_ROW or 16
-            local count = 0
-            for i = 1, BUFF_ACTUAL_DISPLAY do
-                local btn = _G["BuffButton" .. i]
-                if btn and btn:IsShown() and not btn.consolidated then
-                    count = count + 1
-                    local idx = count + slack
-                    if idx == perRow + 1 then
-                        btn:ClearAllPoints()
-                        btn:SetPoint("TOPRIGHT", firstBuff, "BOTTOMRIGHT", 0, -15)
+            if firstBuff then
+                local slack = BuffFrame.numEnchants or 0
+                local perRow = BUFFS_PER_ROW or 16
+                local count = 0
+                for i = 1, BUFF_ACTUAL_DISPLAY do
+                    local btn = _G["BuffButton" .. i]
+                    if btn and btn:IsShown() and not btn.consolidated then
+                        count = count + 1
+                        local idx = count + slack
+                        if idx == perRow + 1 then
+                            btn:ClearAllPoints()
+                            btn:SetPoint("TOPRIGHT", firstBuff, "BOTTOMRIGHT", 0, -15)
+                        end
                     end
                 end
             end
-            -- If user toggled buffs off, re-hide them after Blizzard re-showed them
+
+            -- 3) Respect buff toggle: re-hide buffs if user collapsed them
             if buffsHiddenByToggle then
                 for i = 1, BUFF_ACTUAL_DISPLAY do
                     local btn = _G["BuffButton" .. i]

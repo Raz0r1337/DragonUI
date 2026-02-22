@@ -1565,7 +1565,7 @@ local function ApplyMicromenuSystem()
             local bar = MicromenuModule.frames.latencyIndicator
             bar:SetParent(HelpMicroButton)
             bar:SetFrameStrata(HelpMicroButton:GetFrameStrata())
-            bar:SetFrameLevel(HelpMicroButton:GetFrameLevel() + 5)
+            bar:SetFrameLevel(math.max(1, HelpMicroButton:GetFrameLevel() - 1))
 
             local barW, barH, offX, offY
             if useGrayscale then

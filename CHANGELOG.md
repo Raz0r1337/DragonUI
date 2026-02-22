@@ -2,6 +2,14 @@
 
 > **⚠️ Experimental Branch** - All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) - any feedback helps!
 
+## 📅 2026-02-22
+
+### Fixed
+- Buff frame: weapon enchant buffs (rogue poisons) no longer overlap the toggle button
+- Latency indicator: no longer blocks HelpMicroButton clicks
+- Tooltip: health bar now renders inside the tooltip border
+- Quest tracker: "Wide" watch frame option now applies without reload
+
 ## 📅 2026-02-18
 
 ### Added

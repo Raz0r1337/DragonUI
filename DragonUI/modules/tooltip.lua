@@ -53,6 +53,11 @@ local FACTION_COLORS = {
 -- TOOLTIP HEALTH BAR ENHANCEMENT
 -- ============================================================================
 
+local HEALTHBAR_HEIGHT = 6
+local HEALTHBAR_PADDING = -5  -- space between text and bar
+local HEALTHBAR_BOTTOM_PAD = 8  -- space between bar and tooltip bottom edge
+local HEALTHBAR_TOTAL = HEALTHBAR_HEIGHT + HEALTHBAR_PADDING + HEALTHBAR_BOTTOM_PAD
+
 -- Restyle the existing Blizzard GameTooltipStatusBar instead of creating a new one.
 -- This avoids the double health bar bug.
 local function StyleHealthBar()
@@ -62,8 +67,13 @@ local function StyleHealthBar()
     if not bar then return end
 
     -- Restyle: slimmer, better texture
-    bar:SetHeight(6)
+    bar:SetHeight(HEALTHBAR_HEIGHT)
     bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+
+    -- Position bar INSIDE the tooltip bottom area (like DragonflightUI)
+    bar:ClearAllPoints()
+    bar:SetPoint("BOTTOMLEFT", GameTooltip, "BOTTOMLEFT", 9, HEALTHBAR_BOTTOM_PAD)
+    bar:SetPoint("BOTTOMRIGHT", GameTooltip, "BOTTOMRIGHT", -9, HEALTHBAR_BOTTOM_PAD)
 
     -- Add dark background behind the bar
     if not bar.__DragonUI_bg then
@@ -75,6 +85,26 @@ local function StyleHealthBar()
     end
 
     TooltipModule.healthBarStyled = true
+end
+
+-- Extend tooltip height to make room for the health bar inside the border.
+-- Uses a one-frame OnUpdate delay so the resize applies AFTER Blizzard's
+-- internal layout pass (which can override an immediate SetHeight).
+local function AdjustTooltipForHealthBar(tooltip)
+    if not tooltip or not GameTooltipStatusBar then return end
+    if not GameTooltipStatusBar:IsShown() then return end
+    if tooltip.__DragonUI_adjustPending then return end
+
+    tooltip.__DragonUI_adjustPending = true
+    local orig = tooltip:GetScript("OnUpdate")
+    tooltip:SetScript("OnUpdate", function(self, elapsed)
+        -- Restore original OnUpdate first
+        self:SetScript("OnUpdate", orig)
+        self.__DragonUI_adjustPending = false
+        -- Now extend height — Blizzard's layout is done at this point
+        local h = self:GetHeight()
+        self:SetHeight(h + HEALTHBAR_TOTAL)
+    end)
 end
 
 -- ============================================================================
@@ -242,6 +272,8 @@ local function ApplyTooltipSystem()
                 self:Show() -- Resize after adding lines
                 -- Color name AFTER Show() — calling Show() can reset text colors
                 ColorTooltipName(unit)
+                -- Extend tooltip to fit health bar inside the border
+                AdjustTooltipForHealthBar(self)
             end
         end)
         TooltipModule.hooks["SetUnit"] = true

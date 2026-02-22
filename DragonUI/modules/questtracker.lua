@@ -367,6 +367,21 @@ local function InstallQuestTrackerHooks()
         end)
     end
     
+    -- Hook SetCVar for wide/narrow quest tracker toggle (Interface > Display option)
+    hooksecurefunc("SetCVar", function(name)
+        if name == "watchFrameWidth" then
+            ScheduleTimer(0.2, function()
+                if not IsModuleEnabled() then return end
+                -- Update wrapper frame width to match new WatchFrame width
+                if WatchFrame and QuestTrackerModule.questTrackerFrame then
+                    local newWidth = WatchFrame:GetWidth() or 230
+                    QuestTrackerModule.questTrackerFrame:SetWidth(newWidth)
+                end
+                ForceUpdateQuestTracker()
+            end)
+        end
+    end)
+
     hooksInstalled = true
 end
 
