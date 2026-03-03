@@ -5,16 +5,16 @@
 ## 📅 2026-03-03
 
 ### Added
-- **Weapon Enchants frame** — Weapon enchant icons can now be separated from the buff bar into their own moveable frame (new "Auras" tab in options)
-- **Game menu button** — Restyled with custom texture
-- **Dungeon Eye mover** — The LFG eye icon is now independently moveable via Editor Mode
+- **Weapon Enchants frame** - Weapon enchant icons can now be separated from the buff bar into their own moveable frame (new "Auras" tab in options)
+- **Game menu button** - Restyled with custom texture
+- **Dungeon Eye mover** - The LFG eye icon is now independently moveable via Editor Mode
 
 ### Fixed
-- **Action bar CVar** — Multibar buttons now correctly respect the "Always Show Action Bars" CVar
-- **Korean font** — Unit frame text now renders correctly on koKR clients
-- **Compatibility module** — Fixed missing localized popup text
-- **Leader icon** — Fixed overlapping with portrait and border frames
-- **Quest tracker** — Frame anchor no longer causes position drift after reload
+- **Action bar CVar** - Multibar buttons now correctly respect the "Always Show Action Bars" CVar
+- **Korean font** - Unit frame text now renders correctly on koKR clients
+- **Compatibility module** - Fixed missing localized popup text
+- **Leader icon** - Fixed overlapping with portrait and border frames
+- **Quest tracker** - Frame anchor no longer causes position drift after reload
 
 ## 📅 2026-02-25
 
