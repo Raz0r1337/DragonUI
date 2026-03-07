@@ -134,7 +134,8 @@ local defaults = {
             anchor = "TOPRIGHT",
             x = -210,
             y = -255,
-            show_header = true
+            show_header = true,
+            font_size = 12,      -- Point size for quest tracker text (WoW default: 11)
         },
         -- Loot Roll
         lootroll = {

@@ -596,6 +596,8 @@ L["Center"] = true
 L["Horizontal position offset"] = true
 L["Vertical position offset"] = true
 L["Reset quest tracker to default position"] = true
+L["Font Size"] = true
+L["Font size for quest tracker text"] = true
 
 -- ============================================================================
 -- UNIT FRAMES TAB

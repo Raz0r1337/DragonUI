@@ -43,78 +43,24 @@ local questtrackerOptions = {
             end,
             order = 1.5
         },
-        x = {
+        font_size = {
             type = "range",
-            name = LO["X Position"],
-            desc = LO["Horizontal position offset"],
-            min = -500,
-            max = 500,
+            name = LO["Font Size"],
+            desc = LO["Font size for quest tracker text"],
+            min = 8,
+            max = 18,
             step = 1,
             get = function()
-                return addon.db.profile.questtracker.x
+                return addon.db.profile.questtracker.font_size or 12
             end,
             set = function(_, value)
-                addon.db.profile.questtracker.x = value
+                addon.db.profile.questtracker.font_size = value
                 if addon.RefreshQuestTracker then
                     addon.RefreshQuestTracker()
                 end
             end,
             order = 2
         },
-        y = {
-            type = "range",
-            name = "Y Position",
-            desc = LO["Vertical position offset"],
-            min = -500,
-            max = 500,
-            step = 1,
-            get = function()
-                return addon.db.profile.questtracker.y
-            end,
-            set = function(_, value)
-                addon.db.profile.questtracker.y = value
-                if addon.RefreshQuestTracker then
-                    addon.RefreshQuestTracker()
-                end
-            end,
-            order = 3
-        },
-        anchor = {
-            type = 'select',
-            name = LO["Anchor Point"],
-            desc = LO["Screen anchor point for the quest tracker"],
-            values = {
-                ["TOPRIGHT"] = LO["Top Right"],
-                ["TOPLEFT"] = LO["Top Left"],
-                ["BOTTOMRIGHT"] = LO["Bottom Right"],
-                ["BOTTOMLEFT"] = LO["Bottom Left"],
-                ["CENTER"] = LO["Center"]
-            },
-            get = function()
-                return addon.db.profile.questtracker.anchor
-            end,
-            set = function(_, value)
-                addon.db.profile.questtracker.anchor = value
-                if addon.RefreshQuestTracker then
-                    addon.RefreshQuestTracker()
-                end
-            end,
-            order = 4
-        },
-        reset_position = {
-            type = 'execute',
-            name = LO["Reset Position"],
-            desc = LO["Reset quest tracker to default position"],
-            func = function()
-                addon.db.profile.questtracker.anchor = "TOPRIGHT"
-                addon.db.profile.questtracker.x = -140
-                addon.db.profile.questtracker.y = -255
-                if addon.RefreshQuestTracker then
-                    addon.RefreshQuestTracker()
-                end
-            end,
-            order = 5
-        }
     }
 }
 

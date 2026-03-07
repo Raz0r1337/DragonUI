@@ -765,6 +765,18 @@ local function SetupRuneFrame()
                 button:SetPoint('CENTER', PlayerFrame, 'BOTTOM', -10, 15)
             end
             UpdateRune(button)
+
+            -- FIX: Hook each button's OnEvent to re-apply DragonUI texture
+            -- AFTER Blizzard's built-in handler runs (HookScript fires post-original).
+            -- This prevents Blizzard's handler from permanently overwriting our texture.
+            if not button.__DragonUIRuneHooked then
+                button:HookScript('OnEvent', function(self, event)
+                    if event == 'RUNE_TYPE_UPDATE' then
+                        UpdateRune(self)
+                    end
+                end)
+                button.__DragonUIRuneHooked = true
+            end
         end
     end
 end
@@ -2350,7 +2362,7 @@ local function InitializePlayerFrame()
         end
     end
 
-    -- Phase 2: Removed duplicate PlayerFrame_ToVehicleArt / PlayerFrame_ToPlayerArt hooks
+    
     -- These are hooked at file scope below with richer logic (vehicle transitions section)
     -- HandleRuneFrameVehicleTransition is called from the file-scope hooks instead
 
@@ -2636,9 +2648,12 @@ local function SetupPlayerEvents()
         end,
 
         RUNE_TYPE_UPDATE = function(runeIndex)
-            -- Improved: more robust event handling
-            if runeIndex and runeIndex >= 1 and runeIndex <= 6 then
-                local button = _G['RuneButtonIndividual' .. runeIndex]
+            -- FIX: Update ALL 6 runes, not just the one that changed.
+            -- Blizzard's OnEvent fires on ALL rune buttons for any RUNE_TYPE_UPDATE,
+            -- resetting ALL textures to the Blizzard default. Updating only the
+            -- changed rune leaves the other 5 stuck on Blizzard's texture.
+            for i = 1, 6 do
+                local button = _G['RuneButtonIndividual' .. i]
                 if button then
                     UpdateRune(button)
                 end

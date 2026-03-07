@@ -18,14 +18,6 @@ local Panel = addon.OptionsPanel
 -- QUEST TRACKER TAB BUILDER
 -- ============================================================================
 
-local anchorValues = {
-    TOPRIGHT    = LO["Top Right"],
-    TOPLEFT     = LO["Top Left"],
-    BOTTOMRIGHT = LO["Bottom Right"],
-    BOTTOMLEFT  = LO["Bottom Left"],
-    CENTER      = LO["Center"],
-}
-
 local function RefreshQT()
     if addon.RefreshQuestTracker then addon.RefreshQuestTracker() end
 end
@@ -47,41 +39,13 @@ local function BuildQuesttrackerTab(scroll)
         end,
     })
 
-    C:AddDropdown(section, {
-        label = LO["Anchor Point"],
-        desc = LO["Screen anchor point for the quest tracker."],
-        dbPath = "questtracker.anchor",
-        values = anchorValues,
-        callback = RefreshQT,
-    })
-
     C:AddSlider(section, {
-        label = LO["X Position"],
-        dbPath = "questtracker.x",
-        min = -500, max = 500, step = 1,
+        label = LO["Font Size"],
+        desc = LO["Font size for quest tracker text"],
+        dbPath = "questtracker.font_size",
+        min = 8, max = 18, step = 1,
         width = 200,
         callback = RefreshQT,
-    })
-
-    C:AddSlider(section, {
-        label = "Y Position",
-        dbPath = "questtracker.y",
-        min = -500, max = 500, step = 1,
-        width = 200,
-        callback = RefreshQT,
-    })
-
-    C:AddButton(section, {
-        label = LO["Reset Position"],
-        width = 160,
-        callback = function()
-            C:SetDBValue("questtracker.anchor", "TOPRIGHT")
-            C:SetDBValue("questtracker.x", -140)
-            C:SetDBValue("questtracker.y", -255)
-            RefreshQT()
-            -- Refresh tab to update controls
-            Panel:SelectTab("questtracker")
-        end,
     })
 end
 

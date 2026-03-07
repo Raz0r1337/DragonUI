@@ -565,6 +565,8 @@ L["Center"] = "Mitte"
 L["Horizontal position offset"] = "Horizontaler Positionsversatz"
 L["Vertical position offset"] = "Vertikaler Positionsversatz"
 L["Reset quest tracker to default position"] = "Questverfolgung auf Standardposition zurücksetzen"
+L["Font Size"] = "Schriftgröße"
+L["Font size for quest tracker text"] = "Schriftgröße für den Text der Questverfolgung"
 
 -- ============================================================================
 -- UNIT FRAMES TAB

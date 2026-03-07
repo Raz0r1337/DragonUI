@@ -40,6 +40,39 @@ local function GetQuestTrackerConfig()
     return config.x or -210, config.y or -255, config.anchor or "TOPRIGHT", config.show_header ~= false
 end
 
+-- Returns the configured font size (defaults to WoW's built-in 11pt if unset)
+local function GetQuestFontSize()
+    if addon.db and addon.db.profile and addon.db.profile.questtracker then
+        return addon.db.profile.questtracker.font_size or 12
+    end
+    return 12
+end
+
+-- Apply the configured font size to all quest tracker text elements.
+-- Lines live in WATCHFRAME_QUESTLINES and WATCHFRAME_ACHIEVEMENTLINES as Lua
+-- tables each with a .text FontString (and optional .dash FontString).
+-- We apply to both to ensure the font change takes effect regardless of type.
+local function ApplyQuestTrackerFonts()
+    local targetSize = GetQuestFontSize()
+    local lineSets = { WATCHFRAME_QUESTLINES, WATCHFRAME_ACHIEVEMENTLINES }
+    for _, lineSet in ipairs(lineSets) do
+        if lineSet then
+            for _, line in ipairs(lineSet) do
+                if line then
+                    if line.text and line.text.GetFont then
+                        local fp, _, fl = line.text:GetFont()
+                        if fp then line.text:SetFont(fp, targetSize, fl) end
+                    end
+                    if line.dash and line.dash.GetFont then
+                        local fp, _, fl = line.dash:GetFont()
+                        if fp then line.dash:SetFont(fp, targetSize, fl) end
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- =============================================================================
 -- TIMER FUNCTIONS FOR 3.3.5 COMPATIBILITY
 -- =============================================================================
@@ -218,6 +251,11 @@ function addon.RefreshQuestTracker()
     
     UpdateQuestTrackerPosition()
     ForceUpdateQuestTracker()
+    -- A second update after a short delay stabilises font layout:
+    -- the first update applies the new font to all FontStrings so their
+    -- GetHeight() values are correct; the second update re-runs the
+    -- handler layout pass using those correct heights.
+    ScheduleTimer(0.05, ForceUpdateQuestTracker)
 end
 
 -- =============================================================================
@@ -295,6 +333,9 @@ function QuestTrackerModule:Initialize()
 
     self.initialized = true
     self.applied = true
+
+    -- Apply font immediately so WoW's first render already uses our size
+    ApplyQuestTrackerFonts()
 end
 
 -- =============================================================================
@@ -392,14 +433,25 @@ local function InstallQuestTrackerHooks()
             local maxFrameWidth = WATCHFRAME_MAXLINEWIDTH or 192
             local totalObjectives = 0
 
-            if WATCHFRAME_OBJECTIVEHANDLERS then
-                for i = 1, #WATCHFRAME_OBJECTIVEHANDLERS do
-                    local pixelsUsed, maxLineWidth, numObjectives = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, totalOffset, maxHeight, maxFrameWidth)
-                    if numObjectives then
-                        totalObjectives = totalObjectives + numObjectives
+            -- STEP 1: Apply font to .text/.dash FontStrings BEFORE handlers re-run.
+            -- Handlers use GetHeight() on these FontStrings during layout, so setting
+            -- the font first ensures the layout math reflects the new size.
+            ApplyQuestTrackerFonts()
+
+            -- STEP 2: Re-run objective handlers to reposition all lines.
+            pcall(function()
+                if WATCHFRAME_OBJECTIVEHANDLERS then
+                    for i = 1, #WATCHFRAME_OBJECTIVEHANDLERS do
+                        local pixelsUsed, maxLineWidth, numObjectives = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, totalOffset, maxHeight, maxFrameWidth)
+                        if numObjectives then
+                            totalObjectives = totalObjectives + numObjectives
+                        end
                     end
                 end
-            end
+            end)
+
+            -- STEP 3: Re-apply font in case any handler called SetFont/SetFontObject.
+            ApplyQuestTrackerFonts()
 
             -- Apply background styling after handler re-run
             pcall(ApplyQuestTrackerStyling)
@@ -579,7 +631,13 @@ end
 local function OnPlayerEnteringWorld()
     -- Check if module is enabled
     if not IsModuleEnabled() then return end
-    
+
+    -- Apply font immediately (before hooks are installed) to avoid visible size jump
+    ApplyQuestTrackerFonts()
+    ScheduleTimer(0.1, ApplyQuestTrackerFonts)
+    ScheduleTimer(0.3, ApplyQuestTrackerFonts)
+    ScheduleTimer(0.6, ApplyQuestTrackerFonts)
+
     -- Reapply position on every world entry (login, reload, zone change)
     -- This counters Blizzard's UIParent_ManageFramePositions overriding us
     ScheduleTimer(0.3, function()

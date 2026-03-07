@@ -2,6 +2,14 @@
 
 > **⚠️ Experimental Branch** - All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) - any feedback helps!
 
+## 📅 2026-03-07
+
+### Added
+- **Quest tracker font size option** - You can now change the size of the text in the quest tracker from the options panel
+
+### Fixed
+- **Death Knight runes** - Rune textures no longer break when rune types change mid-combat
+
 ## 📅 2026-03-04
 
 ### Added
