@@ -20,6 +20,13 @@ local GetContainerItemCooldown, GetContainerNumSlots = GetContainerItemCooldown,
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots
 local GetKeyRingSize = GetKeyRingSize
 local GetNumBankSlots = GetNumBankSlots
+local GetInventoryItemLink = GetInventoryItemLink
+local GetInventoryItemTexture = GetInventoryItemTexture
+local GetInventoryItemCount = GetInventoryItemCount
+local GetItemFamily = GetItemFamily
+local IsInventoryItemLocked = IsInventoryItemLocked
+local ContainerIDToInventoryID = ContainerIDToInventoryID
+local BankButtonIDToInvSlotID = BankButtonIDToInvSlotID
 local ContainerFrame_UpdateCooldown = ContainerFrame_UpdateCooldown
 local CooldownFrame_SetTimer = CooldownFrame_SetTimer
 local SetItemButtonTexture, SetItemButtonCount = SetItemButtonTexture, SetItemButtonCount
@@ -34,6 +41,7 @@ local NUM_BANKBAGSLOTS = NUM_BANKBAGSLOTS
 local KEYRING_CONTAINER = KEYRING_CONTAINER
 local BACKPACK_CONTAINER = BACKPACK_CONTAINER
 local BANK_CONTAINER = BANK_CONTAINER
+local NUM_BANKGENERIC_SLOTS = NUM_BANKGENERIC_SLOTS
 
 local TEXTURE_ITEM_QUEST_BORDER = TEXTURE_ITEM_QUEST_BORDER or [[Interface\ContainerFrame\UI-Icon-QuestBorder]]
 local TEXTURE_ITEM_QUEST_BANG = TEXTURE_ITEM_QUEST_BANG or [[Interface\ContainerFrame\UI-Icon-QuestBang]]
@@ -131,6 +139,7 @@ local defaults = {
     },
     bank = {
         bags = { -1, 5, 6, 7, 8, 9, 10, 11 },
+        position = { "LEFT", nil, "LEFT", 24, 0 },
         showBags = false,
         leftSideFilter = true,
         w = 512,
@@ -386,8 +395,18 @@ do
         end
     end
 
+    local function getBagSize(bagId)
+        if bagId == KEYRING_CONTAINER then
+            return GetKeyRingSize()
+        end
+        if bagId == BANK_CONTAINER then
+            return NUM_BANKGENERIC_SLOTS
+        end
+        return GetContainerNumSlots(bagId)
+    end
+
     local function updateBag(bagId)
-        local size = GetContainerNumSlots(bagId)
+        local size = getBagSize(bagId)
         local prevSize = BagSizes[bagId] or 0
 
         -- Check bag type change
@@ -418,7 +437,7 @@ do
     end
 
     local function updateCooldowns(bagId)
-        local size = GetContainerNumSlots(bagId)
+        local size = getBagSize(bagId)
         for slot = 1, size do
             local item = Slots(bagId, slot)
             if item then
@@ -457,7 +476,13 @@ do
         elseif event == "BAG_UPDATE_COOLDOWN" then
             forEachBag(updateCooldowns)
         elseif event == "PLAYERBANKSLOTS_CHANGED" then
-            updateBag(BANK_CONTAINER)
+            local slotId = ...
+            if slotId and slotId > NUM_BANKGENERIC_SLOTS then
+                local bagId = (slotId - NUM_BANKGENERIC_SLOTS) + NUM_BAG_SLOTS
+                updateBag(bagId)
+            else
+                updateBag(BANK_CONTAINER)
+            end
         end
     end)
     eventFrame:RegisterEvent("PLAYER_LOGIN")
@@ -465,19 +490,32 @@ do
     eventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
     eventFrame:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 
-    -- Bank detection
+    -- Bank detection (Show/Hide pattern, matching KPack reference)
     local bankWatcher = CreateFrame("Frame")
+    bankWatcher:Hide()
+
+    bankWatcher:SetScript("OnShow", function(self)
+        AtBank = true
+        updateBag(BANK_CONTAINER)
+        forEachBag(updateBag)
+        sendMessage("BANK_OPENED")
+        -- After first open, simplify subsequent handler
+        self:SetScript("OnShow", function(self)
+            AtBank = true
+            sendMessage("BANK_OPENED")
+        end)
+    end)
+
+    bankWatcher:SetScript("OnHide", function(self)
+        AtBank = false
+        sendMessage("BANK_CLOSED")
+    end)
+
     bankWatcher:SetScript("OnEvent", function(self, event)
         if event == "BANKFRAME_OPENED" then
-            AtBank = true
-            for bag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-                updateBag(bag)
-            end
-            updateBag(BANK_CONTAINER)
-            sendMessage("BANK_OPENED")
-        elseif event == "BANKFRAME_CLOSED" then
-            AtBank = false
-            sendMessage("BANK_CLOSED")
+            self:Show()
+        else
+            self:Hide()
         end
     end)
     bankWatcher:RegisterEvent("BANKFRAME_OPENED")
@@ -512,9 +550,6 @@ do
 
     local IsBank = {}
     IsBank[BANK_CONTAINER] = true
-    for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-        IsBank[i] = true
-    end
 
     function BagSlotInfo:IsBank(bag)
         return IsBank[bag]
@@ -542,35 +577,72 @@ do
         return false
     end
 
+    function BagSlotInfo:IsBackpackBag(bag)
+        return bag > 0 and bag < (NUM_BAG_SLOTS + 1)
+    end
+
     function BagSlotInfo:GetSize(player, bag)
         if player == playerName then
             if bag == KEYRING_CONTAINER then
                 return GetKeyRingSize()
+            elseif bag == BANK_CONTAINER then
+                return NUM_BANKGENERIC_SLOTS
             end
             return GetContainerNumSlots(bag)
         end
         return 0
     end
 
-    local cachedBagTypes = {}
     function BagSlotInfo:GetBagType(player, bag)
-        if player == playerName and bag >= 0 then
-            local _, bagType = GetContainerNumFreeSlots(bag)
-            return bagType or 0
+        if self:IsBank(bag) or self:IsBackpack(bag) then
+            return 0
         end
-        return cachedBagTypes[bag] or 0
+        if player == playerName then
+            local itemLink = self:GetItemInfo(player, bag)
+            if itemLink then
+                return GetItemFamily(itemLink)
+            end
+        end
+        return 0
     end
 
     function BagSlotInfo:IsTradeBag(player, bag)
-        return self:GetBagType(player, bag) > 0
+        return (self:GetBagType(player, bag) or 0) > 0
     end
 
-    function BagSlotInfo:IsLocked(player, bag, slot)
-        if player == playerName then
-            local _, _, locked = GetContainerItemInfo(bag, slot)
-            return locked
+    function BagSlotInfo:ToInventorySlot(bag)
+        if self:IsBackpack(bag) or self:IsBank(bag) then return nil end
+        if self:IsBankBag(bag) then
+            return BankButtonIDToInvSlotID(bag, 1)
         end
-        return false
+        return ContainerIDToInventoryID(bag)
+    end
+
+    function BagSlotInfo:IsLocked(player, bag)
+        if self:IsBackpack(bag) or self:IsBank(bag) or self:IsCached(player, bag) then
+            return false
+        end
+        return IsInventoryItemLocked(self:ToInventorySlot(bag))
+    end
+
+    function BagSlotInfo:IsPurchasable(player, bag)
+        if not self:IsBankBag(bag) then return false end
+        local purchasedSlots = GetNumBankSlots()
+        return bag > (purchasedSlots + NUM_BAG_SLOTS)
+    end
+
+    function BagSlotInfo:GetItemInfo(player, bag)
+        if self:IsBackpack(bag) or self:IsBank(bag) then return nil end
+        if player == playerName then
+            local invSlot = self:ToInventorySlot(bag)
+            if invSlot then
+                local link = GetInventoryItemLink("player", invSlot)
+                local texture = GetInventoryItemTexture("player", invSlot)
+                local count = GetInventoryItemCount("player", invSlot)
+                return link, count, texture
+            end
+        end
+        return nil
     end
 
     -- Global reference for other modules
@@ -586,9 +658,24 @@ do
 
     function ItemSlotInfo:GetItemInfo(player, bag, slot)
         if player == playerName then
-            return GetContainerItemInfo(bag, slot)
+            local texture, count, locked, quality, readable, lootable, link = GetContainerItemInfo(bag, slot)
+            if link and quality and quality < 0 then
+                quality = select(3, GetItemInfo(link))
+            end
+            return texture, count, locked, quality, readable, lootable, link
         end
         return nil
+    end
+
+    function ItemSlotInfo:IsLocked(player, bag, slot)
+        if self:IsCached(player, bag, slot) then
+            return false
+        end
+        return select(3, GetContainerItemInfo(bag, slot))
+    end
+
+    function ItemSlotInfo:IsCached(player, bag, slot)
+        return mod("BagSlotInfo"):IsCached(player, bag)
     end
 
     mod.ItemSlotInfo = ItemSlotInfo
@@ -1594,6 +1681,8 @@ do
             self:RegisterEvent("BAG_UPDATE")
             self:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
             if BagSlotInfo:IsBankBag(id) then
+                self:RegisterEvent("BANKFRAME_OPENED")
+                self:RegisterEvent("BANKFRAME_CLOSED")
                 self:RegisterEvent("PLAYERBANKBAGSLOTS_CHANGED")
             end
         end
@@ -1603,31 +1692,59 @@ do
         self:Hide()
         self:SetParent(nil)
         self:UnregisterAllEvents()
+        _G[self:GetName() .. "Count"]:Hide()
         unused[self] = true
     end
 
+    -- Helper to get the correct inventory slot
+    function Bag:GetInventorySlot()
+        return BagSlotInfo:ToInventorySlot(self:GetID())
+    end
+
+    function Bag:IsBagSlot()
+        local id = self:GetID()
+        return BagSlotInfo:IsBackpackBag(id) or BagSlotInfo:IsBankBag(id)
+    end
+
+    function Bag:IsPurchasable()
+        return BagSlotInfo:IsPurchasable(playerName, self:GetID())
+    end
+
     function Bag:Update()
+        if not self:IsVisible() then return end
         local id = self:GetID()
         if BagSlotInfo:IsBackpack(id) or BagSlotInfo:IsBank(id) then return end
 
-        local link, texture, locked
-        if BagSlotInfo:IsBankBag(id) then
-            local slot = id - NUM_BAG_SLOTS
-            link = GetInventoryItemLink("player", ContainerIDToInventoryID(id))
-            texture = GetInventoryItemTexture("player", ContainerIDToInventoryID(id))
-            locked = IsInventoryItemLocked(ContainerIDToInventoryID(id))
-        else
-            link = GetInventoryItemLink("player", ContainerIDToInventoryID(id))
-            texture = GetInventoryItemTexture("player", ContainerIDToInventoryID(id))
-            locked = IsInventoryItemLocked(ContainerIDToInventoryID(id))
+        -- Update lock
+        if self:IsBagSlot() then
+            SetItemButtonDesaturated(self, BagSlotInfo:IsLocked(playerName, id))
         end
 
-        if texture then
-            SetItemButtonTexture(self, texture)
-        else
-            SetItemButtonTexture(self, [[Interface\PaperDoll\UI-PaperDoll-Slot-Bag]])
+        -- Update slot info (texture)
+        if self:IsBagSlot() then
+            local link, count, texture = BagSlotInfo:GetItemInfo(playerName, id)
+            if link then
+                SetItemButtonTexture(self, texture or GetItemIcon(link))
+                SetItemButtonTextureVertexColor(self, 1, 1, 1)
+            else
+                SetItemButtonTexture(self, [[Interface\PaperDoll\UI-PaperDoll-Slot-Bag]])
+                if self:IsPurchasable() then
+                    SetItemButtonTextureVertexColor(self, 1, 0.1, 0.1)
+                else
+                    SetItemButtonTextureVertexColor(self, 1, 1, 1)
+                end
+            end
         end
-        SetItemButtonDesaturated(self, locked)
+
+        -- Update cursor highlight
+        if self:IsBagSlot() then
+            local invSlot = self:GetInventorySlot()
+            if invSlot and CursorCanGoInSlot(invSlot) then
+                self:LockHighlight()
+            else
+                self:UnlockHighlight()
+            end
+        end
     end
 
     function Bag:OnShow()
@@ -1640,33 +1757,85 @@ do
         if BagSlotInfo:IsBackpack(id) or BagSlotInfo:IsBank(id) then
             GameTooltip:SetText(BACKPACK_TOOLTIP)
         else
-            if not GameTooltip:SetInventoryItem("player", ContainerIDToInventoryID(id)) then
+            local invSlot = self:GetInventorySlot()
+            if invSlot then
+                if not GameTooltip:SetInventoryItem("player", invSlot) then
+                    if self:IsPurchasable() then
+                        GameTooltip:SetText(BANK_BAG_PURCHASE, 1, 1, 1)
+                    else
+                        GameTooltip:SetText(EQUIP_CONTAINER)
+                    end
+                end
+            else
                 GameTooltip:SetText(EQUIP_CONTAINER)
             end
         end
         GameTooltip:Show()
+        -- Highlight items in this bag
+        local parent = self:GetParent()
+        if parent and parent.itemFrame then
+            parent.itemFrame:HighlightBag(id)
+        end
     end
 
     function Bag:OnLeave()
-        GameTooltip:Hide()
+        if GameTooltip:IsOwned(self) then
+            GameTooltip:Hide()
+        end
+        local parent = self:GetParent()
+        if parent and parent.itemFrame then
+            parent.itemFrame:HighlightBag(nil)
+        end
     end
 
     function Bag:OnClick(button)
         local id = self:GetID()
         if BagSlotInfo:IsBackpack(id) or BagSlotInfo:IsBank(id) then return end
-        local invSlot = ContainerIDToInventoryID(id)
-        if CursorHasItem() then
-            PutItemInBag(invSlot)
+
+        if self:IsPurchasable() then
+            self:PurchaseSlot()
+        elseif CursorHasItem() then
+            local invSlot = self:GetInventorySlot()
+            if invSlot then
+                PutItemInBag(invSlot)
+            end
         else
-            PickupBagFromSlot(invSlot)
+            local invSlot = self:GetInventorySlot()
+            if invSlot then
+                PickupBagFromSlot(invSlot)
+            end
         end
     end
 
     function Bag:OnDrag()
         local id = self:GetID()
         if not (BagSlotInfo:IsBackpack(id) or BagSlotInfo:IsBank(id)) then
-            PickupBagFromSlot(ContainerIDToInventoryID(id))
+            local invSlot = self:GetInventorySlot()
+            if invSlot then
+                PickupBagFromSlot(invSlot)
+            end
         end
+    end
+
+    function Bag:PurchaseSlot()
+        if not StaticPopupDialogs["CONFIRM_BUY_BANK_SLOT_COMBUCTOR"] then
+            StaticPopupDialogs["CONFIRM_BUY_BANK_SLOT_COMBUCTOR"] = {
+                text = CONFIRM_BUY_BANK_SLOT,
+                button1 = YES,
+                button2 = NO,
+                OnAccept = function()
+                    PurchaseSlot()
+                end,
+                OnShow = function(self)
+                    MoneyFrame_Update(self:GetName() .. "MoneyFrame", GetBankSlotCost(GetNumBankSlots()))
+                end,
+                hasMoneyFrame = 1,
+                timeout = 0,
+                hideOnEscape = 1
+            }
+        end
+        PlaySound("igMainMenuOption")
+        StaticPopup_Show("CONFIRM_BUY_BANK_SLOT_COMBUCTOR")
     end
 
     function Bag:OnEvent(event)
@@ -2429,6 +2598,7 @@ do
     end
 
     function InventoryFrame:UpdateItemFrameSize()
+        if not self.itemFrame then return end
         local prevW, prevH = self.itemFrame:GetWidth(), self.itemFrame:GetHeight()
         local newW = self:GetWidth() + ITEM_FRAME_WIDTH_OFFSET
         if next(self.bagButtons) then
@@ -2477,6 +2647,13 @@ do
             self:SetPoint(point, self:GetParent(), relPoint, x, y)
             self:SetUserPlaced(true)
         else
+            -- No saved position: anchor at a visible default so the frame actually renders
+            self:ClearAllPoints()
+            if self.isBank then
+                self:SetPoint("LEFT", UIParent, "LEFT", 24, 0)
+            else
+                self:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -64, 64)
+            end
             self:SetUserPlaced(nil)
         end
     end
@@ -2582,6 +2759,7 @@ local function ApplyCombuctorSystem()
 
     hooksecurefunc("CloseAllBags", function() mod:Hide(BACKPACK_CONTAINER) end)
     BankFrame:UnregisterAllEvents()
+    BankFrame:Hide()
 
     mod("InventoryEvents"):Register(mod, "BANK_OPENED", function()
         mod:Show(BANK_CONTAINER, true)
