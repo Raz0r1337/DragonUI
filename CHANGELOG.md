@@ -2,6 +2,18 @@
 
 > **⚠️ Experimental Branch** - All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) - any feedback helps!
 
+## 📅 2026-03-10
+
+### Added
+- **Bag Sort module** — Sort buttons for bags and bank frames (both Combuctor and vanilla). Sorts items by type, rarity, equip slot, level, and name. Also adds `/sort`, `/sortbags`, and `/sortbank` slash commands. Enabled by default
+- **Bag Sort translations** — Full localization for enUS, esES, esMX, deDE, and koKR (options panel and in-game tooltips)
+
+### Changed
+- **Combuctor disabled by default** — Combuctor module now ships disabled; enable it from the Bags options tab
+
+### Fixed
+- **Combuctor bank tooltips** — Item tooltips in the bank now display correctly when hovering
+
 ## 📅 2026-03-09
 
 ### Added
