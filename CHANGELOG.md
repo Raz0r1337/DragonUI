@@ -5,29 +5,29 @@
 ## 📅 2026-03-10
 
 ### Added
-- **Bag Sort module** — Sort buttons for bags and bank frames (both Combuctor and vanilla). Sorts items by type, rarity, equip slot, level, and name. Also adds `/sort`, `/sortbags`, and `/sortbank` slash commands. Enabled by default
-- **Bag Sort translations** — Full localization for enUS, esES, esMX, deDE, and koKR (options panel and in-game tooltips)
+- **Bag Sort module** - Sort buttons for bags and bank frames (both Combuctor and vanilla). Sorts items by type, rarity, equip slot, level, and name. Also adds `/sort`, `/sortbags`, and `/sortbank` slash commands. Enabled by default
+- **Bag Sort translations** - Full localization for enUS, esES, esMX, deDE, and koKR (options panel and in-game tooltips)
 
 ### Changed
-- **Combuctor disabled by default** — Combuctor module now ships disabled; enable it from the Bags options tab
+- **Combuctor disabled by default** - Combuctor module now ships disabled; enable it from the Bags options tab
 
 ### Fixed
-- **Combuctor bank tooltips** — Item tooltips in the bank now display correctly when hovering
+- **Combuctor bank tooltips** - Item tooltips in the bank now display correctly when hovering
 
 ## 📅 2026-03-09
 
 ### Added
-- **Chat enhancements module** — Moveable editbox, URL detection & copy, chat copy via double-click tab, mousewheel scroll (ported from KPack ChatMods)
-- **Combuctor bags module** — All-in-one bag/bank replacement with item filtering and search (ported from KPack Combuctor)
-- **Bags options tab** — New panel section for configuring the Combuctor module
-- **Boss frames in Editor Mode** — Boss unit frames can now be repositioned via Editor Mode
-- **esMX locale** — Full Mexican Spanish translation for both addons
+- **Chat enhancements module** - Moveable editbox, URL detection & copy, chat copy via double-click tab, mousewheel scroll (ported from KPack ChatMods)
+- **Combuctor bags module** - All-in-one bag/bank replacement with item filtering and search (ported from KPack Combuctor)
+- **Bags options tab** - New panel section for configuring the Combuctor module
+- **Boss frames in Editor Mode** - Boss unit frames can now be repositioned via Editor Mode
+- **esMX locale** - Full Mexican Spanish translation for both addons
 
 ### Fixed
-- **Boss frames** — Restyled with Dragonflight atlas textures
-- **Dark mode** — Now covers XP/Rep bar textures, pet frame border, ToT/ToF custom borders, and skinned minimap addon buttons
-- **Party frames** — Vehicle texture hidden correctly; strata/level fixes to prevent overlap
-- **Options panel** — Removed legacy options panel; reduced file size across all options tabs
+- **Boss frames** - Restyled with Dragonflight atlas textures
+- **Dark mode** - Now covers XP/Rep bar textures, pet frame border, ToT/ToF custom borders, and skinned minimap addon buttons
+- **Party frames** - Vehicle texture hidden correctly; strata/level fixes to prevent overlap
+- **Options panel** - Removed legacy options panel; reduced file size across all options tabs
 
 ## 📅 2026-03-07
 
@@ -77,7 +77,7 @@
 ## 📅 2026-02-23
 
 ### Added
-- **Localization system (Beta)** — Full AceLocale-3.0 integration. Base language: enUS. Spanish (esES) translation (may be incomplete). Locale stubs included for deDE, frFR, koKR, ptBR, ruRU, zhCN, zhTW. All UI strings, options panels, slash commands, popups, and editor labels are now localized
+- **Localization system (Beta)** - Full AceLocale-3.0 integration. Base language: enUS. Spanish (esES) translation (may be incomplete). Locale stubs included for deDE, frFR, koKR, ptBR, ruRU, zhCN, zhTW. All UI strings, options panels, slash commands, popups, and editor labels are now localized
 - Loot roll frames now moveable via editor mode
 - Castbar detailed mode: long spell names auto-truncate with "..."
 - Castbar channel ticks auto-localized for any client language
