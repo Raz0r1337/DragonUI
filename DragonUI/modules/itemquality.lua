@@ -98,6 +98,37 @@ local function SetOverlayQuality(frame, quality)
 end
 
 -- ============================================================================
+-- ITEM LINK QUALITY PARSING (shared lookup)
+-- ============================================================================
+
+-- Map known item link color hex codes → quality index
+local COLOR_TO_QUALITY = {
+    ["ff9d9d9d"] = 0, -- Poor
+    ["ffffffff"] = 1, -- Common
+    ["ff1eff00"] = 2, -- Uncommon
+    ["ff0070dd"] = 3, -- Rare
+    ["ffa335ee"] = 4, -- Epic
+    ["ffff8000"] = 5, -- Legendary
+    ["ffe6cc80"] = 6, -- Artifact
+    ["ff00ccff"] = 7, -- Heirloom
+}
+
+-- Extract quality from an item link.
+-- Tries GetItemInfo first; falls back to parsing the embedded color hex so
+-- uncached items (first open of bank, etc.) still get colored correctly.
+local function GetQualityFromLink(link)
+    if not link then return nil end
+    local _, _, quality = GetItemInfo(link)
+    if not quality then
+        local _, _, colorHex = string.find(link, "|c(%x+)|")
+        if colorHex then
+            quality = COLOR_TO_QUALITY[colorHex:lower()]
+        end
+    end
+    return quality
+end
+
+-- ============================================================================
 -- CHARACTER PANEL (equipped items)
 -- ============================================================================
 
@@ -164,6 +195,15 @@ end
 -- INSPECT FRAME (inspected player's equipped items)
 -- ============================================================================
 
+local INSPECT_SLOTS = {
+    "InspectHeadSlot", "InspectNeckSlot", "InspectShoulderSlot", "InspectShirtSlot",
+    "InspectChestSlot", "InspectWaistSlot", "InspectLegsSlot", "InspectFeetSlot",
+    "InspectWristSlot", "InspectHandsSlot", "InspectFinger0Slot", "InspectFinger1Slot",
+    "InspectTrinket0Slot", "InspectTrinket1Slot", "InspectBackSlot",
+    "InspectMainHandSlot", "InspectSecondaryHandSlot", "InspectRangedSlot",
+    "InspectTabardSlot",
+}
+
 local function UpdateInspectSlot(button)
     if not button then return end
     if not IsModuleEnabled() then return end
@@ -177,42 +217,30 @@ local function UpdateInspectSlot(button)
     local hasItem = GetInventoryItemTexture(unit, slotID)
     if hasItem then
         local quality = GetInventoryItemQuality(unit, slotID)
+        if not quality then
+            local link = GetInventoryItemLink(unit, slotID)
+            quality = GetQualityFromLink(link)
+        end
         SetOverlayQuality(button, quality)
     else
         SetOverlayQuality(button, nil)
     end
 end
 
+local function UpdateAllInspectSlots()
+    if not IsModuleEnabled() then return end
+    if not InspectFrame or not InspectFrame:IsShown() then return end
+    for _, slotName in ipairs(INSPECT_SLOTS) do
+        local button = _G[slotName]
+        if button then
+            UpdateInspectSlot(button)
+        end
+    end
+end
+
 -- ============================================================================
 -- BAGS (container frames)
 -- ============================================================================
-
--- Map known item link color hex codes → quality index (shared lookup table)
-local COLOR_TO_QUALITY = {
-    ["ff9d9d9d"] = 0, -- Poor
-    ["ffffffff"] = 1, -- Common
-    ["ff1eff00"] = 2, -- Uncommon
-    ["ff0070dd"] = 3, -- Rare
-    ["ffa335ee"] = 4, -- Epic
-    ["ffff8000"] = 5, -- Legendary
-    ["ffe6cc80"] = 6, -- Artifact
-    ["ff00ccff"] = 7, -- Heirloom
-}
-
--- Extract quality from an item link.
--- Tries GetItemInfo first; falls back to parsing the embedded color hex so
--- uncached items (first open of bank, etc.) still get colored correctly.
-local function GetQualityFromLink(link)
-    if not link then return nil end
-    local _, _, quality = GetItemInfo(link)
-    if not quality then
-        local _, _, colorHex = string.find(link, "|c(%x+)|")
-        if colorHex then
-            quality = COLOR_TO_QUALITY[colorHex:lower()]
-        end
-    end
-    return quality
-end
 
 local function GetBagItemQuality(bag, slot)
     return GetQualityFromLink(GetContainerItemLink(bag, slot))
@@ -400,6 +428,16 @@ end
 -- APPLY / RESTORE SYSTEM
 -- ============================================================================
 
+local function InstallInspectHook()
+    if ItemQualityModule.hooks["Inspect"] then return end
+    if not InspectPaperDollItemSlotButton_Update then return end
+    hooksecurefunc("InspectPaperDollItemSlotButton_Update", function(button)
+        if not IsModuleEnabled() then return end
+        UpdateInspectSlot(button)
+    end)
+    ItemQualityModule.hooks["Inspect"] = true
+end
+
 local function ApplyItemQualitySystem()
     if ItemQualityModule.applied then return end
 
@@ -412,17 +450,8 @@ local function ApplyItemQualitySystem()
         ItemQualityModule.hooks["PaperDoll"] = true
     end
 
-    -- Inspect Frame: hook InspectPaperDollItemSlotButton_Update
-    if not ItemQualityModule.hooks["Inspect"] then
-        -- This function may not exist until the Inspect addon loads
-        if InspectPaperDollItemSlotButton_Update then
-            hooksecurefunc("InspectPaperDollItemSlotButton_Update", function(button)
-                if not IsModuleEnabled() then return end
-                UpdateInspectSlot(button)
-            end)
-            ItemQualityModule.hooks["Inspect"] = true
-        end
-    end
+    -- Inspect Frame: installed via InstallInspectHook() when Blizzard_InspectUI loads
+    InstallInspectHook()
 
     -- Bags: hook ContainerFrame_Update
     if not ItemQualityModule.hooks["ContainerFrame"] and ContainerFrame_Update then
@@ -553,9 +582,15 @@ eventFrame:RegisterEvent("MERCHANT_SHOW")
 eventFrame:RegisterEvent("MERCHANT_UPDATE")
 eventFrame:RegisterEvent("GUILDBANKFRAME_OPENED")
 eventFrame:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
+eventFrame:RegisterEvent("INSPECT_READY")
+eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
 eventFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "ADDON_LOADED" and arg1 == "DragonUI" then
+    if event == "ADDON_LOADED" and arg1 == "Blizzard_InspectUI" then
+        if not IsModuleEnabled() then return end
+        InstallInspectHook()
+
+    elseif event == "ADDON_LOADED" and arg1 == "DragonUI" then
         if not IsModuleEnabled() then return end
 
         -- Register profile callbacks
@@ -567,16 +602,7 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
             end
         end)
 
-        -- Late hook for Inspect (loaded on demand)
-        addon:After(1.0, function()
-            if not ItemQualityModule.hooks["Inspect"] and InspectPaperDollItemSlotButton_Update then
-                hooksecurefunc("InspectPaperDollItemSlotButton_Update", function(button)
-                    if not IsModuleEnabled() then return end
-                    UpdateInspectSlot(button)
-                end)
-                ItemQualityModule.hooks["Inspect"] = true
-            end
-        end)
+        -- Inspect hook is installed when Blizzard_InspectUI loads (see ADDON_LOADED handler below)
 
     elseif event == "PLAYER_ENTERING_WORLD" then
         if not IsModuleEnabled() then return end
@@ -599,6 +625,17 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         UpdateBankSlots()
         addon:After(0.5, UpdateBankSlots)
         addon:After(1.5, UpdateBankSlots)
+
+    elseif event == "INSPECT_READY" then
+        if not IsModuleEnabled() then return end
+        InstallInspectHook()
+        addon:After(0.2, UpdateAllInspectSlots)
+
+    elseif event == "UNIT_INVENTORY_CHANGED" then
+        if not IsModuleEnabled() then return end
+        if InspectFrame and InspectFrame:IsShown() and InspectFrame.unit and arg1 == InspectFrame.unit then
+            addon:After(0.2, UpdateAllInspectSlots)
+        end
 
     elseif event == "MERCHANT_SHOW" or event == "MERCHANT_UPDATE" then
         if not IsModuleEnabled() then return end

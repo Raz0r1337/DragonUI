@@ -15,6 +15,7 @@
 - **Micromenu latency tooltip** - "Network" / "Latency" text now localized
 - **Modules tab locale error** - Missing locale entry for bag sort description
 - **Party background CVar conflict** - Blizzard's "Party/Arena Background" option no longer breaks party frames; a popup warns and offers to disable it
+- **Item quality borders on inspect** - Quality glow borders now display correctly when inspecting other players
 
 ## 📅 2026-03-10
 
