@@ -44,7 +44,7 @@ local T = {
     textWhite = { 1, 1, 1, 1 },
     textDim   = { 0.55, 0.55, 0.55, 1 },
     contentBg = { 0.09, 0.09, 0.11, 1 },
-    font      = "Interface\\AddOns\\DragonUI_Options\\fonts\\PTSansNarrow.ttf",
+    font        = (addon.config and addon.config.assets and addon.config.assets.font) or "Interface\\AddOns\\DragonUI_Options\\fonts\\PTSansNarrow.ttf",
 }
 
 -- ============================================================================
