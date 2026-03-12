@@ -1017,6 +1017,10 @@ local function StylePartyFrames()
             if texture then
                 texture:SetTexture()
                 texture:Hide()
+                if not texture.DragonUI_ShowHooked then
+                    hooksecurefunc(texture, "Show", function(self) self:Hide() end)
+                    texture.DragonUI_ShowHooked = true
+                end
             end
 
             -- Hide vehicle texture (shown when party member is in a vehicle)
@@ -1024,6 +1028,10 @@ local function StylePartyFrames()
             if vehicleTex then
                 vehicleTex:SetTexture()
                 vehicleTex:Hide()
+                if not vehicleTex.DragonUI_ShowHooked then
+                    hooksecurefunc(vehicleTex, "Show", function(self) self:Hide() end)
+                    vehicleTex.DragonUI_ShowHooked = true
+                end
             end
 
             -- Health bar

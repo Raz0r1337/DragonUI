@@ -16,6 +16,7 @@
 - **Modules tab locale error** - Missing locale entry for bag sort description
 - **Party background CVar conflict** - Blizzard's "Party/Arena Background" option no longer breaks party frames; a popup warns and offers to disable it
 - **Item quality borders on inspect** - Quality glow borders now display correctly when inspecting other players
+- **Party frames vehicle texture** - Blizzard's vanilla vehicle texture no longer bleeds through when party members enter vehicles
 
 ## 📅 2026-03-10
 
