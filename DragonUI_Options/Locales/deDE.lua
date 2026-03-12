@@ -118,6 +118,22 @@ L["Enable DragonUI minimap enhancements including custom styling, positioning, t
 L["Minimap styling, tracking icons, and calendar."] = "Minimap-Styling, Tracking-Icons und Kalender."
 L["Enable DragonUI buff frame with custom styling, positioning, and toggle button functionality. When disabled, uses default Blizzard buff frame appearance and positioning."] = "DragonUI-Stärkungsfenster mit eigenem Styling, Positionierung und Umschalt-Button aktivieren. Wenn deaktiviert, wird das Blizzard-Standard-Stärkungsfenster verwendet."
 L["Buff frame styling and toggle button."] = "Stärkungsfenster-Styling und Umschalt-Button."
+L["Separate Weapon Enchants"] = "Separate Waffenverzauberungen"
+L["Detach weapon enchant icons (poisons, sharpening stones, etc.) from the buff bar into their own independently moveable frame. Position it freely using Editor Mode."] = "Entfernt die Symbole für Waffenverzauberungen (Gifte, Schleifsteine usw.) aus der Buff-Leiste und verschiebt sie in einen eigenen, unabhängig verschiebbaren Rahmen. Positionieren Sie diesen frei im Editor-Modus."
+
+-- Auras tab
+L["Auras"] = "Auren"
+L["Show Toggle Button"] = "Zeige wechsel Knopf"
+L["Show a collapse/expand button next to the buff icons."] = "Zeige eine Schaltfläche zum Ein- und Ausblenden neben den Buff-Symbolen an."
+L["Weapon Enchants"] = "Waffenverzauberungen"
+L["Weapon enchant icons include rogue poisons, sharpening stones, wizard oils, and similar temporary weapon enhancements."] = "Zu den Symbolen für Waffenverzauberungen gehören Schurken-Gifte, Schleifsteine, Zaubereröle und ähnliche vorübergehende Waffenverbesserungen."
+L["When enabled, a 'Weapon Enchants' mover appears in Editor Mode that you can drag to any position on screen."] = "Wenn diese Option aktiviert ist, erscheint im Editor-Modus ein „Waffenverzauberungen”-Mover, den Sie an eine beliebige Position auf dem Bildschirm ziehen können."
+L["Positions"] = "Positionen"
+L["Reset Buff Frame Position"] = "Buff-Rahmenposition zurücksetzen"
+L["Reset Weapon Enchant Position"] = "Waffenverzauberungsposition zurücksetzen"
+L["Buff frame position reset."] = "Buff-Rahmenposition zurücksetzen."
+L["Weapon enchant position reset."] = "Waffenverzauberungsposition zurückgesetzt."
+
 L["DragonUI quest tracker positioning and styling."] = "Positionierung und Styling der DragonUI-Questverfolgung."
 L["LibKeyBound integration for intuitive hover + key press binding."] = "LibKeyBound-Integration für intuitives Belegen (Hover + Tastendruck)."
 
@@ -193,16 +209,60 @@ L["Bottom"] = "Unten"
 L["Middle"] = "Mitte"
 
 -- Combuctor
-L["Combuctor"] = "Combuctor"
-L["Enable Combuctor"] = "Combuctor aktivieren"
+L["Combuctor"] = "Combuctor/Kombi-Beutel"
+L["Enable Combuctor"] = "Combuctor/Kombi-Beutel aktivieren"
 L["All-in-one bag replacement with item filtering, search, quality indicators, and bank integration."] = "Komplett-Taschenersatz mit Gegenstandsfilterung, Suche, Qualitätsindikatoren und Bankintegration."
+L["Combuctor Settings"] = "Combuctor/Kombi-Beutel Einstellungen"
 
--- Taschen sortieren (Bag Sort)
+-- Bag Sort
 L["Bag Sort"] = "Taschen sortieren"
 L["Enable Bag Sort"] = "Taschen sortieren aktivieren"
 L["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] = "Sortier-Buttons für Taschen und Bank. Sortiert Gegenstände nach Typ, Seltenheit, Stufe und Name."
 L["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] = "Fügt Sortier-Buttons zu Taschen- und Bankfenstern hinzu. Aktiviert auch die Befehle /sort und /sortbank."
 L["Sort bags and bank items with buttons"] = "Taschen und Bank mit Buttons sortieren"
+
+L["Show 'All' Tab"] = "Registerkarte „Alle“ anzeigen"
+L["Show the 'All' category tab that displays all items without filtering."] = "Zeigt die Registerkarte „Alle“ an, auf der alle Elemente ohne Filterung angezeigt werden."
+L["Show Equipment Tab"] = "Registerkarte „Ausrüstung“ anzeigen"
+L["Show the Equipment category tab for armor and weapons."] = "Zeigt Registerkarte „Ausrüstung“ für Rüstungen und Waffen an."
+L["Show Usable Tab"] = "Registerkarte „Verwendbar“ anzeigen"
+L["Show the Usable category tab for consumables and devices."] = "Zeigt die Registerkarte „Verwendbare Kategorie“ für Verbrauchsmaterialien und Geräte an."
+L["Show Consumable Tab"] = "Registerkarte „Verbrauchsmaterialien“ anzeigen"
+L["Show the Consumable category tab."] = "Zeigt die Registerkarte „Verbrauchsmaterialien“ an."
+L["Show Quest Tab"] = "Quest-Registerkarte anzeigen"
+L["Show the Quest items category tab."] = "Zeigt die Registerkarte „Quest-Gegenstände“ an."
+L["Show Trade Goods Tab"] = "Registerkarte „Handelswaren“ anzeigen"
+L["Show the Trade Goods category tab (includes gems and recipes)."] = "Zeigt die Registerkarte „Handelswaren“ (enthält Edelsteine und Rezepte)."
+L["Show Miscellaneous Tab"] = "Registerkarte „Verschiedenes“ anzeigen"
+L["Show the Miscellaneous items category tab."] = "Zeigt die Registerkarte „Verschiedenes“ an."
+L["Left Side Tabs"] = "Registerkarten auf der linken Seite"
+L["Place category filter tabs on the left side of the bag frame instead of the right."] = "Platziert die Filterregisterkarten für die Kategorien auf der linken Seite des Taschenrahmens statt auf der rechten Seite."
+L["Place category filter tabs on the left side of the bank frame instead of the right."] = "Platziert die Filterregisterkarten für die Kategorien auf der linken Seite des Bankrahmens statt auf der rechten Seite."
+L["Changes require closing and reopening bags to take effect."] = "Änderungen müssen durch Schließen und erneutes Öffnen der Taschen bestätigt werden, um wirksam zu werden."
+L["Subtabs"] = "Unterregisterkarten"
+L["Configure which bottom subtabs appear within each category tab. Applies to both inventory and bank."] = "Konfiguriert, welche Unterregisterkarten innerhalb jeder Kategorie-Registerkarte angezeigt werden sollen. Gilt sowohl für Lagerbestand als auch für Bank."
+L["Normal"] = "Normal"
+L["Trade Bags"] = "Handelsbeutel"
+L["Show the Normal bags subtab (non-profession bags)."] = "Zeigt die Unterregisterkarte „Normale Taschen“ (Taschen, die nicht für Berufe bestimmt sind)."
+L["Show the Trade bags subtab (profession bags)."] = "Zeigt die Unterregisterkarte „Handelsbeutel“ (Berufsbeutel)."
+L["Show the Armor subtab."] = "Zeigt die Unterregisterkarte „Rüstung“ an."
+L["Show the Weapon subtab."] = "Zeigt die Unterregisterkarte „Waffe“ an."
+L["Show the Trinket subtab."] = "Zeige die Unterregisterkarte „Schmuckstücke“ an."
+L["Show the Consumable subtab."] = "Zeigt die Unterregisterkarte „Verbrauchsmaterialien“ an."
+L["Show the Devices subtab."] = "Zeigt die Unterregisterkarte „Geräte“ an."
+L["Show the Trade Goods subtab."] = "Zeigt die Unterregisterkarte „Handelsgüter“ an."
+L["Show the Gem subtab."] = "Zeigt die Unterregisterkarte „Edelstein“ an."
+L["Show the Recipe subtab."] = "Zeigt die Unterregisterkarte „Rezept“ an."
+L["Configure Combuctor bag replacement settings."] = "Einstellungen für den Austausch des Combuctor/Kombi-Beutels konfigurieren."
+L["Category Tabs"] = "Kategorie-Registerkarten"
+L["Inventory Tabs"] = "Inventar-Registerkarten"
+L["Bank Tabs"] = "Bank-Registerkarten"
+L["Inventory"] = "Inventar"
+L["Bank"] = "Bank"
+L["Choose which category tabs appear on the bag frame. Changes require closing and reopening bags to take effect."] = "Wähle aus, welche Kategorie-Registerkarten auf dem Taschenrahmen angezeigt werden sollen. Änderungen müssen durch Schließen und erneutes Öffnen der Taschen bestätigt werden, um wirksam zu werden."
+L["Choose which category tabs appear on the inventory bag frame."] = "Wähle aus, welche Kategorie-Registerkarten auf dem Inventartaschenrahmen angezeigt werden sollen."
+L["Choose which category tabs appear on the bank frame."] = "Wähle aus, welche Kategorie-Registerkarten im Bankrahmen angezeigt werden sollen."
+L["Display"] = "Bildschirm"
 
 -- Advanced modules - Fallback display names
 L["Main Bars"] = "Hauptleisten"
@@ -241,6 +301,10 @@ L["Vehicle interface enhancements"] = "Verbesserungen fürs Fahrzeug-Interface"
 L["Stance/shapeshift bar positioning and styling"] = "Positionierung und Styling der Haltungs-/Gestaltleiste"
 L["Pet action bar positioning and styling"] = "Positionierung und Styling der Begleiteraktionsleiste"
 L["Multicast (totem/possess) bar positioning and styling"] = "Positionierung und Styling der Multicast-Leiste (Totems/Besessenheit)"
+L["Chat Mods"] = "Chat Mods"
+L["Chat enhancements: hide buttons, editbox position, URL copy, chat copy, link hover, tell target"] = "Chat-Verbesserungen: Schaltflächen ausblenden, Position des Bearbeitungsfelds, URL kopieren, Chat kopieren, Link-Hover, Ziel angeben"
+L["Combuctor"] = "Combuctor/Kombi-Beutel"
+L["All-in-one bag replacement with filtering and search"] = "All-in-One-Ersatz für Taschen mit Filter- und Suchfunktion"
 
 -- ============================================================================
 -- ACTION BARS TAB
@@ -294,6 +358,7 @@ L["Show Count Text"] = "Anzahltext anzeigen"
 L["Hotkey Text"] = "Hotkey-Text"
 L["Show Hotkey"] = "Hotkey anzeigen"
 L["Show Hotkey Text"] = "Hotkey-Text anzeigen"
+L["Range Indicator"] = "Reichweitenanzeige"
 L["Show small range indicator point on buttons"] = "Kleinen Reichweitenpunkt auf Buttons anzeigen"
 L["Show range indicator dot on buttons."] = "Reichweitenpunkt auf Buttons anzeigen."
 L["Macro Text"] = "Makrotext"
@@ -415,6 +480,10 @@ L["TIP: Use Editor Mode to position the totem bar (type /dragonui edit)."] = "TI
 -- CAST BARS TAB
 -- ============================================================================
 
+L["Player Castbar"] = "Spieler-Zauberleiste"
+L["Target Castbar"] = "Ziel-Zauberleiste"
+L["Focus Castbar"] = "Focus--Zauberleiste"
+
 -- Sub-tabs
 L["Player"] = "Spieler"
 L["Target"] = "Ziel"
@@ -484,6 +553,8 @@ L["Time to show the castbar after cast interruption"] = "Anzeigezeit nach Zauber
 
 L["Enhancements"] = "Verbesserungen"
 L["Visual enhancements that add Dragonflight-style polish to the UI. These are optional — disable any you don't want."] = "Visuelle Verbesserungen, die der UI den Dragonflight-Feinschliff geben. Optional — deaktiviere, was du nicht willst."
+
+-- (Dark Mode, Range Indicator, Item Quality, Tooltips defined above in MODULES section)
 
 -- ============================================================================
 -- MICRO MENU TAB
@@ -676,6 +747,7 @@ L["Always Show"] = "Immer anzeigen"
 L["Druid mana text visible at all times, not just on hover."] = "Druiden-Mana-Text immer sichtbar, nicht nur beim Darüberfahren."
 L["Alternate Mana Text Format"] = "Format alternativer Mana-Text"
 L["Choose text format for alternate mana display"] = "Textformat für die Anzeige des alternativen Manas wählen"
+L["Percentage + Current/Max"] = "Prozent + Aktuell/Maximal"
 
 -- Fat Health Bar
 L["Health Bar Style"] = "Lebensleisten-Stil"
@@ -731,6 +803,7 @@ L["Horizontal position (only active if Override is checked)"] = "Horizontale Pos
 L["Vertical position (only active if Override is checked)"] = "Vertikale Position (nur aktiv, wenn Überschreiben aktiviert ist)"
 
 -- Target of Target
+L["Target of Target"] = "Ziel des Ziels"
 L["Follows the Target frame by default. Move it in Editor Mode (/dragonui edit) to detach and position freely."] = "Folgt standardmäßig dem Zielfenster. Im Editor-Modus (/dragonui edit) bewegen, um es zu lösen und frei zu positionieren."
 L["Detached — positioned freely via Editor Mode"] = "Gelöst — frei positioniert via Editor-Modus"
 L["Attached — follows Target frame"] = "Angeheftet — folgt dem Zielfenster"
@@ -746,6 +819,11 @@ L["Re-attach to Focus"] = "Wieder an den Fokus anheften"
 L["Party Frames"] = "Gruppenfenster"
 L["Party Frames Configuration"] = "Gruppenfenster-Konfiguration"
 L["Custom styling for party member frames with automatic health/mana text display and class colors."] = "Eigenes Styling für Gruppenmitgliederfenster mit automatischer Lebens-/Mana-Textanzeige und Klassenfarben."
+
+-- Boss Frames
+L["Boss Frames"] = "Boss-Rahmen"
+L["Enabled"] = "Aktiviert"
+
 L["Orientation"] = "Ausrichtung"
 L["Vertical"] = "Vertikal"
 L["Horizontal"] = "Horizontal"

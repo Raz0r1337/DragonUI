@@ -11,18 +11,22 @@ if not L then return end
 -- CORE / GENERAL
 -- ============================================================================
 
+-- Combat lockdown messages
 L["Cannot toggle editor mode during combat!"] = "Editor-Modus kann im Kampf nicht umgeschaltet werden!"
 L["Cannot reset positions during combat!"] = "Positionen können im Kampf nicht zurückgesetzt werden!"
 L["Cannot toggle keybind mode during combat!"] = "Tastenbelegungsmodus kann im Kampf nicht umgeschaltet werden!"
 L["Cannot move frames during combat!"] = "Fenster können im Kampf nicht bewegt werden!"
 L["Cannot open options in combat."] = "Optionen können im Kampf nicht geöffnet werden."
+L["Options panel not available. Try /reload."] = "Optionsfeld nicht verfügbar. Versuche /reload."
 
+-- Module availability
 L["Editor mode not available."] = "Editor-Modus ist nicht verfügbar."
 L["Keybind mode not available."] = "Tastenbelegungsmodus ist nicht verfügbar."
 L["Vehicle debug not available"] = "Fahrzeug-Debug ist nicht verfügbar"
 L["KeyBinding module not available"] = "Tastenbelegungs-Modul ist nicht verfügbar"
 L["Unable to open configuration"] = "Konfiguration kann nicht geöffnet werden"
 
+-- Errors
 L["Error executing pending operation:"] = "Fehler beim Ausführen der ausstehenden Operation:"
 L["Error -- Addon 'DragonUI_Options' not found or is disabled."] = "Fehler -- Addon 'DragonUI_Options' wurde nicht gefunden oder ist deaktiviert."
 
@@ -105,6 +109,7 @@ L["BottomBarRight"] = "Unten rechts"
 L["XPBar"] = "EP-Leiste"
 L["RepBar"] = "Ruf-Leiste"
 L["MinimapFrame"] = "Minimap"
+L["LFGFrame"] = "Dungeon Auge"
 L["PlayerFrame"] = "Spieler"
 L["ManaBar"] = "Mana-Leiste"
 L["PetFrame"] = "Begleiter"
@@ -120,6 +125,12 @@ L["MicroMenu"] = "Mikromenü"
 L["VehicleExitOverlay"] = "Fahrzeug verlassen"
 L["StanceOverlay"] = "Haltungsleiste"
 L["petbar"] = "Begleiterleiste"
+L["boss"] = "Boss-Rahmen"
+L["Boss Frames"] = "Boss-Rahmen"
+L["Boss1Frame"] = "Boss-Rahmen"
+L["Boss2Frame"] = "Boss-Rahmen"
+L["Boss3Frame"] = "Boss-Rahmen"
+L["Boss4Frame"] = "Boss-Rahmen"
 L["TotemBarOverlay"] = "Totemleiste"
 L["PlayerCastbar"] = "Zauberleiste"
 L["Auras"] = "Auren"
@@ -139,6 +150,7 @@ L["All editable frames hidden, positions saved"] = "Alle bearbeitbaren Frames au
 -- COMPATIBILITY MODULE
 -- ============================================================================
 
+-- Conflict warning popup
 L["DragonUI Conflict Warning"] = "DragonUI-Konfliktwarnung"
 L["The addon |cFFFFFF00%s|r conflicts with DragonUI."] = "Das Addon |cFFFFFF00%s|r kollidiert mit DragonUI."
 L["Reason:"] = "Grund:"
@@ -146,6 +158,7 @@ L["Disable the conflicting addon now?"] = "Das konfliktverursachende Addon jetzt
 L["Disable"] = "Deaktivieren"
 L["Keep Both"] = "Beide behalten"
 
+-- Conflict reasons
 L["Conflicts with DragonUI's custom unit frame textures and power bar system."] = "Kollidiert mit DragonUIs benutzerdefinierten Einheiten-Rahmen-Texturen und dem Machtleistensystem."
 L["Known taint issues when manipulating party frames during combat. DragonUI provides automatic fixes."] = "Bekannte Kontaminationsprobleme beim Manipulieren von Gruppenrahmen im Kampf. DragonUI bietet automatische Korrekturen."
 L["Resets minimap mask and blip textures. DragonUI re-applies its custom textures automatically."] = "Setzt Minimap-Maske und Markierungs-Texturen zurück. DragonUI wendet seine benutzerdefinierten Texturen automatisch erneut an."
@@ -177,16 +190,8 @@ L["Show current SexyMap compatibility mode"] = "Aktuellen SexyMap-Kompatibilitä
 L["Reset SexyMap mode choice (re-prompts on reload)"] = "SexyMap-Modusauswahl zurücksetzen (fragt beim Neuladen erneut)"
 L["Loaded addons:"] = "Geladene Addons:"
 
--- Boss Frames
-L["boss"] = "Boss-Rahmen"
-L["Boss Frames"] = "Boss-Rahmen"
-L["Boss1Frame"] = "Boss-Rahmen"
-L["Boss2Frame"] = "Boss-Rahmen"
-L["Boss3Frame"] = "Boss-Rahmen"
-L["Boss4Frame"] = "Boss-Rahmen"
-
 -- ============================================================================
--- STATIC POPUPS
+-- STATIC POPUPS (shared between modules)
 -- ============================================================================
 
 L["Changing this setting requires a UI reload to apply correctly."] = "Das Ändern dieser Einstellung erfordert ein Neuladen der UI, damit es korrekt angewendet wird."
