@@ -1034,6 +1034,20 @@ local function StylePartyFrames()
                 end
             end
 
+            -- Lock portrait position so Blizzard vehicle transitions can't move it
+            local portrait = _G[frame:GetName() .. 'Portrait']
+            if portrait and not portrait.DragonUI_SetPointHooked then
+                local isResetting = false
+                hooksecurefunc(portrait, "SetPoint", function(self)
+                    if isResetting or InCombatLockdown() then return end
+                    isResetting = true
+                    self:ClearAllPoints()
+                    self:SetPoint("TOPLEFT", 7, -6)
+                    isResetting = false
+                end)
+                portrait.DragonUI_SetPointHooked = true
+            end
+
             -- Health bar
             local healthbar = _G[frame:GetName() .. 'HealthBar']
             if healthbar and not InCombatLockdown() then
@@ -1866,6 +1880,16 @@ end)
 -- PartyMemberFrame_UpdateArt hook catches all vehicle art transitions.
 -- PLAYER_ENTERING_WORLD with delay handles reload while in vehicle.
 
+-- Reset portrait to DragonUI's expected position after Blizzard vehicle transitions
+local function ResetPartyPortrait(frame)
+    if InCombatLockdown() then return end
+    local portrait = _G[frame:GetName() .. "Portrait"]
+    if portrait then
+        portrait:ClearAllPoints()
+        portrait:SetPoint("TOPLEFT", 7, -6)
+    end
+end
+
 -- Hook PartyMemberFrame_UpdateArt — catches both vehicle enter and exit
 if type(PartyMemberFrame_UpdateArt) == "function" then
     hooksecurefunc("PartyMemberFrame_UpdateArt", function(frame)
@@ -1898,6 +1922,7 @@ if type(PartyMemberFrame_UpdateArt) == "function" then
         HideBlizzardTexts(frame)
         CreateCustomTexts(frame)
         UpdateDisconnectedState(frame)
+        ResetPartyPortrait(frame)
     end)
 end
 
@@ -1942,6 +1967,7 @@ if type(PartyMemberFrame_ToVehicleArt) == "function" then
         HideBlizzardTexts(frame)
         CreateCustomTexts(frame)
         UpdateDisconnectedState(frame)
+        ResetPartyPortrait(frame)
     end)
 end
 
@@ -1986,6 +2012,7 @@ if type(PartyMemberFrame_ToPlayerArt) == "function" then
         HideBlizzardTexts(frame)
         CreateCustomTexts(frame)
         UpdateDisconnectedState(frame)
+        ResetPartyPortrait(frame)
     end)
 end
 
@@ -2000,6 +2027,7 @@ local function RefreshAllPartyFrames()
             CreateCustomTexts(frame)
             UpdateManaBarTexture(frame)
             UpdateDisconnectedState(frame)
+            ResetPartyPortrait(frame)
             local healthbar = _G[frame:GetName() .. "HealthBar"]
             local manabar = _G[frame:GetName() .. "ManaBar"]
             if healthbar then UpdateHealthText(healthbar, false) end
