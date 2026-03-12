@@ -202,6 +202,7 @@ L["Bag Sort"] = "Taschen sortieren"
 L["Enable Bag Sort"] = "Taschen sortieren aktivieren"
 L["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] = "Sortier-Buttons für Taschen und Bank. Sortiert Gegenstände nach Typ, Seltenheit, Stufe und Name."
 L["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] = "Fügt Sortier-Buttons zu Taschen- und Bankfenstern hinzu. Aktiviert auch die Befehle /sort und /sortbank."
+L["Sort bags and bank items with buttons"] = "Taschen und Bank mit Buttons sortieren"
 
 -- Advanced modules - Fallback display names
 L["Main Bars"] = "Hauptleisten"
@@ -714,6 +715,8 @@ L["Reset Colors to Default"] = "Farben auf Standard zurücksetzen"
 L["Target Frame"] = "Zielfenster"
 L["Threat Glow"] = "Bedrohungs-Glühen"
 L["Show threat glow effect"] = "Bedrohungs-Leuchteffekt anzeigen"
+L["Show Name Background"] = "Namenshintergrund anzeigen"
+L["Show the colored name background behind the target name."] = "Zeigt den farbigen Hintergrund hinter dem Zielnamen an."
 
 -- Focus frame
 L["Focus Frame"] = "Fokusfenster"

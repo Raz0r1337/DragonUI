@@ -188,8 +188,11 @@ local function ApplyQuestTrackerStyling()
     -- Get show_header setting
     local _, _, _, showHeader = GetQuestTrackerConfig()
 
-    -- Show background only when there are quests and header is enabled
-    if trackedQuestsCount > 0 and showHeader then
+    -- Hide header when QuestHelper is loaded (its own tracker conflicts visually)
+    local questHelperLoaded = IsAddOnLoaded and IsAddOnLoaded("QuestHelper")
+
+    -- Show background only when there are quests, header is enabled, and QuestHelper is not loaded
+    if trackedQuestsCount > 0 and showHeader and not questHelperLoaded then
         background:Show()
     else
         background:Hide()

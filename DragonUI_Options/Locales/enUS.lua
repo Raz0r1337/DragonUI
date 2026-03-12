@@ -227,6 +227,7 @@ L["Bag Sort"] = true
 L["Enable Bag Sort"] = true
 L["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] = true
 L["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] = true
+L["Sort bags and bank items with buttons"] = true
 
 L["Show 'All' Tab"] = true
 L["Show the 'All' category tab that displays all items without filtering."] = true
@@ -795,6 +796,8 @@ L["Reset Colors to Default"] = true
 L["Target Frame"] = true
 L["Threat Glow"] = true
 L["Show threat glow effect"] = true
+L["Show Name Background"] = true
+L["Show the colored name background behind the target name."] = true
 
 -- Focus frame
 L["Focus Frame"] = true

@@ -165,3 +165,13 @@ L["Sort Bags"] = "가방 정렬"
 L["Sort Bank"] = "은행 정렬"
 L["Sort Items"] = "아이템 정렬"
 L["Click to sort items by type, rarity, and name."] = "유형, 희귀도, 이름순으로 아이템을 정렬하려면 클릭하세요."
+
+-- 마이크로메뉴 지연 시간
+L["Network"] = "네트워크"
+L["Latency"] = "지연 시간"
+
+-- 파티 배경 CVar
+L["Disable"] = "비활성화"
+L["Ignore"] = "무시"
+L["The Blizzard option |cFFFFFF00Party/Arena Background|r is enabled. This conflicts with DragonUI's party frames."] = "블리자드 옵션 |cFFFFFF00파티/투기장 배경|r이 활성화되어 있습니다. DragonUI 파티 프레임과 충돌합니다."
+L["Disable it now?"] = "지금 비활성화하시가십니까?"

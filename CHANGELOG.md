@@ -2,6 +2,20 @@
 
 > **⚠️ Experimental Branch** - All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) - any feedback helps!
 
+## 📅 2026-03-12
+
+### Added
+- **Target name background toggle** - New option to hide the colored background behind target name text
+- **Chat font sizes** - Extended font size range (10–20) now available by default without manual commands
+- **QuestHelper compatibility** - Quest tracker header auto-hides when QuestHelper is loaded
+
+### Fixed
+- **Target class color** - Attempted fix for health bar reverting to default green when Blizzard resets the color (needs testing)
+- **Player icon layering** - PvP, leader, and master looter icons no longer render above other UI windows
+- **Micromenu latency tooltip** - "Network" / "Latency" text now localized
+- **Modules tab locale error** - Missing locale entry for bag sort description
+- **Party background CVar conflict** - Blizzard's "Party/Arena Background" option no longer breaks party frames; a popup warns and offers to disable it
+
 ## 📅 2026-03-10
 
 ### Added

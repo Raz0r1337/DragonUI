@@ -471,6 +471,7 @@ local defaults = {
                 showManaTextAlways = false,
                 enableNumericThreat = true,
                 enableThreatGlow = true,
+                show_name_background = true,
                 scale = 1.0
             },
             focus = {

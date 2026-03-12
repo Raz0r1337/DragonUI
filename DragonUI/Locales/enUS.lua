@@ -204,9 +204,17 @@ L["Loaded addons:"] = true
 L["Changing this setting requires a UI reload to apply correctly."] = true
 L["Reload UI"] = true
 L["Not Now"] = true
+L["Disable"] = true
+L["Ignore"] = true
+L["The Blizzard option |cFFFFFF00Party/Arena Background|r is enabled. This conflicts with DragonUI's party frames."] = true
+L["Disable it now?"] = true
 
 -- Bag Sort
 L["Sort Bags"] = true
 L["Sort Bank"] = true
 L["Sort Items"] = true
 L["Click to sort items by type, rarity, and name."] = true
+
+-- Micromenu Latency
+L["Network"] = true
+L["Latency"] = true

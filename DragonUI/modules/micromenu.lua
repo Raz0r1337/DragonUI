@@ -7,6 +7,7 @@
 ]]
 local addon = select(2, ...);
 local config = addon.config;
+local L = addon.L
 
 -- ============================================================================
 -- SERVER DETECTION & MODULE STATE
@@ -1557,8 +1558,8 @@ local function ApplyMicromenuSystem()
                     GameTooltip:SetOwner(self, "ANCHOR_TOP")
                     local _, _, latency = GetNetStats()
                     latency = latency or 0
-                    GameTooltip:AddLine("Network", 1, 1, 1)
-                    GameTooltip:AddDoubleLine("Latency", latency .. " ms", 1, 1, 1, 1, 1, 0)
+                    GameTooltip:AddLine(L and L["Network"] or "Network", 1, 1, 1)
+                    GameTooltip:AddDoubleLine(L and L["Latency"] or "Latency", latency .. " ms", 1, 1, 1, 1, 1, 0)
                     GameTooltip:Show()
                 end)
                 latencyBar:SetScript("OnLeave", function()

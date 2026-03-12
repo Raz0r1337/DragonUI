@@ -1507,9 +1507,9 @@ local function UpdatePlayerDragonDecoration()
                 dragonFrame.HitIndicatorFrame = hif
             end
             -- HIGH strata to render above dragon decoration (MEDIUM strata)
-            -- Level 1001 to render above EliteIconContainer (level 1000) which holds PVP icon
-            dragonFrame.HitIndicatorFrame:SetFrameStrata("HIGH")
-            dragonFrame.HitIndicatorFrame:SetFrameLevel(1001)
+            -- Level PlayerFrame+11 to render above EliteIconContainer (level+10) which holds PVP icon
+            dragonFrame.HitIndicatorFrame:SetFrameStrata("MEDIUM")
+            dragonFrame.HitIndicatorFrame:SetFrameLevel(PlayerFrame:GetFrameLevel() + 11)
             dragonFrame.HitIndicatorFrame:ClearAllPoints()
             dragonFrame.HitIndicatorFrame:SetPoint("CENTER", PlayerPortrait, "CENTER", 0, 0)
             dragonFrame.HitIndicatorFrame:Show()
@@ -1535,10 +1535,10 @@ local function UpdatePlayerDragonDecoration()
                 hif:SetSize(100, 100)
                 dragonFrame.HitIndicatorFrame = hif
             end
-            -- HIGH strata + level 1001 to render above EliteIconContainer (HIGH, level 1000)
+            -- MEDIUM strata + level PlayerFrame+11 to render above EliteIconContainer (level+10)
             -- which holds the PVP icon
-            dragonFrame.HitIndicatorFrame:SetFrameStrata("HIGH")
-            dragonFrame.HitIndicatorFrame:SetFrameLevel(1001)
+            dragonFrame.HitIndicatorFrame:SetFrameStrata("MEDIUM")
+            dragonFrame.HitIndicatorFrame:SetFrameLevel(PlayerFrame:GetFrameLevel() + 11)
             dragonFrame.HitIndicatorFrame:ClearAllPoints()
             dragonFrame.HitIndicatorFrame:SetPoint("CENTER", PlayerPortrait, "CENTER", 0, 0)
             dragonFrame.HitIndicatorFrame:Show()
@@ -1672,8 +1672,8 @@ local function CreatePlayerFrameTextures()
 
     if not dragonFrame.EliteIconContainer then
         local iconContainer = CreateFrame("Frame", "DragonUI_EliteIconContainer", PlayerFrame)
-        iconContainer:SetFrameStrata("HIGH")
-        iconContainer:SetFrameLevel(1000)
+        iconContainer:SetFrameStrata("MEDIUM")
+        iconContainer:SetFrameLevel(PlayerFrame:GetFrameLevel() + 10)
         iconContainer:SetSize(200, 200)
         iconContainer:SetPoint("CENTER", PlayerFrame, "CENTER", 0, 0)
         dragonFrame.EliteIconContainer = iconContainer

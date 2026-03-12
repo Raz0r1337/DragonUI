@@ -201,8 +201,11 @@ function UF.TargetStyle.Create(opts)
     -- HEALTH BAR COLOR
     -- ================================================================
 
-    local function UpdateHealthBarColor()
+    local isUpdatingColor = false
+
+    local function UpdateHealthBarColor(force)
         if not UnitExists(unitToken) or not HealthBar then return end
+        if isUpdatingColor then return end -- prevent recursion from SetVertexColor/SetStatusBarColor hooks
 
         -- Per-frame throttle: skip redundant calls in the same render frame.
         -- Multiple hooks (SetValue, OnValueChanged, SetStatusBarColor,
@@ -210,9 +213,15 @@ function UF.TargetStyle.Create(opts)
         -- the same event, especially when target==player.  Running once per
         -- frame is enough to keep visuals correct while avoiding the
         -- rendering pipeline churn that causes aura-icon flicker.
-        local now = GetTime()
-        if now == updateCache.lastColorFrame then return end
-        updateCache.lastColorFrame = now
+        -- The "force" flag bypasses the throttle so that correction hooks
+        -- (SetStatusBarColor) always win the race against Blizzard resets.
+        if not force then
+            local now = GetTime()
+            if now == updateCache.lastColorFrame then return end
+            updateCache.lastColorFrame = now
+        end
+
+        isUpdatingColor = true
 
         local config  = GetConfig()
         local texture = HealthBar:GetStatusBarTexture()
@@ -239,6 +248,8 @@ function UF.TargetStyle.Create(opts)
             end
             texture:SetVertexColor(1, 1, 1, 1)
         end
+
+        isUpdatingColor = false
     end
 
     -- ================================================================
@@ -338,9 +349,11 @@ function UF.TargetStyle.Create(opts)
             end)
 
             -- Prevent Blizzard from resetting health bar to default green
+            -- Use force=true to bypass the per-frame throttle so this
+            -- correction always wins the race against Blizzard color resets.
             hooksecurefunc(HealthBar, "SetStatusBarColor", function(self)
                 if UnitExists(unitToken) then
-                    UpdateHealthBarColor()
+                    UpdateHealthBarColor(true)
                 end
             end)
 
@@ -499,6 +512,13 @@ function UF.TargetStyle.Create(opts)
     local function UpdateNameBackground()
         if not NameBackground then return end
         if not UnitExists(unitToken) then
+            NameBackground:Hide()
+            return
+        end
+
+        -- Check if name background is disabled in config
+        local config = GetConfig()
+        if config and config.show_name_background == false then
             NameBackground:Hide()
             return
         end

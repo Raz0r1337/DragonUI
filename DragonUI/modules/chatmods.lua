@@ -446,6 +446,10 @@ end
 local function ApplyChatModsSystem()
     if ChatModsModule.applied then return end
 
+    -- Expand available chat font sizes (default WoW only has a few)
+    ChatModsModule.originalStates.CHAT_FONT_HEIGHTS = CHAT_FONT_HEIGHTS
+    CHAT_FONT_HEIGHTS = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+
     ApplyChatFrameTweaks()
     ApplyEditBoxPosition()
     ApplyLinkHover()
@@ -474,6 +478,12 @@ end
 
 local function RestoreChatModsSystem()
     if not ChatModsModule.applied then return end
+
+    -- Restore original chat font heights
+    if ChatModsModule.originalStates.CHAT_FONT_HEIGHTS then
+        CHAT_FONT_HEIGHTS = ChatModsModule.originalStates.CHAT_FONT_HEIGHTS
+        ChatModsModule.originalStates.CHAT_FONT_HEIGHTS = nil
+    end
 
     -- Restore URL handler
     if ChatModsModule.originalStates.ChatFrame_OnHyperlinkShow then

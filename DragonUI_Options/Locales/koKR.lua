@@ -206,6 +206,7 @@ L["Bag Sort"] = "가방 정렬"
 L["Enable Bag Sort"] = "가방 정렬 활성화"
 L["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] = "가방과 은행에 정렬 버튼을 추가합니다. 유형, 희귀도, 레벨, 이름순으로 정렬합니다."
 L["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] = "가방과 은행 창에 정렬 버튼을 추가합니다. /sort 및 /sortbank 명령어도 활성화됩니다."
+L["Sort bags and bank items with buttons"] = "버튼으로 가방 및 은행 아이템 정렬"
 
 -- 고급 모듈 - 대체 표시 이름 (Advanced modules - Fallback display names)
 L["Main Bars"] = "주 단축바"
@@ -728,6 +729,8 @@ L["Reset Colors to Default"] = "기본 색상으로 초기화"
 L["Target Frame"] = "대상 프레임"
 L["Threat Glow"] = "위협 수준 반짝임"
 L["Show threat glow effect"] = "위협 수준 반짝임 효과 표시"
+L["Show Name Background"] = "이름 배경 표시"
+L["Show the colored name background behind the target name."] = "대상 이름 뒤의 색상 배경을 표시합니다."
 
 -- Focus frame
 L["Focus Frame"] = "주시 대상 프레임"

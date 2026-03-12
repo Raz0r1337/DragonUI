@@ -302,6 +302,13 @@ local function BuildTargetSection(scroll)
     AddCommonControls(s, "target", refreshTarget, {
         hasClassPortrait = true,
     })
+
+    C:AddToggle(s, {
+        label = LO["Show Name Background"],
+        desc = LO["Show the colored name background behind the target name."],
+        dbPath = "unitframe.target.show_name_background",
+        callback = refreshTarget,
+    })
 end
 
 local function BuildFocusSection(scroll)

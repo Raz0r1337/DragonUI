@@ -199,3 +199,13 @@ L["Sort Bags"] = "Ordenar Bolsas"
 L["Sort Bank"] = "Ordenar Banco"
 L["Sort Items"] = "Ordenar Objetos"
 L["Click to sort items by type, rarity, and name."] = "Clic para ordenar objetos por tipo, rareza y nombre."
+
+-- Micromenu Latencia
+L["Network"] = "Red"
+L["Latency"] = "Latencia"
+
+-- Party Background CVar
+L["Disable"] = "Desactivar"
+L["Ignore"] = "Ignorar"
+L["The Blizzard option |cFFFFFF00Party/Arena Background|r is enabled. This conflicts with DragonUI's party frames."] = "La opción de Blizzard |cFFFFFF00Fondo de Grupo/Arena|r está activada. Esto entra en conflicto con los marcos de grupo de DragonUI."
+L["Disable it now?"] = "¿Desactivarla ahora?"
