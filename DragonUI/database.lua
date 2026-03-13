@@ -96,7 +96,7 @@ local defaults = {
             bagsbar = {
                 anchor = "BOTTOMRIGHT",
                 posX = -3,
-                posY = 45
+                posY = 40
             },
             xpbar = {
                 anchor = "BOTTOM",

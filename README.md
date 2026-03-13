@@ -21,5 +21,5 @@ Dragonflight UI for WotLK 3.3.5a.
 
 ## Changes
 
-See [CHANGELOG.md](CHANGELOG.md) for recent updates.
+See [CHANGELOG](CHANGELOG.md) for recent updates.
 

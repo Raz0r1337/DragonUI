@@ -1,3 +1,5 @@
 # Exclude these files and directories from GitHub's ZIP downloads
 .gitignore export-ignore
 .gitattributes export-ignore
+CHANGELOG.md export-ignore
+README.md export-ignore
