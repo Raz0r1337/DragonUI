@@ -144,7 +144,7 @@ local function BuildEnhancementsTab(scroll)
     C:AddSpacer(scroll)
     local iqSection = C:AddSection(scroll, LO["Item Quality Borders"])
 
-    C:AddDescription(iqSection, "Adds quality-colored glow borders to items in your bags, character panel, bank, merchant, and inspect frames: |cff1eff00green|r = uncommon, |cff0070ddblue|r = rare, |cffa335eepurple|r = epic, |cffff8000orange|r = legendary.")
+    C:AddDescription(iqSection, LO["Adds quality-colored glow borders to items in your bags, character panel, bank, merchant, and inspect frames: |cff1eff00green|r = uncommon, |cff0070ddblue|r = rare, |cffa335eepurple|r = epic, |cffff8000orange|r = legendary."])
 
     C:AddToggle(iqSection, {
         label = LO["Enable Item Quality Borders"],
