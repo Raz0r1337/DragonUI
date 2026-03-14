@@ -395,7 +395,7 @@ local function BuildPetSection(scroll)
     })
 
     C:AddSlider(s, {
-        label = "Y Position",
+        label = LO["Y Position"],
         dbPath = "unitframe.pet.y",
         min = -2500, max = 2500, step = 1,
         width = 200,
@@ -415,7 +415,7 @@ local function BuildToTSection(scroll)
 
     local tot = C:AddSection(scroll, LO["Target of Target"])
     C:AddDescription(tot,
-        "Follows the Target frame by default. Move it in Editor Mode (|cffffd700/dragonui edit|r) to detach and position freely.")
+        LO["Follows the Target frame by default. Move it in Editor Mode (|cffffd700/dragonui edit|r) to detach and position freely."])
 
     C:AddSlider(tot, {
         label = LO["Scale"],
@@ -434,9 +434,9 @@ local function BuildToTSection(scroll)
     -- Attachment status indicator
     local totOverride = C:GetDBValue("unitframe.tot.override")
     if totOverride then
-        C:AddDescription(tot, "|cff1784d1\226\151\143 Detached|r \226\128\148 positioned freely via Editor Mode")
+        C:AddDescription(tot, LO["|cff1784d1\226\151\143 Detached|r \226\128\148 positioned freely via Editor Mode"])
     else
-        C:AddDescription(tot, "|cffaaaaaa\226\151\143 Attached|r \226\128\148 follows Target frame")
+        C:AddDescription(tot, LO["|cffaaaaaa\226\151\143 Attached|r \226\128\148 follows Target frame"])
     end
 
     -- Re-attach button (only useful when detached)
@@ -463,7 +463,7 @@ local function BuildToTSection(scroll)
 
     local fot = C:AddSection(scroll, LO["Target of Focus"])
     C:AddDescription(fot,
-        "Follows the Focus frame by default. Move it in Editor Mode (|cffffd700/dragonui edit|r) to detach and position freely.")
+        LO["Follows the Focus frame by default. Move it in Editor Mode (|cffffd700/dragonui edit|r) to detach and position freely."])
 
     C:AddSlider(fot, {
         label = LO["Scale"],
@@ -482,9 +482,9 @@ local function BuildToTSection(scroll)
     -- Attachment status indicator
     local fotOverride = C:GetDBValue("unitframe.fot.override")
     if fotOverride then
-        C:AddDescription(fot, "|cff1784d1\226\151\143 Detached|r \226\128\148 positioned freely via Editor Mode")
+        C:AddDescription(fot, LO["|cff1784d1\226\151\143 Detached|r \226\128\148 positioned freely via Editor Mode"])
     else
-        C:AddDescription(fot, "|cffaaaaaa\226\151\143 Attached|r \226\128\148 follows Focus frame")
+        C:AddDescription(fot, LO["|cffaaaaaa\226\151\143 Attached|r \226\128\148 follows Focus frame"])
     end
 
     -- Re-attach button (only useful when detached)

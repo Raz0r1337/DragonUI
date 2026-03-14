@@ -101,7 +101,7 @@ local function BuildProfilesTab(scroll)
     -- ====================================================================
     local deleteSection = C:AddSection(scroll, LO["Delete Profile"])
 
-    C:AddDescription(deleteSection, "|cffFF6600Warning:|r Deleting a profile is permanent and cannot be undone.")
+    C:AddDescription(deleteSection, LO["|cffFF6600Warning:|r Deleting a profile is permanent and cannot be undone."])
 
     -- Build list excluding current
     local function GetDeletableProfiles()

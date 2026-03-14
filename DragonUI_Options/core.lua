@@ -10,7 +10,7 @@ Based on ElvUI_OptionsUI pattern - accesses DragonUI addon via global.
 -- Access the main DragonUI addon (exposed globally in DragonUI/core.lua)
 local addon = DragonUI
 if not addon then
-    print("|cFFFF0000[DragonUI_Options]|r Error: DragonUI addon not found!")
+    print(LO["|cFFFF0000[DragonUI_Options]|r Error: DragonUI addon not found!"])
     return
 end
 
