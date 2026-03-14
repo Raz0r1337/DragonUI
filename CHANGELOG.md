@@ -2,6 +2,21 @@
 
 > **⚠️ Experimental Branch** - All changes below still need further in-game testing and may contain bugs or incomplete features. If you run into any problems, feel free to let me know [here](https://github.com/NeticSoul/DragonUI/issues/141) - any feedback helps!
 
+## 📅 2026-03-14
+
+### Added
+- **Unit Frame Layers module** - New optional module that adds heal prediction bars, absorb shield overlays, and animated health loss effect to player and target unit frames. Configurable from the Modules tab
+- **UnitFrameLayers compatibility** - If the standalone UnitFrameLayers addon is detected, a popup now lets you choose between using DragonUI's built-in version or disabling both to avoid conflicts
+- **Focus name background toggle** - New option to show or hide the colored background behind the focus frame name
+
+### Changed
+- **Centralized font system** - All fonts are now managed from a single source that automatically picks the right font for your client language. This also fixes the "???" rendering bug on Korean, Chinese, and Russian clients
+
+### Fixed
+- **Attempted fix for UI freezes** - Applied texture coordinate clipping to player and pet health/mana bars to prevent visual corruption that could cause the game to freeze
+- **Options panel translation errors** - Fixed missing or mismatched locale keys that caused errors in the options panel for non-English clients
+- **Korean translations updated** - Improved Korean localization across the options panel (contributed by nadugi)
+
 ## 📅 2026-03-12
 
 ### Added
