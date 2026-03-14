@@ -42,7 +42,7 @@ Controls.Theme = {
     widgetBorder = { 0.25, 0.25, 0.28, 1 },
     buttonBg    = { 0.16, 0.16, 0.18, 1 },
     buttonHover = { 0.09, 0.52, 0.82, 0.3 },
-    font        = "Interface\\AddOns\\DragonUI_Options\\fonts\\PTSansNarrow.ttf",
+    font        = (addon.Fonts and addon.Fonts.NARROW) or "Interface\\AddOns\\DragonUI_Options\\fonts\\PTSansNarrow.ttf",
     fontSize    = 13,
 }
 

@@ -3,6 +3,12 @@
     <!-- Shared core utilities — must load before all frame modules -->
     <Script file="uf_core.lua"/>
     
+    <!-- UnitFrame Layers dependencies (math, mixin, spell cost, animated loss) -->
+    <Script file="uf_layers_deps.lua"/>
+    
+    <!-- UnitFrame Layers XML templates (heal prediction, absorb bar templates) -->
+    <Include file="unitframe_layers.xml"/>
+
     <!-- Shared factory for small companion frames (ToT/FoT) -->
     <Script file="small_frame.lua"/>
 
@@ -19,5 +25,8 @@
     <Script file="party.lua"/>
     <Script file="pet.lua"/>
     <Script file="boss.lua"/>
+
+    <!-- UnitFrame Layers module (hooks all above — must load LAST) -->
+    <Script file="unitframe_layers.lua"/>
 
 </Ui>

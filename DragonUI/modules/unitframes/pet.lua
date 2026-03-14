@@ -330,6 +330,20 @@ local function ReplaceBlizzardPetFrame()
         {70.5, 10},
         UNITFRAME_PATH .. TOT_BASE .. 'Bar-Health'
     )
+
+    -- TexCoord clipping for health bar (prevents baked texture squish)
+    if not PetFrameHealthBar.DragonUI_TexCoordHooked then
+        hooksecurefunc(PetFrameHealthBar, "SetValue", function(self)
+            local texture = self:GetStatusBarTexture()
+            if not texture then return end
+            local _, max = self:GetMinMaxValues()
+            local cur = self:GetValue()
+            if max > 0 and cur then
+                texture:SetTexCoord(0, cur / max, 0, 1)
+            end
+        end)
+        PetFrameHealthBar.DragonUI_TexCoordHooked = true
+    end
     
     -- Setup mana bar
     SetupStatusBar(
@@ -338,6 +352,22 @@ local function ReplaceBlizzardPetFrame()
         {74, 7.5}
     )
     UpdatePowerBarTexture()
+
+    -- TexCoord clipping for mana bar (prevents baked texture squish/inversion)
+    if not PetFrameManaBar.DragonUI_TexCoordHooked then
+        hooksecurefunc(PetFrameManaBar, "SetValue", function(self)
+            local texture = self:GetStatusBarTexture()
+            if not texture then return end
+            -- Re-apply power texture in case Blizzard reset it
+            UpdatePowerBarTexture()
+            local _, max = self:GetMinMaxValues()
+            local cur = self:GetValue()
+            if max > 0 and cur then
+                texture:SetTexCoord(0, cur / max, 0, 1)
+            end
+        end)
+        PetFrameManaBar.DragonUI_TexCoordHooked = true
+    end
     
     -- Configure combat mode
     ConfigureCombatMode()

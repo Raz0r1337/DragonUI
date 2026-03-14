@@ -71,11 +71,11 @@ local function styleEditorButton(button)
         button._dragonHighlight = hl
     end
 
-    -- Style text: clean modern font
+    -- Style text: clean modern font (locale-aware via addon.Fonts)
     local fontString = button:GetFontString()
     if fontString then
         fontString:SetTextColor(0.9, 0.9, 0.9, 1)
-        local fontPath = "Interface\\AddOns\\DragonUI_Options\\fonts\\PTSansNarrow.ttf"
+        local fontPath = (addon.Fonts and addon.Fonts.NARROW) or "Interface\\AddOns\\DragonUI_Options\\fonts\\PTSansNarrow.ttf"
         fontString:SetFont(fontPath, 12, "")
     end
 end

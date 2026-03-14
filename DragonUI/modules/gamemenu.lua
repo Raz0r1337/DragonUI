@@ -97,7 +97,7 @@ local function CreateDragonUIButton()
     local TEX_CUSTOM_HOVER  = nil
     local TEX_CUSTOM_PUSHED = nil
 
-    local FONT      = (addon.UF and addon.UF.DEFAULT_FONT) or "Fonts\\FRIZQT__.TTF"
+    local FONT      = (addon.Fonts and addon.Fonts.PRIMARY) or "Fonts\\FRIZQT__.TTF"
     local FONT_SIZE = 12
 
     -- GameMenuButtonTemplate sets the correct hit rect and default sizing.

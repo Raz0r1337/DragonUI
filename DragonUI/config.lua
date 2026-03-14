@@ -11,14 +11,8 @@ addon.L = LibStub("AceLocale-3.0"):GetLocale("DragonUI")
 
 addon._dir = [[Interface\AddOns\DragonUI\assets\]];
 
--- Locale-aware font selection (expressway.ttf lacks CJK/Cyrillic glyphs)
-local _locale = GetLocale()
-local _needsCJKFont = (_locale == "koKR" or _locale == "zhCN" or _locale == "zhTW")
-local _actionbarFont = _needsCJKFont and (({
-	koKR = "Fonts\\2002.TTF",
-	zhCN = "Fonts\\ZYKai_T.TTF",
-	zhTW = "Fonts\\bLEI00D.TTF",
-})[_locale]) or addon._dir..'expressway.ttf'
+-- Use centralized font system (loaded via core/fonts.lua before this file)
+local _actionbarFont = addon.Fonts.ACTIONBAR
 
 -- Static assets (not backed by database)
 local static_assets = {

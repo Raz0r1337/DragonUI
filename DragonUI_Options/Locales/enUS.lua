@@ -902,3 +902,14 @@ L["Restores the current profile to its defaults. This cannot be undone."] = true
 L["Reset Profile"] = true
 L["All changes will be lost and the UI will be reloaded.\nAre you sure you want to reset your profile?"] = true
 L["Profile reset to defaults."] = true
+
+-- UNIT FRAME LAYERS MODULE
+L["Unit Frame Layers"] = true
+L["Enable Unit Frame Layers"] = true
+L["Heal prediction, absorb shields, and animated health loss on unit frames"] = true
+L["Heal prediction bars, absorb shields, and animated health loss overlays on unit frames."] = true
+L["Show heal prediction, absorb shields, and animated health loss on all unit frames."] = true
+L["Animated Health Loss"] = true
+L["Show animated red health loss bar on player frame when taking damage."] = true
+L["Builder/Spender Feedback"] = true
+L["Show mana gain/loss glow feedback on player mana bar (experimental)."] = true

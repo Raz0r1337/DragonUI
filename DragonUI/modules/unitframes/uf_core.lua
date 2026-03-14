@@ -159,16 +159,10 @@ addon.unitframe.famous = UF.FAMOUS_NPCS
 -- ============================================================================
 -- LOCALE-AWARE DEFAULT FONT
 -- ============================================================================
--- WoW 3.3.5a ships different fonts per locale. FRIZQT__.TTF lacks Korean,
--- Chinese and extended Cyrillic glyphs, causing "???" on those clients.
+-- Uses centralized font system from core/fonts.lua.
 -- Modules should use UF.DEFAULT_FONT instead of hardcoding FRIZQT__.
 
-UF.DEFAULT_FONT = ({
-    koKR = "Fonts\\2002.TTF",
-    zhCN = "Fonts\\ZYKai_T.TTF",
-    zhTW = "Fonts\\bLEI00D.TTF",
-    ruRU = "Fonts\\FRIZQT___CYR.TTF",
-})[GetLocale()] or "Fonts\\FRIZQT__.TTF"
+UF.DEFAULT_FONT = addon.Fonts and addon.Fonts.PRIMARY or "Fonts\\FRIZQT__.TTF"
 
 
 -- ============================================================================

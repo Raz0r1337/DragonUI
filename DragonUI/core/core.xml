@@ -3,6 +3,7 @@
     
     <!-- DragonUI Core Files -->
     <!-- Load order: api (utilities + module helpers) -> movers -> commands -->
+    <!-- Note: fonts.lua loads earlier via DragonUI.xml (before config.lua) -->
     
     <Script file="api.lua"/>
     <Script file="movers.lua"/>

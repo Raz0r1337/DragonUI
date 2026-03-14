@@ -6,6 +6,9 @@
 
 local addon = select(2, ...);
 
+-- Locale-aware font (set by core/fonts.lua, loaded before this file)
+local _arialn = addon.Fonts and addon.Fonts.ARIALN or "Fonts\\ARIALN.TTF"
+
 local defaults = {
     profile = {
         -- Widgets
@@ -281,21 +284,21 @@ local defaults = {
                 show = true,
                 range = true,
                 shadow = {0, 0, 0, 1},
-                font = {"Fonts\\ARIALN.TTF", 12, "OUTLINE"}
+                font = {_arialn, 12, "OUTLINE"}
             },
             macros = {
                 show = true,
                 color = {.67, .80, .93, 1},
-                font = {"Fonts\\ARIALN.TTF", 10, "OUTLINE"}
+                font = {_arialn, 10, "OUTLINE"}
             },
             pages = {
                 show = true,
-                font = {"Fonts\\ARIALN.TTF", 12, "OUTLINE"}
+                font = {_arialn, 12, "OUTLINE"}
             },
             cooldown = {
                 color = {1, 1, 1, 1},
                 min_duration = 3,
-                font = {"Fonts\\ARIALN.TTF", 16, "OUTLINE"},
+                font = {_arialn, 16, "OUTLINE"},
                 font_size = 16,
                 position = {'CENTER', 0, 1}
             },
@@ -621,6 +624,11 @@ local defaults = {
             },
             bagsort = {
                 enabled = true -- Sort bags and bank items with buttons
+            },
+            unitframe_layers = {
+                enabled = false, -- Heal prediction, absorb shields, animated health loss overlays on unit frames
+                animated_loss = true, -- Animated red health loss bar on player frame
+                builder_spender = false -- Mana gain/loss glow feedback (experimental)
             }
         }
     }

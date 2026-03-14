@@ -163,6 +163,54 @@ local function BuildModulesTab(scroll)
     })
 
     -- ====================================================================
+    -- UNIT FRAME LAYERS
+    -- ====================================================================
+    local ufLayersSection = C:AddSection(scroll, LO["Unit Frame Layers"])
+
+    C:AddDescription(ufLayersSection, LO["Heal prediction bars, absorb shields, and animated health loss overlays on unit frames."])
+
+    ModuleToggle(ufLayersSection, {
+        label = LO["Enable Unit Frame Layers"],
+        desc = LO["Show heal prediction, absorb shields, and animated health loss on all unit frames."],
+        moduleName = "unitframe_layers",
+        requiresReload = true,
+    })
+
+    C:AddToggle(ufLayersSection, {
+        label = LO["Animated Health Loss"],
+        desc = LO["Show animated red health loss bar on player frame when taking damage."],
+        getFunc = function()
+            local m = addon.db.profile.modules and addon.db.profile.modules.unitframe_layers
+            if not m then return true end
+            return m.animated_loss ~= false
+        end,
+        setFunc = function(val)
+            if not addon.db.profile.modules.unitframe_layers then
+                addon.db.profile.modules.unitframe_layers = {}
+            end
+            addon.db.profile.modules.unitframe_layers.animated_loss = val
+        end,
+        requiresReload = true,
+    })
+
+    C:AddToggle(ufLayersSection, {
+        label = LO["Builder/Spender Feedback"],
+        desc = LO["Show mana gain/loss glow feedback on player mana bar (experimental)."],
+        getFunc = function()
+            local m = addon.db.profile.modules and addon.db.profile.modules.unitframe_layers
+            if not m then return false end
+            return m.builder_spender == true
+        end,
+        setFunc = function(val)
+            if not addon.db.profile.modules.unitframe_layers then
+                addon.db.profile.modules.unitframe_layers = {}
+            end
+            addon.db.profile.modules.unitframe_layers.builder_spender = val
+        end,
+        requiresReload = true,
+    })
+
+    -- ====================================================================
     -- ADVANCED: Individual Module Control
     -- ====================================================================
     C:AddSpacer(scroll)

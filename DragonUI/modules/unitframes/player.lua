@@ -2469,8 +2469,6 @@ local function InitializePlayerFrame()
             --  APPLY CLASS COLOR ON SHOW
             UpdatePlayerHealthBarColor()
         end)
-        -- Phase 2: Removed OnUpdate hook — fires 60x/sec unnecessarily.
-        -- OnValueChanged + OnShow + UnitFrameHealthBar_Update hook cover all real update cases.
     end
 
     -- Instance-level SetStatusBarColor defense (same pattern as small_frame.lua).
@@ -2493,6 +2491,33 @@ local function InitializePlayerFrame()
         PlayerFrameManaBar:HookScript('OnValueChanged', UpdateManaBarColor)
     end
 
+    -- TexCoord clipping for baked textures (critical for DragonUI dynamic cropping).
+    -- Overlay anchoring uses the statusbar texture object, so clipping remains compatible.
+    if PlayerFrameHealthBar then
+        hooksecurefunc(PlayerFrameHealthBar, "SetValue", function(self)
+            local texture = self:GetStatusBarTexture()
+            if not texture then return end
+            local _, max = self:GetMinMaxValues()
+            local cur = self:GetValue()
+            if max > 0 and cur and cur >= 0 then
+                texture:SetTexCoord(0, cur / max, 0, 1)
+            end
+        end)
+    end
+
+    -- Mana texcoord clipping (same baked texture rule).
+    if PlayerFrameManaBar then
+        hooksecurefunc(PlayerFrameManaBar, "SetValue", function(self)
+            local texture = self:GetStatusBarTexture()
+            if not texture then return end
+            local _, max = self:GetMinMaxValues()
+            local cur = self:GetValue()
+            if max > 0 and cur and cur >= 0 then
+                texture:SetTexCoord(0, cur / max, 0, 1)
+            end
+        end)
+    end
+
     -- Instance-level SetStatusBarColor defense for mana bar (same rationale).
     if PlayerFrameManaBar then
         local manaColorGuard = false
@@ -2502,6 +2527,16 @@ local function InitializePlayerFrame()
             UpdateManaBarColor(self)
             manaColorGuard = false
         end)
+    end
+
+    -- Protect against Blizzard's UnitFrameManaBar_UpdateType resetting our texture
+    if not Module._manaTypeHooked and _G.UnitFrameManaBar_UpdateType then
+        hooksecurefunc("UnitFrameManaBar_UpdateType", function(manaBar)
+            if manaBar == PlayerFrameManaBar then
+                UpdatePowerBarTexture(PlayerFrameManaBar)
+            end
+        end)
+        Module._manaTypeHooked = true
     end
 
     -- Setup glow suppression hooks
