@@ -17,7 +17,7 @@
 ## 📅 2026-03-14
 
 ### Added
-- **Unit Frame Layers module** - New optional module that adds heal prediction bars, absorb shield overlays, and animated health loss effect to player and target unit frames. Configurable from the Modules tab
+- **Unit Frame Layers module (beta)** - New optional module that adds heal prediction bars, absorb shield overlays, and animated health loss effect to player and target unit frames. Configurable from the Modules tab
 - **UnitFrameLayers compatibility** - If the standalone UnitFrameLayers addon is detected, a popup now lets you choose between using DragonUI's built-in version or disabling both to avoid conflicts
 - **Focus name background toggle** - New option to show or hide the colored background behind the focus frame name
 
