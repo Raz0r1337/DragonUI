@@ -5,18 +5,12 @@
 ## 📅 2026-03-16
 
 ### Added
-- **Bag Sort slot lock system** - You can now exclude specific bag slots from sorting (including empty slots) and keep them fixed while sorting everything else.
-- **Alt+Click locking workflow** - `Alt + LeftClick` on bag slots now toggles lock/unlock directly in both vanilla bags and Combuctor.
-- **Clear locked slots button** - Added a dedicated button next to sort controls to clear all slot locks quickly.
+- **Bag slot lock system** - You can lock specific bag slots to exclude them from automatic sorting.
+- **Quick lock controls** - Added `Alt + LeftClick` slot locking and a clear button to remove all locked slots.
 
 ### Changed
-- **Bag Sort localization coverage** - New lock-system tooltips/messages and clear-lock button text are now localized for enUS, esES, esMX, deDE, and koKR.
-- **Game menu compatibility split** - DragonUI button placement now uses Ascension-specific behavior when custom `EscapeMenu` is active and keeps classic insertion logic for standard clients.
-
-### Fixed
-- **Combuctor tooltip nil error** - Fixed `attempt to call method 'UpdateTooltip' (a nil value)` in Combuctor item slot updates.
-- **Game menu hook init error on custom servers** - Prevented early `hooksecurefunc` failures when menu frames are not ready yet.
-- **Game menu button visibility/repositioning** - Improved reliability when custom clients rebuild menu layout asynchronously.
+- **Localization coverage** - All new bag lock system texts and related changes are fully localized.
+- **Game menu compatibility mode** - Added compatibility handling with an Ascension-specific menu path.
 
 ## 📅 2026-03-15
 
