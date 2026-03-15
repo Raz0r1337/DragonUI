@@ -45,7 +45,11 @@ end
 local DEFAULT_MINIMAP_WIDTH = Minimap:GetWidth() * 1.36
 local DEFAULT_MINIMAP_HEIGHT = Minimap:GetHeight() * 1.36
 local blipScale = 1.12
-local BORDER_SIZE = 71 * 2 * 2 ^ 0.5
+local BORDER_SIZE = 71 * 2 * 2 ^ 1
+local BORDER_TO_MAP_RATIO = BORDER_SIZE / (DEFAULT_MINIMAP_WIDTH / blipScale)
+local DRAGONUI_MINIMAP_MASK = "Interface\\AddOns\\DragonUI\\assets\\uiminimapmask.tga"
+local RETAIL_INDOOR_ROTATE_SCALE_FACTOR = 175 / DEFAULT_MINIMAP_WIDTH
+local INDOOR_ROTATE_BORDER_SCALE_FACTOR = 1.09
 
 local ADDON_ORBIT_RADIUS = 15
 
@@ -84,6 +88,126 @@ local function GetAtlasFunction()
     else
         return nil
     end
+end
+
+local function UpdateMinimapCircleSize()
+    if not Minimap or not Minimap.Circle then return end
+
+    local mapSize = math.max(Minimap:GetWidth(), Minimap:GetHeight())
+    if not mapSize or mapSize <= 0 then return end
+
+    local rotateEnabled = GetCVar("rotateMinimap") == "1"
+    local isIndoor = IsIndoors and IsIndoors()
+    local sizeFactor = (rotateEnabled and isIndoor) and INDOOR_ROTATE_BORDER_SCALE_FACTOR or 1
+
+    local borderSize = mapSize * BORDER_TO_MAP_RATIO * sizeFactor
+    if MinimapModule.activeCircleSize ~= borderSize then
+        Minimap.Circle:SetSize(borderSize, borderSize)
+        Minimap.Circle:ClearAllPoints()
+        Minimap.Circle:SetPoint("CENTER", Minimap, "CENTER", 0, 0)
+        MinimapModule.activeCircleSize = borderSize
+    end
+end
+
+local function UpdateMinimapMaskForRotation()
+    if not Minimap then return end
+
+    if MinimapModule.activeMask ~= DRAGONUI_MINIMAP_MASK then
+        Minimap:SetMaskTexture(DRAGONUI_MINIMAP_MASK)
+        MinimapModule.activeMask = DRAGONUI_MINIMAP_MASK
+    end
+end
+
+local function UpdateIndoorRotationPolicy()
+    if not Minimap then return end
+
+    local isIndoor = IsIndoors and IsIndoors()
+    local currentRotate = GetCVar("rotateMinimap")
+
+    -- While indoors, force rotateMinimap off if user had it on.
+    if isIndoor then
+        if currentRotate == "1" then
+            MinimapModule.userRotatePreference = "1"
+            MinimapModule.forcingIndoorRotation = true
+            SetCVar("rotateMinimap", "0")
+            if MinimapModule.UpdateRotation then
+                MinimapModule.UpdateRotation()
+            end
+            return
+        end
+        return
+    end
+
+    -- Outdoors, restore user preference after indoor force-disable.
+    if MinimapModule.forcingIndoorRotation then
+        MinimapModule.forcingIndoorRotation = false
+        local restoreRotate = MinimapModule.userRotatePreference or "1"
+        if GetCVar("rotateMinimap") ~= restoreRotate then
+            SetCVar("rotateMinimap", restoreRotate)
+            if MinimapModule.UpdateRotation then
+                MinimapModule.UpdateRotation()
+            end
+            return
+        end
+    end
+
+    MinimapModule.userRotatePreference = currentRotate
+end
+
+local function UpdateMinimapBackdropAlignment(force)
+    if not Minimap or not MinimapBackdrop then return end
+
+    local rotateEnabled = GetCVar("rotateMinimap") == "1"
+    local isIndoor = IsIndoors and IsIndoors()
+    local desiredYOffset = (rotateEnabled and isIndoor) and 0 or 3
+
+    if force or MinimapModule.backdropYOffset ~= desiredYOffset then
+        MinimapBackdrop:ClearAllPoints()
+        MinimapBackdrop:SetPoint("CENTER", Minimap, "CENTER", 0, desiredYOffset)
+        MinimapModule.backdropYOffset = desiredYOffset
+    end
+end
+
+local function UpdateIndoorRotateScale()
+    if not Minimap then return end
+
+    local rotateEnabled = GetCVar("rotateMinimap") == "1"
+    local isIndoor = IsIndoors and IsIndoors()
+    local desiredScale = blipScale
+
+    if rotateEnabled and isIndoor then
+        desiredScale = blipScale * RETAIL_INDOOR_ROTATE_SCALE_FACTOR
+    end
+
+    if MinimapModule.activeMinimapScale ~= desiredScale then
+        Minimap:SetScale(desiredScale)
+        MinimapModule.activeMinimapScale = desiredScale
+    end
+end
+
+local function ApplyTextureRotation(texture, angle)
+    if not texture then return end
+
+    if texture.SetRotation then
+        texture:SetRotation(angle)
+        return
+    end
+
+    local c = math.cos(angle)
+    local s = math.sin(angle)
+    local cx, cy = 0.5, 0.5
+
+    local function RotatePoint(x, y)
+        local dx = x - cx
+        local dy = y - cy
+        return cx + dx * c - dy * s, cy + dx * s + dy * c
+    end
+
+    local ulx, uly = RotatePoint(0, 0)
+    local llx, lly = RotatePoint(0, 1)
+    local urx, ury = RotatePoint(1, 0)
+    local lrx, lry = RotatePoint(1, 1)
+    texture:SetTexCoord(ulx, uly, llx, lly, urx, ury, lrx, lry)
 end
 
 -- SECURE HOOKS: Add secure hooks for critical functions
@@ -384,10 +508,11 @@ local function ReplaceBlizzardFrame(frame)
     minimapFrame:SetWidth(DEFAULT_MINIMAP_WIDTH / blipScale)
     minimapFrame:SetHeight(DEFAULT_MINIMAP_HEIGHT / blipScale)
     minimapFrame:SetScale(blipScale)
+    MinimapModule.activeMinimapScale = blipScale
 
     -- In hybrid mode, don't override SexyMap's mask (it controls shape)
     if not isHybridMode then
-        minimapFrame:SetMaskTexture("Interface\\AddOns\\DragonUI\\assets\\uiminimapmask.tga")
+        UpdateMinimapMaskForRotation()
     end
 
     -- POI (Point of Interest) Custom Textures
@@ -445,7 +570,7 @@ local function ReplaceBlizzardFrame(frame)
                     and addon.db.profile.modules.minimap
                     and addon.db.profile.modules.minimap.sexymap_mode == "hybrid")
             if not hybridCheck then
-                Minimap:SetMaskTexture("Interface\\AddOns\\DragonUI\\assets\\uiminimapmask.tga")
+                UpdateMinimapMaskForRotation()
             end
         end
 
@@ -512,16 +637,15 @@ local function ReplaceBlizzardFrame(frame)
         local minimapBackdropTexture = MinimapBackdrop
         minimapBackdropTexture:ClearAllPoints()
         minimapBackdropTexture:SetPoint("CENTER", minimapFrame, "CENTER", 0, 3)
+        MinimapModule.backdropYOffset = 3
 
         local minimapBorderTexture = MinimapBorder
         minimapBorderTexture:Hide()
         if not Minimap.Circle then
             Minimap.Circle = MinimapBackdrop:CreateTexture(nil, 'ARTWORK')
-
-            Minimap.Circle:SetSize(BORDER_SIZE, BORDER_SIZE)
-            Minimap.Circle:SetPoint('CENTER', Minimap, 'CENTER')
             Minimap.Circle:SetTexture("Interface\\AddOns\\DragonUI\\assets\\uiminimapborder.tga")
         end
+        UpdateMinimapCircleSize()
 
         local zoomInButton = MinimapZoomIn
         zoomInButton:ClearAllPoints()
@@ -712,8 +836,33 @@ local function CreateMinimapBorderFrame(width, height)
     local minimapBorderFrame = CreateFrame('Frame', UIParent)
     minimapBorderFrame:SetSize(width, height)
     minimapBorderFrame:SetScript("OnUpdate", function(self)
-        local angle = GetPlayerFacing()
-        self.border:SetRotation(angle)
+        UpdateIndoorRotationPolicy()
+
+        local facing = GetPlayerFacing()
+        if not facing then return end
+        local angle = -facing
+        local rotateEnabled = GetCVar("rotateMinimap") == "1"
+
+        if Minimap and Minimap.Circle then
+            if rotateEnabled then
+                ApplyTextureRotation(Minimap.Circle, angle)
+            else
+                if Minimap.Circle.SetRotation then
+                    Minimap.Circle:SetRotation(0)
+                else
+                    Minimap.Circle:SetTexCoord(0, 1, 0, 1)
+                end
+            end
+        end
+        UpdateMinimapMaskForRotation()
+        UpdateMinimapBackdropAlignment(false)
+        UpdateIndoorRotateScale()
+        UpdateMinimapCircleSize()
+
+        if self.border then
+            self.border:SetAlpha(0)
+            ApplyTextureRotation(self.border, 0)
+        end
     end)
 
     do
@@ -1153,6 +1302,8 @@ end
 -- Stored on module table so the hooksecurefunc post-hook can reference it
 -- without calling the global (which would cause infinite recursion)
 MinimapModule.UpdateRotation = function()
+    UpdateIndoorRotationPolicy()
+
     -- In hybrid mode, let SexyMap control the border visibility
     local isHybridMode = MinimapModule.sexyMapHybridMode
         or MinimapModule._allowExternalBorderControl
@@ -1166,13 +1317,33 @@ MinimapModule.UpdateRotation = function()
         end
     end
 
-    if GetCVar("rotateMinimap") == "1" then
+    local rotateEnabled = GetCVar("rotateMinimap") == "1"
+    local keepPolicyLoop = MinimapModule.forcingIndoorRotation == true
+
+    -- Keep borderFrame visible while forcing indoor rotation OFF so OnUpdate can
+    -- detect leaving indoor areas and restore the user's rotation preference.
+    if rotateEnabled or keepPolicyLoop then
         if MinimapModule.borderFrame then
             MinimapModule.borderFrame:Show()
         end
+        UpdateMinimapMaskForRotation()
+        UpdateMinimapBackdropAlignment(false)
+        UpdateIndoorRotateScale()
+        UpdateMinimapCircleSize()
     else
         if MinimapModule.borderFrame then
             MinimapModule.borderFrame:Hide()
+        end
+        UpdateMinimapMaskForRotation()
+        UpdateMinimapBackdropAlignment(false)
+        UpdateIndoorRotateScale()
+        UpdateMinimapCircleSize()
+        if Minimap and Minimap.Circle then
+            if Minimap.Circle.SetRotation then
+                Minimap.Circle:SetRotation(0)
+            else
+                Minimap.Circle:SetTexCoord(0, 1, 0, 1)
+            end
         end
     end
 
@@ -1634,6 +1805,10 @@ function MinimapModule:InitializeMinimapSystem()
     --  ADD THIS LINE TO APPLY ALL SETTINGS AT STARTUP
     self:UpdateSettings()
 
+    if self.UpdateRotation then
+        self.UpdateRotation()
+    end
+
     -- Hook tracking changes to update icon automatically (not in hybrid mode)
     if not isHybridMode then
         MiniMapTrackingButton:HookScript("OnEvent", function()
@@ -1716,6 +1891,8 @@ function MinimapModule:UpdateSettings()
         if self.borderFrame then
             self.borderFrame:SetScale(scale)
         end
+
+        UpdateMinimapCircleSize()
 
         --  APPLY ALL SETTINGS
         self:ApplyAllSettings()

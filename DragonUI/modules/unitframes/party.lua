@@ -1348,8 +1348,14 @@ end
 local function SetupPartyHooks()
     hooksecurefunc("PartyMemberFrame_UpdateMember", function(frame)
         if frame and frame:GetName():match("^PartyMemberFrame%d+$") then
+            local frameIndex = frame:GetID()
+            local unit = frameIndex and ("party" .. frameIndex)
+
+            if unit and UnitExists(unit) and not frame:IsShown() and not InCombatLockdown() then
+                frame:Show()
+            end
+
             if PartyFrames.anchor and not InCombatLockdown() then
-                local frameIndex = frame:GetID()
                 if frameIndex and frameIndex >= 1 and frameIndex <= 4 then
                     frame:ClearAllPoints()
                     local step = GetPartyStep()
@@ -1768,18 +1774,45 @@ end)
 
 local recoveryFrame = CreateFrame("Frame")
 recoveryFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")   -- Party composition changes (join/leave/role swap)
+recoveryFrame:RegisterEvent("PLAYER_ENTERING_WORLD")   -- Recovery after reload/zone transitions
 recoveryFrame:RegisterEvent("PLAYER_ALIVE")             -- Player resurrects (accept rez or spirit healer)
 recoveryFrame:RegisterEvent("PLAYER_UNGHOST")           -- Player returns from ghost form
 recoveryFrame:RegisterEvent("UNIT_HEALTH")              -- Any unit health change (catches party member rez too)
 recoveryFrame:SetScript("OnEvent", function(self, event, unit)
-    -- For PARTY_MEMBERS_CHANGED, hide frames for members that no longer exist
-    -- Uses CombatQueue to defer if in combat (Hide on secure frames causes taint)
+    if event == "PLAYER_ENTERING_WORLD" then
+        local delayFrame = CreateFrame("Frame")
+        local elapsed = 0
+        delayFrame:SetScript("OnUpdate", function(delaySelf, dt)
+            elapsed = elapsed + dt
+            if elapsed >= 0.5 then
+                delaySelf:SetScript("OnUpdate", nil)
+                if InCombatLockdown() then
+                    return
+                end
+                StylePartyFrames()
+                for i = 1, MAX_PARTY_MEMBERS do
+                    local frame = _G['PartyMemberFrame' .. i]
+                    if frame and UnitExists("party" .. i) then
+                        frame:Show()
+                    end
+                end
+            end
+        end)
+        return
+    end
+
+    -- For PARTY_MEMBERS_CHANGED, refresh frame visibility for all party slots.
+    -- Uses CombatQueue to defer in combat (Show/Hide on secure frames causes taint).
     if event == "PARTY_MEMBERS_CHANGED" then
-        local function HideEmptyPartyFrames()
+        local function RefreshPartyFrames()
             for i = 1, MAX_PARTY_MEMBERS do
                 local frame = _G['PartyMemberFrame' .. i]
-                if frame and not UnitExists("party" .. i) then
-                    frame:Hide()
+                if frame then
+                    if UnitExists("party" .. i) then
+                        frame:Show()
+                    else
+                        frame:Hide()
+                    end
                 end
             end
         end
@@ -1787,10 +1820,10 @@ recoveryFrame:SetScript("OnEvent", function(self, event, unit)
         if InCombatLockdown() then
             -- Queue for after combat ends
             if addon.CombatQueue then
-                addon.CombatQueue:Add("party_hide_empty", HideEmptyPartyFrames)
+                addon.CombatQueue:Add("party_refresh", RefreshPartyFrames)
             end
         else
-            HideEmptyPartyFrames()
+            RefreshPartyFrames()
         end
     end
 

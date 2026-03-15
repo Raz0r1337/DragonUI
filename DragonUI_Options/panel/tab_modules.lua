@@ -193,23 +193,6 @@ local function BuildModulesTab(scroll)
         requiresReload = true,
     })
 
-    C:AddToggle(ufLayersSection, {
-        label = LO["Builder/Spender Feedback"],
-        desc = LO["Show mana gain/loss glow feedback on player mana bar (experimental)."],
-        getFunc = function()
-            local m = addon.db.profile.modules and addon.db.profile.modules.unitframe_layers
-            if not m then return false end
-            return m.builder_spender == true
-        end,
-        setFunc = function(val)
-            if not addon.db.profile.modules.unitframe_layers then
-                addon.db.profile.modules.unitframe_layers = {}
-            end
-            addon.db.profile.modules.unitframe_layers.builder_spender = val
-        end,
-        requiresReload = true,
-    })
-
     -- ====================================================================
     -- ADVANCED: Individual Module Control
     -- ====================================================================

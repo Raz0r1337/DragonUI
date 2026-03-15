@@ -455,13 +455,20 @@ function UF.TargetStyle.Create(opts)
     -- ================================================================
 
     local function UpdateClassification()
+        local raidTargetIcon = _G[namePrefix .. "FrameTextureFrameRaidTargetIcon"]
+        if raidTargetIcon and raidTargetIcon.SetDrawLayer then
+            raidTargetIcon:SetDrawLayer("OVERLAY", 7)
+        end
+
         if not UnitExists(unitToken) or not frameElements.elite then
             if frameElements.elite then frameElements.elite:Hide() end
             return
         end
 
-        -- Vehicle override
-        if UnitVehicleSeatCount and UnitVehicleSeatCount(unitToken) > 0 then
+        -- Vehicle override (strict): only hide for actual units in vehicles.
+        -- UnitVehicleSeatCount can be non-zero on some boss units and should not
+        -- suppress elite/worldboss decoration in that case.
+        if UnitInVehicle and UnitInVehicle(unitToken) then
             frameElements.elite:Hide()
             return
         end
@@ -494,15 +501,54 @@ function UF.TargetStyle.Create(opts)
         end
 
         if coords then
+            frameElements.elite:SetDrawLayer("ARTWORK", 1)
             frameElements.elite:SetTexCoord(
                 coords[1], coords[2], coords[3], coords[4])
             frameElements.elite:SetSize(coords[5], coords[6])
+            frameElements.elite:ClearAllPoints()
             frameElements.elite:SetPoint(
                 "CENTER", Portrait, "CENTER", coords[7], coords[8])
             frameElements.elite:Show()
         else
             frameElements.elite:Hide()
         end
+    end
+
+    local function QueueClassificationRefresh(delay)
+        if not Module.classificationRefreshFrame then
+            Module.classificationRefreshFrame = CreateFrame("Frame")
+        end
+
+        local refreshFrame = Module.classificationRefreshFrame
+        refreshFrame.delay = delay or 0.08
+        refreshFrame.elapsed = 0
+        refreshFrame.passes = 0
+        refreshFrame.maxPasses = 3
+        refreshFrame.targetGUID = UnitGUID(unitToken)
+
+        refreshFrame:SetScript("OnUpdate", function(self, dt)
+            self.elapsed = self.elapsed + dt
+            if self.elapsed >= self.delay then
+                self.elapsed = 0
+                self.passes = self.passes + 1
+
+                if UnitExists(unitToken) then
+                    local currentGUID = UnitGUID(unitToken)
+                    if (not self.targetGUID) or (not currentGUID) or currentGUID == self.targetGUID then
+                        UpdateClassification()
+                    else
+                        -- Unit swapped again during delay; apply once for the new unit.
+                        UpdateClassification()
+                    end
+                elseif frameElements.elite then
+                    frameElements.elite:Hide()
+                end
+
+                if self.passes >= self.maxPasses then
+                    self:SetScript("OnUpdate", nil)
+                end
+            end
+        end)
     end
 
     -- ================================================================
@@ -599,10 +645,16 @@ function UF.TargetStyle.Create(opts)
 
         -- ---- Create elite decoration ----
         if not frameElements.elite then
-            frameElements.elite = BlizzFrame:CreateTexture(
-                "DragonUI_" .. namePrefix .. "Elite", "OVERLAY", nil, 7)
+            local textureFrame = _G[namePrefix .. "FrameTextureFrame"]
+            frameElements.elite = (textureFrame or BlizzFrame):CreateTexture(
+                "DragonUI_" .. namePrefix .. "Elite", "ARTWORK", nil, 1)
             frameElements.elite:SetTexture(TEXTURES.BOSS)
             frameElements.elite:Hide()
+        end
+
+        local raidTargetIcon = _G[namePrefix .. "FrameTextureFrameRaidTargetIcon"]
+        if raidTargetIcon and raidTargetIcon.SetDrawLayer then
+            raidTargetIcon:SetDrawLayer("OVERLAY", 7)
         end
 
         -- ---- Create threat numeric indicator ----
@@ -842,6 +894,7 @@ function UF.TargetStyle.Create(opts)
                             eCoords[3], eCoords[4])
                         frameElements.elite:SetSize(
                             eCoords[5], eCoords[6])
+                        frameElements.elite:ClearAllPoints()
                         frameElements.elite:SetPoint(
                             "CENTER", Portrait, "CENTER",
                             eCoords[7], eCoords[8])
@@ -910,6 +963,7 @@ function UF.TargetStyle.Create(opts)
                 end
                 UpdateNameBackground()
                 UpdateClassification()
+                QueueClassificationRefresh(0.12)
                 UpdateThreat()
                 if Module.textSystem then Module.textSystem.update() end
             end
@@ -923,6 +977,7 @@ function UF.TargetStyle.Create(opts)
             end
             UpdateNameBackground()
             UpdateClassification()
+            QueueClassificationRefresh(0.08)
             UpdateThreat()
             UpdateHealthBarColor()
             UpdateClassPortrait()
@@ -930,7 +985,10 @@ function UF.TargetStyle.Create(opts)
 
         elseif event == "UNIT_CLASSIFICATION_CHANGED" then
             local unit = ...
-            if unit == unitToken then UpdateClassification() end
+            if unit == unitToken then
+                UpdateClassification()
+                QueueClassificationRefresh(0.05)
+            end
 
         elseif event == "UNIT_THREAT_SITUATION_UPDATE"
             or event == "UNIT_THREAT_LIST_UPDATE" then

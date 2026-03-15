@@ -91,7 +91,13 @@ function TextSystem.CreateDualTextElements(parentFrame, barFrame, prefix, layer,
         if fontPath and originalSize then
             centerText:SetFont(fontPath, originalSize + 1, flags) --  LARGER FONT
         end
-        centerText:SetPoint("CENTER", barFrame, "CENTER", 0, 0)
+        if prefix == "TargetFrameMana" then
+            centerText:SetPoint("CENTER", barFrame, "CENTER", -2, 0)
+        elseif prefix == "FocusFrameMana" then
+            centerText:SetPoint("CENTER", barFrame, "CENTER", -3, 0)
+        else
+            centerText:SetPoint("CENTER", barFrame, "CENTER", 0, 0)
+        end
         centerText:SetJustifyH("CENTER")
         parentFrame[prefix .. "Text"] = centerText
         elements.center = centerText

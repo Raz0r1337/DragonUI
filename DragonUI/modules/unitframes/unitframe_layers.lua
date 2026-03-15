@@ -404,6 +404,24 @@ local function UnitFrameLayer_Initialize(self, myHealPredictionBar, otherHealPre
 			self.manabar.FeedbackFrame:SetFrameLevel(self:GetParent():GetFrameLevel() + 2);
 
 			self.manabar.FullPowerFrame = CreateFrame("Frame", nil, self.manabar, "DragonUI_FullPowerFrameTemplate");
+
+			local powerType, powerToken = UnitPowerType(self.unit);
+			local info = nil;
+			if PowerBarColor then
+				info = (powerToken and PowerBarColor[powerToken])
+					or (powerType and PowerBarColor[powerType])
+					or PowerBarColor["MANA"];
+			end
+			if not info then
+				info = { r = 1, g = 1, b = 1 };
+			end
+
+			if self.manabar.FeedbackFrame.Initialize then
+				self.manabar.FeedbackFrame:Initialize(info, self.unit, powerType or 0);
+			end
+			if self.manabar.FullPowerFrame and self.manabar.FullPowerFrame.Initialize then
+				self.manabar.FullPowerFrame:Initialize(info.fullPowerAnim and true or false);
+			end
 		end
 	end
 
@@ -488,7 +506,8 @@ local function ApplyUnitFrameLayersSystem()
 					if ( not self.ignoreNoUnit or UnitGUID(self.unit) ) then
 						if ( self.FeedbackFrame ) then
 							local oldValue = self.currValue or 0;
-							if ( self.FeedbackFrame.maxValue ~= 0 and math.abs(currValue - oldValue) / self.FeedbackFrame.maxValue > 0.1 ) then
+							local maxValue = self.FeedbackFrame.maxValue;
+							if ( maxValue and maxValue ~= 0 and math.abs(currValue - oldValue) / maxValue > 0.1 ) then
 								self.FeedbackFrame:StartFeedbackAnim(oldValue, currValue);
 							end
 						end
