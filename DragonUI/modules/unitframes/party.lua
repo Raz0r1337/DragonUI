@@ -89,12 +89,32 @@ local function UpdatePartyAnchorSize()
 end
 
 local function IsCompactRaidFrameAddonLoaded()
-    if IsAddOnLoaded then
-        return IsAddOnLoaded("CompactRaidFrame")
+    -- Runtime signal first: if compact raid/party frames already exist,
+    -- we should treat compact mode as active regardless of addon ID.
+    if _G.CompactRaidFrameManager or _G.CompactRaidFrame1 or _G.CompactPartyFrame then
+        return true
     end
 
-    -- Fallback for environments where addon name differs but frame manager exists.
-    return CompactRaidFrameManager ~= nil
+    -- Prefer CUF_CVar API when present (matches CompactRaidFrame reference).
+    local useCompact = nil
+    if CUF_CVar and CUF_CVar.GetCVarBool then
+        useCompact = CUF_CVar:GetCVarBool("useCompactPartyFrames") and true or false
+    elseif GetCVar then
+        useCompact = (GetCVar("useCompactPartyFrames") == "1")
+    end
+
+    if useCompact then
+        return true
+    end
+
+    if IsAddOnLoaded then
+        -- Canonical addon folder name in this client branch.
+        if IsAddOnLoaded("CompactRaidFrame") then
+            return true
+        end
+    end
+
+    return false
 end
 
 local function GetDefaultPartyPosX()
@@ -104,7 +124,7 @@ end
 local function GetCompactRaidPartyOffsetX()
     -- Runtime-only offset: avoids persisting shifted positions in the profile.
     if IsCompactRaidFrameAddonLoaded() then
-        return 15
+        return 3
     end
     return 0
 end
@@ -237,6 +257,11 @@ end
 
 -- Function to check if party frames should be visible
 local function IsCompactPartyFramesEnabled()
+    -- Prefer CUF_CVar API when present (matches CompactRaidFrame reference).
+    if CUF_CVar and CUF_CVar.GetCVarBool then
+        return CUF_CVar:GetCVarBool("useCompactPartyFrames") and true or false
+    end
+
     return GetCVar and GetCVar("useCompactPartyFrames") == "1"
 end
 
