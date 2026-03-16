@@ -11,6 +11,7 @@
 ### Fixed
 - **Target PvP icon overlap** - The PvP flag icon now renders in front of the elite dragon decoration.
 - **Bank slot locking** - Slot locks now work correctly on main bank slots (previously locks were stored under the wrong bag ID and ignored during sorting).
+- **CompactRaidFrame** - Fixed a compatibility issue with the CompactRaidFrame addon.
 
 ### Changed
 - **Localization coverage** - All new bag lock system texts and related changes are fully localized.
