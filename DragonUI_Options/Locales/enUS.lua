@@ -20,7 +20,7 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = true
-L["Use the tabs on the left to customize action bars, unit frames, minimap, cast bars, and more."] = true
+L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = true
 L["Editor Mode"] = true
 L["KeyBind Mode"] = true
 L["Exit Editor Mode"] = true
@@ -42,9 +42,11 @@ L["Heal prediction, absorb shields and animated health loss."] = true
 L["Change columns, rows, and buttons shown per action bar."] = true
 L["Switch micro menu icons between colored and grayscale style."] = true
 L["About"] = true
-L["Dragonflight-inspired UI for WotLK 3.3.5a."] = true
+L["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."] = true
+L["Created and maintained by Neticsoul, with community contributions."] = true
 
-L["Use /dragonui or /pi to toggle this panel."]  = true
+L["Commands: /dragonui, /dui, /pi \226\128\148 /dragonui edit (editor) \226\128\148 /dragonui help"] = true
+L["GitHub (select and Ctrl+C to copy):"] = true
 L["All"] = true
 L["Error:"] = true
 L["Error: DragonUI addon not found!"] = true

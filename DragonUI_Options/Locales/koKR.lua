@@ -20,7 +20,7 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
-L["Use the tabs on the left to customize action bars, unit frames, minimap, cast bars, and more."] = "왼쪽 탭을 사용하여 액션바, 유닛 프레임, 미니맵, 시전바 등을 커스터마이즈하세요."
+L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "왼쪽 탭을 사용하여 모듈, 액션바, 유닛 프레임, 미니맵 등을 설정하세요."
 L["Editor Mode"] = "편집 모드"
 L["Exit Editor Mode"] = "편집 모드 종료"
 L["KeyBind Mode Active"] = "단축키 설정 모드 활성화됨"
@@ -41,9 +41,11 @@ L["Heal prediction, absorb shields and animated health loss."] = "치유 예측,
 L["Change columns, rows, and buttons shown per action bar."] = "액션바당 열, 행 및 표시 버튼 수를 변경합니다."
 L["Switch micro menu icons between colored and grayscale style."] = "마이크로 메뉴 아이콘을 컬러와 회색조 사이에서 전환합니다."
 L["About"] = "정보"
-L["Dragonflight-inspired UI for WotLK 3.3.5a."] = "리치 왕의 분노(3.3.5a)용 용군단 스타일 UI"
+L["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."] = "Dragonflight UI에서 영감을 받아 3.3.5a에 리테일 WoW 느낌을 구현합니다."
+L["Created and maintained by Neticsoul, with community contributions."] = "Neticsoul이 제작 및 유지하며, 커뮤니티가 기여합니다."
 
-L["Use /dragonui or /pi to toggle this panel."] = "/dragonui 또는 /pi 로 이 패널을 전환하세요."
+L["Commands: /dragonui, /dui, /pi — /dragonui edit (editor) — /dragonui help"] = "명령어: /dragonui, /dui, /pi — /dragonui edit (편집) — /dragonui help"
+L["GitHub (select and Ctrl+C to copy):"] = "GitHub (선택 후 Ctrl+C로 복사):"
 L["All"] = "전체"
 L["Error:"] = "오류:"
 L["Error: DragonUI addon not found!"] = "오류: DragonUI 애드온을 찾을 수 없습니다!"

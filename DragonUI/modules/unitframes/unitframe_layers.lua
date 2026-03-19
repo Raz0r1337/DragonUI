@@ -275,39 +275,50 @@ local function LibEventCallback(self, event, ...)
 	local arg1, arg2, arg3, arg4, arg5 = ...;
 	if ( not self.unit ) then return end
 
-	if ( event == "EffectApplied" and arg3 == UnitGUID(self.unit) ) then
+	local unitGUID = UnitGUID(self.unit);
+	if not unitGUID then return end
+
+	-- AbsorbsMonitor events: EffectApplied(srcGUID, srcName, dstGUID, ...) → arg3=dstGUID
+	if ( (event == "EffectApplied") and arg3 == unitGUID ) then
 		UnitFrameHealPredictionBars_Update(self);
-	elseif ( arg1 == UnitGUID(self.unit) ) then
-		if ( event == "UnitUpdated" or event == "EffectRemoved" or event == "UnitCleared"
-			or event == "AreaCreated" or event == "AreaCleared" or event == "COMPACT_UNIT_FRAME_UNIT_AURA" ) then
+
+	-- AbsorbsMonitor events where arg1=guid: EffectUpdated, UnitUpdated, EffectRemoved, UnitCleared, AreaCleared
+	elseif ( arg1 == unitGUID ) then
+		if ( event == "UnitUpdated" or event == "EffectUpdated" or event == "EffectRemoved"
+			or event == "UnitCleared" or event == "AreaCreated" or event == "AreaCleared"
+			or event == "HealComm_ModifierChanged" or event == "HealComm_GUIDDisappeared" ) then
 			UnitFrameHealPredictionBars_Update(self);
 		end
-	elseif ( arg5 == UnitGUID(self.unit) ) then
+
+	-- HealComm events: (casterGUID, spellID, bitType, endTime, ...targets) → arg5=first target
+	elseif ( arg5 == unitGUID ) then
 		if ( event == "HealComm_HealUpdated" or event == "HealComm_HealStarted"
-			or event == "HealComm_HealDelayed" or event == "HealComm_HealStopped"
-			or event == "HealComm_ModifierChanged" or event == "HealComm_GUIDDisappeared" ) then
+			or event == "HealComm_HealDelayed" or event == "HealComm_HealStopped" ) then
 			UnitFrameHealPredictionBars_Update(self);
 		end
 	end
 end
 
 local function UnitFrame_RegisterCallback(self)
-	if not LibAbsorb or not HealComm then return end
+	-- Register each library independently so one failing doesn't block the other
+	if LibAbsorb and LibAbsorb.RegisterCallback then
+		LibAbsorb.RegisterCallback(self, "EffectApplied", LibEventCallback, self);
+		LibAbsorb.RegisterCallback(self, "EffectUpdated", LibEventCallback, self);
+		LibAbsorb.RegisterCallback(self, "EffectRemoved", LibEventCallback, self);
+		LibAbsorb.RegisterCallback(self, "UnitUpdated", LibEventCallback, self);
+		LibAbsorb.RegisterCallback(self, "UnitCleared", LibEventCallback, self);
+		LibAbsorb.RegisterCallback(self, "AreaCreated", LibEventCallback, self);
+		LibAbsorb.RegisterCallback(self, "AreaCleared", LibEventCallback, self);
+	end
 
-	LibAbsorb.RegisterCallback(self, "EffectApplied", LibEventCallback, self);
-	LibAbsorb.RegisterCallback(self, "EffectUpdated", LibEventCallback, self);
-	LibAbsorb.RegisterCallback(self, "EffectRemoved", LibEventCallback, self);
-	LibAbsorb.RegisterCallback(self, "UnitUpdated", LibEventCallback, self);
-	LibAbsorb.RegisterCallback(self, "UnitCleared", LibEventCallback, self);
-	LibAbsorb.RegisterCallback(self, "AreaCreated", LibEventCallback, self);
-	LibAbsorb.RegisterCallback(self, "AreaCleared", LibEventCallback, self);
-
-	HealComm.RegisterCallback(self, "HealComm_HealStarted", LibEventCallback, self);
-	HealComm.RegisterCallback(self, "HealComm_HealUpdated", LibEventCallback, self);
-	HealComm.RegisterCallback(self, "HealComm_HealDelayed", LibEventCallback, self);
-	HealComm.RegisterCallback(self, "HealComm_HealStopped", LibEventCallback, self);
-	HealComm.RegisterCallback(self, "HealComm_ModifierChanged", LibEventCallback, self);
-	HealComm.RegisterCallback(self, "HealComm_GUIDDisappeared", LibEventCallback, self);
+	if HealComm and HealComm.RegisterCallback then
+		HealComm.RegisterCallback(self, "HealComm_HealStarted", LibEventCallback, self);
+		HealComm.RegisterCallback(self, "HealComm_HealUpdated", LibEventCallback, self);
+		HealComm.RegisterCallback(self, "HealComm_HealDelayed", LibEventCallback, self);
+		HealComm.RegisterCallback(self, "HealComm_HealStopped", LibEventCallback, self);
+		HealComm.RegisterCallback(self, "HealComm_ModifierChanged", LibEventCallback, self);
+		HealComm.RegisterCallback(self, "HealComm_GUIDDisappeared", LibEventCallback, self);
+	end
 end
 
 local function UnitFrame_UnregisterCallback(self)
@@ -386,6 +397,8 @@ local function UnitFrameLayer_Initialize(self, myHealPredictionBar, otherHealPre
 	self.healAbsorbBarRightShadow:ClearAllPoints();
 
 	self:RegisterEvent("UNIT_MAXHEALTH");
+	self:RegisterEvent("UNIT_AURA");
+	EnsureLibs();
 	UnitFrame_RegisterCallback(self);
 
 	-- Player-specific features
@@ -714,4 +727,107 @@ end
 -- Also register via callback table if available
 if addon.profileCallbacks then
 	addon.profileCallbacks.unitframe_layers = OnProfileChanged;
+end
+
+-- ============================================================================
+-- DIAGNOSTIC COMMAND: /dragonui ufl
+-- ============================================================================
+
+addon.DiagnoseUnitFrameLayers = function()
+	local P = function(msg) print("|cFF00FF00[DragonUI UFL]|r " .. msg) end
+	local OK = "|cFF00FF00OK|r"
+	local FAIL = "|cFFFF0000FAIL|r"
+	local WARN = "|cFFFFFF00WARN|r"
+
+	P("=== UnitFrameLayers Diagnostic ===")
+
+	-- 1. Module state
+	local cfg = GetModuleConfig()
+	P("Module enabled: " .. (IsModuleEnabled() and OK or FAIL))
+	P("Module applied: " .. (UnitFrameLayersModule.applied and OK or FAIL))
+	P("Module initialized: " .. (UnitFrameLayersModule.initialized and OK or FAIL))
+	P("Config table: " .. (cfg and OK or FAIL))
+	if cfg then
+		P("  animated_loss: " .. tostring(cfg.animated_loss))
+		P("  builder_spender: " .. tostring(cfg.builder_spender))
+	end
+
+	-- 2. Libraries
+	EnsureLibs()
+	P("LibHealComm-4.0: " .. (HealComm and OK or FAIL))
+	P("AbsorbsMonitor-1.0: " .. (LibAbsorb and OK or FAIL))
+	if HealComm then
+		P("  HealComm.ALL_HEALS: " .. tostring(HealComm.ALL_HEALS))
+		P("  HealComm.CASTED_HEALS: " .. tostring(HealComm.CASTED_HEALS))
+		P("  HealComm.HOT_HEALS: " .. tostring(HealComm.HOT_HEALS))
+	end
+
+	-- 3. Hooks installed
+	P("Hooks:")
+	for k, v in pairs(UnitFrameLayersModule.hooks) do
+		P("  " .. k .. ": " .. tostring(v))
+	end
+
+	-- 4. Tracked frames
+	local frameCount = 0
+	for name, frame in pairs(UnitFrameLayersModule.frames) do
+		frameCount = frameCount + 1
+		P("Frame: " .. tostring(name))
+		P("  unit: " .. tostring(frame.unit))
+		P("  myHealPredictionBar: " .. (frame.myHealPredictionBar and OK or FAIL))
+		P("  otherHealPredictionBar: " .. (frame.otherHealPredictionBar and OK or FAIL))
+		P("  totalAbsorbBar: " .. (frame.totalAbsorbBar and OK or FAIL))
+		P("  overAbsorbGlow: " .. (frame.overAbsorbGlow and OK or FAIL))
+		P("  healAbsorbBar: " .. (frame.healAbsorbBar and OK or FAIL))
+		P("  myManaCostPredictionBar: " .. (frame.myManaCostPredictionBar and OK or FAIL))
+		if frame.PlayerFrameHealthBarAnimatedLoss then
+			P("  AnimatedLossBar: " .. OK)
+		end
+
+		-- Check OnUpdate scripts
+		if frame.healthbar then
+			local onUpdate = frame.healthbar:GetScript("OnUpdate")
+			local isOverridden = (onUpdate == _G.UnitFrameHealthBar_OnUpdate)
+			P("  healthbar OnUpdate is UFL override: " .. (isOverridden and OK or FAIL))
+		end
+
+		-- Check registered events
+		local hasAura = frame:IsEventRegistered("UNIT_AURA")
+		local hasMaxHP = frame:IsEventRegistered("UNIT_MAXHEALTH")
+		P("  UNIT_AURA registered: " .. (hasAura and OK or (FAIL .. " (HoT/absorb updates need this!)")))
+		P("  UNIT_MAXHEALTH registered: " .. (hasMaxHP and OK or FAIL))
+
+		-- Live data
+		if frame.unit and UnitExists(frame.unit) then
+			local myHeal = UFL_UnitGetIncomingHeals(frame.unit, "player") or 0
+			local allHeal = UFL_UnitGetIncomingHeals(frame.unit) or 0
+			local absorb = UFL_UnitGetTotalAbsorbs(frame.unit) or 0
+			local _, maxHP = frame.healthbar:GetMinMaxValues()
+			local hp = frame.healthbar:GetValue()
+			P("  Health: " .. tostring(hp) .. " / " .. tostring(maxHP))
+			P("  myIncomingHeal (CASTED): " .. tostring(myHeal))
+			P("  allIncomingHeal (ALL): " .. tostring(allHeal))
+			P("  HoT amount (all-my): " .. tostring(allHeal - myHeal))
+			P("  totalAbsorb: " .. tostring(absorb))
+
+			-- Visibility check
+			if frame.myHealPredictionBar then
+				P("  myHealBar visible: " .. (frame.myHealPredictionBar:IsShown() and "YES" or "no"))
+			end
+			if frame.otherHealPredictionBar then
+				P("  otherHealBar visible: " .. (frame.otherHealPredictionBar:IsShown() and "YES" or "no"))
+			end
+			if frame.totalAbsorbBar then
+				P("  absorbBar visible: " .. (frame.totalAbsorbBar:IsShown() and "YES" or "no"))
+			end
+		end
+	end
+	P("Total tracked frames: " .. frameCount)
+
+	-- 5. Global function override check
+	P("Global UnitFrameHealthBar_OnUpdate overridden: " .. (UnitFrameLayersModule.hooks["UnitFrameHealthBar_OnUpdate_override"] and OK or FAIL))
+	P("Global UnitFrameManaBar_OnUpdate overridden: " .. (UnitFrameLayersModule.hooks["UnitFrameManaBar_OnUpdate_override"] and OK or FAIL))
+
+	P("=== End Diagnostic ===")
+	P("Tip: Cast a HoT or apply a shield, then run /dragonui ufl again to see live data.")
 end

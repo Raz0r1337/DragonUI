@@ -1229,6 +1229,7 @@ end
                 borderTex:SetAllPoints(MainMenuExpBar)
                 borderTex:SetPoint("TOPLEFT", MainMenuExpBar, "TOPLEFT", -3, 3)
                 borderTex:SetPoint("BOTTOMRIGHT", MainMenuExpBar, "BOTTOMRIGHT", 3, -6)
+                borderTex:SetDrawLayer("OVERLAY", 1)
                 borderTex:SetTexture(ExperienceBarAsset)
                 borderTex:SetTexCoord(1 / 2048, 572 / 2048, 1 / 64, 18 / 64)
                 borderTex:SetSize(571, 17)
@@ -1371,6 +1372,7 @@ end
                 repBorder:SetAllPoints(ReputationWatchStatusBar)
                 repBorder:SetPoint("TOPLEFT", ReputationWatchStatusBar, "TOPLEFT", -3, 2)
                 repBorder:SetPoint("BOTTOMRIGHT", ReputationWatchStatusBar, "BOTTOMRIGHT", 3, -7)
+                repBorder:SetDrawLayer("OVERLAY", 1)
                 repBorder:SetTexture(ExperienceBarAsset)
                 repBorder:SetTexCoord(1 / 2048, 572 / 2048, 1 / 64, 18 / 64)
                 repBorder:SetSize(571, 17)
@@ -1383,6 +1385,7 @@ end
                 repBorder2:SetAllPoints(ReputationWatchStatusBar)
                 repBorder2:SetPoint("TOPLEFT", ReputationWatchStatusBar, "TOPLEFT", -3, 2)
                 repBorder2:SetPoint("BOTTOMRIGHT", ReputationWatchStatusBar, "BOTTOMRIGHT", 3, -7)
+                repBorder2:SetDrawLayer("OVERLAY", 1)
                 repBorder2:SetTexture(ExperienceBarAsset)
                 repBorder2:SetTexCoord(1 / 2048, 572 / 2048, 1 / 64, 18 / 64)
                 repBorder2:SetSize(571, 17)
@@ -1423,6 +1426,11 @@ end
                 ReputationWatchStatusBarText:Show()
             end
         end
+
+        -- Re-apply dark mode tint — SetTexture() above resets vertex colors
+        if addon.RefreshDarkModeXPRepBars then
+            addon.RefreshDarkModeXPRepBars()
+        end
     end
 
     -- ========== SHARED: CONNECT BARS TO EDITOR & POSITIONING ==========
@@ -1460,6 +1468,10 @@ end
             local xpBar = CreateDragonflightUIXPBar()
             local repBar = CreateDragonflightUIRepBar()
 
+            -- Store references on addon table so dark mode can find them reliably
+            addon.DfuiXpBar = xpBar
+            addon.DfuiRepBar = repBar
+
             xpBar:SetParent(addon.ActionBarFrames.xpbar)
             xpBar:SetScale(cfg.expbar_scale or 1.0)
             xpBar:SetFrameStrata("MEDIUM")
@@ -1470,6 +1482,11 @@ end
 
             -- Exhaustion tick for DragonflightUI: delegated to UpdateDfuiExhaustionTick()
             UpdateDfuiExhaustionTick()
+
+            -- Re-apply dark mode tint to newly created bar borders
+            if addon.RefreshDarkModeXPRepBars then
+                addon.RefreshDarkModeXPRepBars()
+            end
 
         else -- retailui
             -- Hide custom bars if they exist

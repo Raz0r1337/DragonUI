@@ -889,9 +889,6 @@ rangeFrame:SetScript("OnUpdate", function(self, elapsed)
     if rangeTimer < rangeUpdateInterval then return end
     rangeTimer = 0
 
-    -- Only update if we have a target and module is enabled
-    if not UnitExists("target") then return end
-
     for _, button in ipairs(self.buttonList) do
         UpdateButtonRange(button)
     end
@@ -922,23 +919,10 @@ rangeEventFrame:SetScript("OnEvent", function(self, event)
     if not IsModuleEnabled() then return end
     UpdateRangeIndicatorState()
 
-    -- When target is cleared, restore all button colors
-    if event == "PLAYER_TARGET_CHANGED" and not UnitExists("target") then
-        for i = 1, 12 do
-            local btn = _G["ActionButton" .. i]
-            if btn then
-                local icon = btn.icon or _G["ActionButton" .. i .. "Icon"]
-                if icon then icon:SetVertexColor(1, 1, 1) end
-            end
-        end
-        for _, prefix in ipairs({"MultiBarBottomLeftButton", "MultiBarBottomRightButton", "MultiBarRightButton", "MultiBarLeftButton"}) do
-            for i = 1, 12 do
-                local btn = _G[prefix .. i]
-                if btn then
-                    local icon = btn.icon or _G[prefix .. i .. "Icon"]
-                    if icon then icon:SetVertexColor(1, 1, 1) end
-                end
-            end
+    -- When target changes, immediately update all buttons (usability + range)
+    if event == "PLAYER_TARGET_CHANGED" then
+        for _, button in ipairs(rangeFrame.buttonList) do
+            UpdateButtonRange(button)
         end
     end
 end)

@@ -20,7 +20,7 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
-L["Use the tabs on the left to customize action bars, unit frames, minimap, cast bars, and more."] = "Используйте вкладки слева для настройки панелей действий, фреймов, миникарты, полос заклинаний и многого другого."
+L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "Используйте вкладки слева для настройки модулей, панелей действий, фреймов, миникарты и многого другого."
 L["Editor Mode"] = "Режим редактора"
 L["Exit Editor Mode"] = "Выйти из режима редактора"
 L["KeyBind Mode Active"] = "Режим клавиш активен"
@@ -41,9 +41,11 @@ L["Heal prediction, absorb shields and animated health loss."] = "Предска
 L["Change columns, rows, and buttons shown per action bar."] = "Изменить количество столбцов, строк и кнопок на панели действий."
 L["Switch micro menu icons between colored and grayscale style."] = "Переключить значки микроменю между цветным и серым стилем."
 L["About"] = "О программе"
-L["Dragonflight-inspired UI for WotLK 3.3.5a."] = "Интерфейс в стиле Dragonflight для WotLK 3.3.5a."
+L["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."] = "Внешний вид розничного WoW для 3.3.5a, вдохновлённый Dragonflight UI."
+L["Created and maintained by Neticsoul, with community contributions."] = "Создано и поддерживается Neticsoul при участии сообщества."
 
-L["Use /dragonui or /pi to toggle this panel."] = "Используйте /dragonui или /pi для открытия этой панели."
+L["Commands: /dragonui, /dui, /pi — /dragonui edit (editor) — /dragonui help"] = "Команды: /dragonui, /dui, /pi — /dragonui edit (редактор) — /dragonui help"
+L["GitHub (select and Ctrl+C to copy):"] = "GitHub (выделите и Ctrl+C для копирования):"
 L["All"] = "Все"
 L["Error:"] = "Ошибка:"
 L["Error: DragonUI addon not found!"] = "Ошибка: Аддон DragonUI не найден!"

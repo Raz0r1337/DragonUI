@@ -270,7 +270,7 @@ local function CreatePanel()
     SetSafeFont(statusText, 11, "")
     statusText:SetPoint("BOTTOM", f, "BOTTOM", 0, 4)
     statusText:SetTextColor(0.4, 0.4, 0.4, 1)
-    statusText:SetText(LO["Use /dragonui or /pi to toggle this panel."])
+    statusText:SetText(LO["Commands: /dragonui, /dui, /pi — /dragonui edit (editor) — /dragonui help"])
 
     -- Resize grip (bottom-right corner)
     local resizeGrip = CreateFrame("Frame", nil, f)

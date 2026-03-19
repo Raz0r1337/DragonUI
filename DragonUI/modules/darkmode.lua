@@ -182,6 +182,47 @@ local function DarkenPetButtonBorders(tint)
 end
 
 -- -----------------------------------------------------------------------
+-- XP / REP BAR BORDERS ONLY: named border textures for RetailUI,
+-- .Border overlay for DragonflightUI. Never touches the fill bar.
+-- -----------------------------------------------------------------------
+local function DarkenXPRepBorders(tint)
+    -- RetailUI: ONLY the 3 border textures restored by ApplyRetailUIExpRepBarStyling.
+    -- Texture1-3 are cleared by noop and never restored — skip them entirely.
+    local borderTexNames = {
+        "MainMenuXPBarTexture0",
+        "ReputationXPBarTexture0",
+        "ReputationWatchBarTexture0",
+    }
+    for _, texName in ipairs(borderTexNames) do
+        local tex = _G[texName]
+        if tex and tex.GetTexture and tex:GetTexture() then
+            DarkenTexture(tex, tint)
+        end
+    end
+
+    -- DragonflightUI custom XP/Rep bar borders (overlay only, not fill/background)
+    -- Use addon table references first (set by mainbars), fall back to _G
+    local dfXpBar = addon.DfuiXpBar or _G["DragonUI_XPBar"]
+    local dfRepBar = addon.DfuiRepBar or _G["DragonUI_RepBar"]
+    if dfXpBar and dfXpBar.Border then
+        DarkenTexture(dfXpBar.Border, tint)
+    end
+    if dfRepBar and dfRepBar.Border then
+        DarkenTexture(dfRepBar.Border, tint)
+    end
+
+    -- Exhaustion tick (rested marker) — darken its child textures
+    local tick = _G["ExhaustionTick"]
+    if tick and tick:IsShown() and tick.GetRegions then
+        for _, region in ipairs({ tick:GetRegions() }) do
+            if region and region.GetObjectType and region:GetObjectType() == "Texture" then
+                DarkenTexture(region, tint)
+            end
+        end
+    end
+end
+
+-- -----------------------------------------------------------------------
 -- MAIN BAR ART: the art frame, gryphons/dragons, dividers, page arrows
 -- These are purely decorative chrome, safe to darken entirely.
 -- -----------------------------------------------------------------------
@@ -273,46 +314,6 @@ local function DarkenMainBarArt(tint)
         end
     end
 
-    -- XP bar / Rep bar borders
-    local xpBarNames = { "MainMenuExpBar", "MainMenuBarMaxLevelBar", "ReputationWatchBar" }
-    for _, name in ipairs(xpBarNames) do
-        local bar = _G[name]
-        if bar and bar.GetRegions then
-            local regions = { bar:GetRegions() }
-            for _, region in ipairs(regions) do
-                if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-                    -- XP bar has border textures we can darken
-                    local layer = region:GetDrawLayer()
-                    if layer == "OVERLAY" or layer == "BORDER" or layer == "ARTWORK" then
-                        DarkenTexture(region, tint)
-                    end
-                end
-            end
-        end
-    end
-
-    -- Explicit named XP/Rep border textures (restored by mainbars after noop clears them)
-    local namedBarTextures = {
-        "MainMenuXPBarTexture0", "MainMenuXPBarTexture1", "MainMenuXPBarTexture2", "MainMenuXPBarTexture3",
-        "ReputationXPBarTexture0", "ReputationXPBarTexture1",
-        "ReputationWatchBarTexture0", "ReputationWatchBarTexture1",
-    }
-    for _, texName in ipairs(namedBarTextures) do
-        local tex = _G[texName]
-        if tex and tex.GetTexture and tex:GetTexture() then
-            DarkenTexture(tex, tint)
-        end
-    end
-
-    -- DragonflightUI custom XP/Rep bars (if they exist)
-    local dfBarNames = { "DragonUI_XPBar", "DragonUI_RepBar" }
-    for _, name in ipairs(dfBarNames) do
-        local bar = _G[name]
-        if bar then
-            if bar.Border then DarkenTexture(bar.Border, tint) end
-            if bar.Background then DarkenTexture(bar.Background, tint) end
-        end
-    end
 end
 
 -- -----------------------------------------------------------------------
@@ -714,6 +715,7 @@ local function ApplyDarkMode()
 
     -- Apply surgically to each UI area (borders only)
     DarkenMainBarArt(tint)
+    DarkenXPRepBorders(tint)
     DarkenActionButtonBorders(tint)
     DarkenStanceButtonBorders(tint)
     DarkenPetButtonBorders(tint)
@@ -726,6 +728,15 @@ local function ApplyDarkMode()
     DarkenAddonButtonBorders(tint)
 
     DarkModeModule.applied = true
+
+    -- Delayed re-darken for XP/Rep borders: mainbars creates DragonflightUI bars
+    -- and restyles RetailUI textures at various times. A second pass at 0.5s
+    -- guarantees we catch borders regardless of init ordering.
+    addon:After(0.5, function()
+        if not DarkModeModule.applied then return end
+        local t = GetTintValues()
+        DarkenXPRepBorders(t)
+    end)
 end
 
 RestoreDarkMode = function()
@@ -952,4 +963,12 @@ addon.RefreshDarkModeCastbars = function()
     if not DarkModeModule.applied then return end
     local tint = GetTintValues()
     DarkenCastbarBorders(tint)
+end
+
+-- Re-darken XP/Rep bar borders (called from mainbars.lua after styling resets vertex colors)
+addon.RefreshDarkModeXPRepBars = function()
+    if not IsModuleEnabled() then return end
+    if not DarkModeModule.applied then return end
+    local tint = GetTintValues()
+    DarkenXPRepBorders(tint)
 end

@@ -208,6 +208,8 @@ local function SlashCommandHandler(input)
             return
         end
         if addon.DebugVehicle then addon.DebugVehicle() else addon:Print(L["Vehicle debug not available"]) end
+    elseif cmd == "ufl" then
+        if addon.DiagnoseUnitFrameLayers then addon.DiagnoseUnitFrameLayers() else addon:Print("UFL diagnostic not available") end
     elseif cmd == "debugshadow" then
         if not addon.debugMode then
             addon:Print(L["Enable debug mode first with /dragonui debug on"])

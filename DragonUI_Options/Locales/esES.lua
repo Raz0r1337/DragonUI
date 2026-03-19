@@ -20,7 +20,7 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
-L["Use the tabs on the left to customize action bars, unit frames, minimap, cast bars, and more."] = "Usa las pestañas de la izquierda para personalizar barras de acción, marcos de unidad, minimapa, barras de lanzamiento y más."
+L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "Usa las pestañas de la izquierda para configurar módulos, barras de acción, marcos de unidad, minimapa y más."
 L["Editor Mode"] = "Modo Editor"
 L["Exit Editor Mode"] = "Salir del Modo Editor"
 L["KeyBind Mode Active"] = "Modo de Atajos Activo"
@@ -41,9 +41,11 @@ L["Heal prediction, absorb shields and animated health loss."] = "Predicción de
 L["Change columns, rows, and buttons shown per action bar."] = "Cambiar columnas, filas y botones visibles por barra de acción."
 L["Switch micro menu icons between colored and grayscale style."] = "Alternar los iconos del micro menú entre color y escala de grises."
 L["About"] = "Acerca de"
-L["Dragonflight-inspired UI for WotLK 3.3.5a."] = "IU inspirada en Dragonflight para WotLK 3.3.5a."
+L["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."] = "Trayendo el aspecto del WoW retail a 3.3.5a, inspirado en Dragonflight UI."
+L["Created and maintained by Neticsoul, with community contributions."] = "Creado y mantenido por Neticsoul, con contribuciones de la comunidad."
 
-L["Use /dragonui or /pi to toggle this panel."] = "Usa /dragonui o /pi para mostrar/ocultar este panel."
+L["Commands: /dragonui, /dui, /pi \226\128\148 /dragonui edit (editor) \226\128\148 /dragonui help"] = "Comandos: /dragonui, /dui, /pi \226\128\148 /dragonui edit (editor) \226\128\148 /dragonui help"
+L["GitHub (select and Ctrl+C to copy):"] = "GitHub (selecciona y Ctrl+C para copiar):"
 L["All"] = "Todo"
 L["Error:"] = "Error:"
 L["Error: DragonUI addon not found!"] = "Error: ¡No se encontró el addon DragonUI!"

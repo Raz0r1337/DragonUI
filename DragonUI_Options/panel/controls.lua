@@ -438,6 +438,17 @@ function Controls:AddDescription(parent, text)
     return self:AddLabel(parent, text, { color = self.Theme.textDim })
 end
 
+function Controls:AddCopyableText(parent, text)
+    local editBox = AceGUI:Create("EditBox")
+    editBox:SetText(text)
+    editBox:SetFullWidth(true)
+    editBox:DisableButton(true)
+    editBox:SetCallback("OnEnterPressed", function(w) w:ClearFocus() end)
+    editBox:SetCallback("OnTextChanged", function(w) w:SetText(text) end)
+    parent:AddChild(editBox)
+    return editBox
+end
+
 -- ============================================================================
 -- SPACER
 -- ============================================================================
