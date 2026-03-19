@@ -195,8 +195,8 @@ local function BuildBagsTab(scroll)
     })
 
     -- Category tabs (matching KPack Combuctor set names)
-    local Equipment = "Equipment"
-    local Usable = "Usable"
+    local Equipment = LO["Equipment"]
+    local Usable = LO["Usable"]
     local Weapon, Armor, _, Consumable, _, TradeGood, _, _, Recipe, Gem, Misc, Quest = GetAuctionItemClasses()
     local Devices = select(10, GetAuctionItemSubClasses(6))
 

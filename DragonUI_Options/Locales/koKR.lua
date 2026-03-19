@@ -228,10 +228,12 @@ L["Bag Sort"] = "가방 정렬"
 L["Enable Bag Sort"] = "가방 정렬 활성화"
 L["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] = "가방 및 은행 정렬 버튼. 아이템을 유형, 희귀도, 레벨, 이름순으로 정렬"
 L["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] = "가방 및 은행 창에 정렬 버튼 추가. /sort 및 /sortbank 명령어 활성화"
-L["Sort bags and bank items with buttons"] = true
+L["Sort bags and bank items with buttons"] = "가방 및 은행 아이템 일괄 정리"
 
 L["Show 'All' Tab"] = "'전체' 탭 표시"
 L["Show the 'All' category tab that displays all items without filtering."] = "필터링 없이 모든 아이템을 보여주는 '전체' 카테고리 탭 표시"
+L["Equipment"] = "장비"
+L["Usable"] = "소모품"
 L["Show Equipment Tab"] = "장비 탭 표시"
 L["Show the Equipment category tab for armor and weapons."] = "방어구 및 무기용 장비 카테고리 탭 표시"
 L["Show Usable Tab"] = "사용 가능 탭 표시"
@@ -286,32 +288,32 @@ L["Cooldowns"] = "재사용 대기시간"
 -- Advanced modules - RegisterModule display names (from module files)
 L["Micro Menu"] = "마이크로 메뉴"
 L["Loot Roll"] = "주사위 굴림"
-L["Key Binding"] = true
-L["Item Quality"] = true
-L["Buff Frame"] = true
-L["Hide Blizzard"] = true
-L["Tooltip"] = true
+L["Key Binding"] = "단축키 설정"
+L["Item Quality"] = "아이템 등급"
+L["Buff Frame"] = "버프 프레임"
+L["Hide Blizzard"] = "순정 화면 숨기기"
+L["Tooltip"] = "툴팁"
 
 -- Advanced modules - RegisterModule descriptions (from module files)
-L["Micro menu and bags system styling and positioning"] = true
-L["Quest tracker positioning and styling"] = true
-L["Enhanced tooltip styling with class colors and health bars"] = true
-L["Hide default Blizzard UI elements"] = true
-L["Custom minimap styling, positioning, tracking icons and calendar"] = true
-L["Main action bars, status bars, scaling and positioning"] = true
-L["LibKeyBound integration for intuitive keybinding"] = true
-L["Color item borders by quality in bags, character panel, bank, and merchant"] = true
+L["Micro menu and bags system styling and positioning"] = "마이크로 메뉴 및 가방 시스템 스타일/위치 설정"
+L["Quest tracker positioning and styling"] = "퀘스트 추적기 위치 및 스타일 설정"
+L["Enhanced tooltip styling with class colors and health bars"] = "직업 색상 및 생명력 바가 포함된 강화된 툴팁 스타일"
+L["Hide default Blizzard UI elements"] = "블리자드 기본 UI 요소 숨기기"
+L["Custom minimap styling, positioning, tracking icons and calendar"] = "미니맵 스타일, 위치, 추적 아이콘 및 달력 설정"
+L["Main action bars, status bars, scaling and positioning"] = "주 행동 단축바, 상태 바, 크기 조절 및 위치 설정"
+L["LibKeyBound integration for intuitive keybinding"] = "직관적인 단축키 설정을 위한 LibKeyBound 통합"
+L["Color item borders by quality in bags, character panel, bank, and merchant"] = "가방, 캐릭터 창, 은행, 상점에서 아이템 등급별 테두리 색상 표시"
 L["Darken UI borders and chrome"] = "UI 테두리 및 장식 요소 어둡게"
-L["Action button styling and enhancements"] = true
-L["Custom buff frame styling, positioning and toggle button"] = true
-L["Vehicle interface enhancements"] = true
-L["Stance/shapeshift bar positioning and styling"] = true
-L["Pet action bar positioning and styling"] = true
+L["Action button styling and enhancements"] = "단축 버튼 스타일 및 기능 강화"
+L["Custom buff frame styling, positioning and toggle button"] = "사용자 정의 버프 프레임 스타일, 위치 및 토글 버튼"
+L["Vehicle interface enhancements"] = "탈것(탑승물) 인터페이스 기능 강화"
+L["Stance/shapeshift bar positioning and styling"] = "태세/변신 바 위치 및 스타일 설정"
+L["Pet action bar positioning and styling"] = "소환수 행동 단축바 위치 및 스타일 설정"
 L["Multicast (totem/possess) bar positioning and styling"] = "멀티캐스트 (토템/빙의) 바 위치 및 스타일"
-L["Chat Mods"] = true
-L["Chat enhancements: hide buttons, editbox position, URL copy, chat copy, link hover, tell target"] = true
+L["Chat Mods"] = "채팅 모드(기능)"
+L["Chat enhancements: hide buttons, editbox position, URL copy, chat copy, link hover, tell target"] = "채팅 강화: 버튼 숨김, 입력창 위치, URL/채팅 복사, 링크 툴팁, 대상에게 귓속말"
 L["Combuctor"] = "통합가방(Combuctor)"
-L["All-in-one bag replacement with filtering and search"] = true
+L["All-in-one bag replacement with filtering and search"] = "필터 및 검색 기능이 포함된 통합 가방 시스템"
 
 -- ============================================================================
 -- ACTION BARS TAB

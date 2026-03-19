@@ -247,6 +247,8 @@ L["Sort bags and bank items with buttons"] = true
 
 L["Show 'All' Tab"] = true
 L["Show the 'All' category tab that displays all items without filtering."] = true
+L["Equipment"] = true
+L["Usable"] = true
 L["Show Equipment Tab"] = true
 L["Show the Equipment category tab for armor and weapons."] = true
 L["Show Usable Tab"] = true
