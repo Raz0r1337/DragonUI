@@ -77,7 +77,7 @@ DragonUI combines original work with adapted ideas, ports, and implementation re
 - [RovBot](https://github.com/RovxBot) for action bar grid/preset system
 - [Raz0r](https://github.com/Raz0r1337) for German localization
 - [nadugi](https://github.com/nadugi) for Korean localization
-- Did I forget you...? Please let me know opening an [issue](https://github.com/NeticSoul/DragonUI/issues).
+- Did I forget you...? Please [let me know](https://github.com/NeticSoul/DragonUI/issues).
 
 ## 💛 Special Thanks
 
