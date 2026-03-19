@@ -1,6 +1,14 @@
 --[[
 ================================================================================
-DragonUI_Options - Latin American Spanish (esMX) Locale
+DragonUI_Options - English Locale (Default)
+================================================================================
+Base locale for the options panel: labels, descriptions, section headers,
+dropdown values, print messages, popup text.
+
+When adding new strings:
+1. Add L[<your key>] = true here
+2. Use L["Your String"] in your options code
+3. Add translations to other locale files
 ================================================================================
 ]]
 
@@ -12,9 +20,8 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
-L["experimental"] = "experimental"
+L["Use the tabs on the left to customize action bars, unit frames, minimap, cast bars, and more."] = "Usa las pestañas de la izquierda para personalizar barras de acción, marcos de unidad, minimapa, barras de lanzamiento y más."
 L["Editor Mode"] = "Modo Editor"
-L["KeyBind Mode"] = "Modo de Atajos"
 L["Exit Editor Mode"] = "Salir del Modo Editor"
 L["KeyBind Mode Active"] = "Modo de Atajos Activo"
 L["Move UI Elements"] = "Mover Elementos de la IU"
@@ -25,11 +32,21 @@ L["Use /dragonui to open the full settings panel."] = "Usa /dragonui para abrir 
 
 -- Quick Actions
 L["Quick Actions"] = "Acciones Rápidas"
+L["Jump to popular settings sections."] = "Accede rápido a las secciones más usadas."
+L["Action Bar Layout"] = "Disposición de Barras de Acción"
+L["Configure dark tinting for all UI chrome."] = "Configurar el oscurecimiento de toda la interfaz."
+L["Full-width health bar that fills the entire player frame."] = "Barra de vida ancha que ocupa todo el marco del jugador."
+L["Add a decorative dragon to your player frame."] = "Añadir un dragón decorativo al marco del jugador."
+L["Heal prediction, absorb shields and animated health loss."] = "Predicción de curación, escudos de absorción y pérdida de vida animada."
+L["Change columns, rows, and buttons shown per action bar."] = "Cambiar columnas, filas y botones visibles por barra de acción."
+L["Switch micro menu icons between colored and grayscale style."] = "Alternar los iconos del micro menú entre color y escala de grises."
 L["About"] = "Acerca de"
 L["Dragonflight-inspired UI for WotLK 3.3.5a."] = "IU inspirada en Dragonflight para WotLK 3.3.5a."
-L["Experimental Branch — This options panel is in early beta."] = "Rama Experimental — Este panel de opciones está en beta temprana."
-L["Features may change or be incomplete. Report issues on GitHub."] = "Las funciones pueden cambiar o estar incompletas. Reporta errores en GitHub."
+
 L["Use /dragonui or /pi to toggle this panel."] = "Usa /dragonui o /pi para mostrar/ocultar este panel."
+L["All"] = "Todo"
+L["Error:"] = "Error:"
+L["Error: DragonUI addon not found!"] = "Error: ¡No se encontró el addon DragonUI!"
 
 -- ============================================================================
 -- STATIC POPUPS
@@ -51,18 +68,11 @@ L["General"] = "General"
 L["Modules"] = "Módulos"
 L["Action Bars"] = "Barras de Acción"
 L["Additional Bars"] = "Barras Adicionales"
-L["Cast Bars"] = "Barras de Lanzamiento"
-L["Enhancements"] = "Mejoras"
-L["Micro Menu"] = "Micro Menú"
 L["Minimap"] = "Minimapa"
 L["Profiles"] = "Perfiles"
-L["Quest Tracker"] = "Rastreador de Misiones"
 L["Unit Frames"] = "Marcos de Unidad"
 L["XP & Rep Bars"] = "Barras de XP y Rep"
 L["Chat"] = "Chat"
-L["Bags"] = "Bolsas"
-L["Left Side Tabs"] = "Pestañas a la Izquierda"
-L["Place category filter tabs on the left side of the bag frame instead of the right."] = "Colocar las pestañas de filtro de categoría en el lado izquierdo del marco de bolsas en lugar del derecho."
 
 -- ============================================================================
 -- MODULES TAB
@@ -83,18 +93,20 @@ L["Cast Bars"] = "Barras de Lanzamiento"
 L["Other Modules"] = "Otros Módulos"
 L["UI Systems"] = "Sistemas de IU"
 L["Enable All Action Bar Modules"] = "Activar Todos los Módulos de Barras"
+L["Cast Bar"] = "Barra de Lanzamiento"
+L["Custom player, target, and focus cast bars"] = "Barras de lanzamiento personalizadas para jugador, objetivo y foco"
+L["Cooldown text on action buttons"] = "Texto de reutilización en los botones de acción"
+L["Shaman totem bar positioning and styling"] = "Posicionamiento y estilo de la barra de tótems del chamán"
+L["Dragonflight-styled player unit frame"] = "Marco de unidad del jugador con estilo Dragonflight"
+L["Dragonflight-styled boss target frames"] = "Marcos de objetivo de jefe con estilo Dragonflight"
 
 -- Toggle labels
-L["Player Castbar"] = "Barra de Lanzamiento del Jugador"
-L["Target Castbar"] = "Barra de Lanzamiento del Objetivo"
-L["Focus Castbar"] = "Barra de Lanzamiento del Foco"
 L["Action Bars System"] = "Sistema de Barras de Acción"
 L["Micro Menu & Bags"] = "Micro Menú y Bolsas"
 L["Cooldown Timers"] = "Temporizadores de Reutilización"
 L["Minimap System"] = "Sistema del Minimapa"
 L["Buff Frame System"] = "Sistema de Marco de Beneficios"
 L["Dark Mode"] = "Modo Oscuro"
-L["Range Indicator"] = "Indicador de Alcance"
 L["Item Quality Borders"] = "Bordes de Calidad de Objetos"
 L["Enable Enhanced Tooltips"] = "Activar Tooltips Mejorados"
 L["KeyBind Mode"] = "Modo de Atajos"
@@ -181,14 +193,12 @@ L["Legendary"] = "Legendario"
 
 -- Enhanced Tooltips
 L["Enhanced Tooltips"] = "Tooltips Mejorados"
-L["Improve GameTooltip with class-colored borders, class-colored names, target-of-target info, and styled health bars."] = "Mejorar el tooltip con bordes de color de clase, nombres coloreados, info de objetivo del objetivo y barras de vida estilizadas."
 L["Improves GameTooltip with class-colored borders, class-colored names, target-of-target info, and styled health bars."] = "Mejora el tooltip con bordes de color de clase, nombres coloreados, info de objetivo del objetivo y barras de vida estilizadas."
 L["Activate all tooltip improvements. Sub-options below control individual features."] = "Activar todas las mejoras de tooltips. Las sub-opciones controlan funciones individuales."
 L["Class-Colored Border"] = "Borde con Color de Clase"
 L["Color the tooltip border by the unit's class (players) or reaction (NPCs)."] = "Colorear el borde del tooltip según la clase de la unidad (jugadores) o reacción (NPCs)."
 L["Class-Colored Name"] = "Nombre con Color de Clase"
 L["Color the unit name text in the tooltip by class color (players only)."] = "Colorear el nombre de la unidad en el tooltip con el color de clase (solo jugadores)."
-L["Target of Target"] = "Objetivo del Objetivo"
 L["Add a 'Targeting: <name>' line showing who the unit is targeting."] = "Añadir una línea 'Objetivo: <nombre>' mostrando a quién apunta la unidad."
 L["Add a 'Targeting: <name>' line to the tooltip showing who the unit is targeting."] = "Añadir una línea 'Objetivo: <nombre>' al tooltip mostrando a quién apunta la unidad."
 L["Styled Health Bar"] = "Barra de Vida Estilizada"
@@ -196,10 +206,8 @@ L["Restyle the tooltip health bar with class/reaction colors."] = "Reestilizar l
 L["Restyle the tooltip health bar with class/reaction colors and slimmer look."] = "Reestilizar la barra de vida del tooltip con colores de clase/reacción y aspecto más delgado."
 L["Anchor to Cursor"] = "Anclar al Cursor"
 L["Make the tooltip follow the cursor position instead of the default anchor."] = "Hacer que el tooltip siga la posición del cursor en lugar del anclaje predeterminado."
-L["Make the tooltip follow the cursor position instead of using the default anchor."] = "Hacer que el tooltip siga la posición del cursor en lugar de usar el anclaje predeterminado."
 
 -- Chat Mods
-L["Chat Mods"] = "Mods de Chat"
 L["Enable Chat Mods"] = "Activar Mods de Chat"
 L["Chat enhancements: hide buttons, editbox positioning, URL detection & copy, chat copy, link hover tooltips, tell target, mousewheel scroll."] = "Mejoras de chat: ocultar botones, posición del editbox, detección y copia de URL, copia de chat, tooltips de enlaces, susurrar objetivo, scroll con rueda."
 L["Editbox Position"] = "Posición del Editbox"
@@ -209,10 +217,9 @@ L["Bottom"] = "Abajo"
 L["Middle"] = "Centro"
 
 -- Combuctor
-L["Combuctor"] = "Combuctor"
 L["Enable Combuctor"] = "Activar Combuctor"
 L["All-in-one bag replacement with item filtering, search, quality indicators, and bank integration."] = "Reemplazo de bolsas todo-en-uno con filtrado de objetos, búsqueda, indicadores de calidad e integración con el banco."
-L["Combuctor Settings"] = "Opciones de Combuctor"
+L["Combuctor Settings"] = "Ajustes de Combuctor"
 
 -- Bag Sort
 L["Bag Sort"] = "Ordenar Bolsas"
@@ -220,54 +227,53 @@ L["Enable Bag Sort"] = "Activar Ordenar Bolsas"
 L["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] = "Botones para ordenar bolsas y banco. Ordena objetos por tipo, rareza, nivel y nombre."
 L["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] = "Añade botones de ordenar a las bolsas y al banco. También habilita los comandos /sort y /sortbank."
 L["Sort bags and bank items with buttons"] = "Ordenar bolsas y banco con botones"
+
 L["Show 'All' Tab"] = "Mostrar pestaña 'Todo'"
 L["Show the 'All' category tab that displays all items without filtering."] = "Mostrar la pestaña de categoría 'Todo' que muestra todos los objetos sin filtrar."
-L["Show Equipment Tab"] = "Mostrar pestaña Equipamiento"
-L["Show the Equipment category tab for armor and weapons."] = "Mostrar la pestaña de categoría Equipamiento para armaduras y armas."
-L["Show Usable Tab"] = "Mostrar pestaña Utilizables"
-L["Show the Usable category tab for consumables and devices."] = "Mostrar la pestaña de categoría Utilizables para consumibles y dispositivos."
-L["Show Consumable Tab"] = "Mostrar pestaña Consumibles"
-L["Show the Consumable category tab."] = "Mostrar la pestaña de categoría Consumibles."
-L["Show Quest Tab"] = "Mostrar pestaña Misión"
-L["Show the Quest items category tab."] = "Mostrar la pestaña de categoría objetos de Misión."
-L["Show Trade Goods Tab"] = "Mostrar pestaña Bienes Comerciales"
-L["Show the Trade Goods category tab (includes gems and recipes)."] = "Mostrar la pestaña de categoría Bienes Comerciales (incluye gemas y recetas)."
-L["Show Miscellaneous Tab"] = "Mostrar pestaña Miscelánea"
-L["Show the Miscellaneous items category tab."] = "Mostrar la pestaña de categoría objetos Miscelánea."
+L["Show Equipment Tab"] = "Mostrar pestaña de Equipo"
+L["Show the Equipment category tab for armor and weapons."] = "Mostrar la pestaña de categoría de Equipo para armaduras y armas."
+L["Show Usable Tab"] = "Mostrar pestaña de Usables"
+L["Show the Usable category tab for consumables and devices."] = "Mostrar la pestaña de categoría de Usables para consumibles y dispositivos."
+L["Show Consumable Tab"] = "Mostrar pestaña de Consumibles"
+L["Show the Consumable category tab."] = "Mostrar la pestaña de categoría de Consumibles."
+L["Show Quest Tab"] = "Mostrar pestaña de Misiones"
+L["Show the Quest items category tab."] = "Mostrar la pestaña de categoría de objetos de misión."
+L["Show Trade Goods Tab"] = "Mostrar pestaña de Comercio"
+L["Show the Trade Goods category tab (includes gems and recipes)."] = "Mostrar la pestaña de categoría de Comercio (incluye gemas y recetas)."
+L["Show Miscellaneous Tab"] = "Mostrar pestaña de Miscelánea"
+L["Show the Miscellaneous items category tab."] = "Mostrar la pestaña de categoría de objetos misceláneos."
 L["Left Side Tabs"] = "Pestañas a la Izquierda"
 L["Place category filter tabs on the left side of the bag frame instead of the right."] = "Colocar las pestañas de filtro de categoría en el lado izquierdo del marco de bolsas en lugar del derecho."
-L["Place category filter tabs on the left side of the bank frame instead of the right."] = "Colocar las pestañas de filtro de categoría en el lado izquierdo del marco del banco en lugar del derecho."
-L["Changes require closing and reopening bags to take effect."] = "Los cambios requieren cerrar y reabrir las bolsas para aplicarse."
+L["Place category filter tabs on the left side of the bank frame instead of the right."] = "Coloca las pestañas de filtro de categoría en el lado izquierdo del marco del banco en lugar del derecho."
+L["Changes require closing and reopening bags to take effect."] = "Los cambios requieren cerrar y volver a abrir las bolsas para aplicarse."
 L["Subtabs"] = "Subpestañas"
-L["Configure which bottom subtabs appear within each category tab. Applies to both inventory and bank."] = "Configurar qué subpestañas inferiores aparecen en cada pestaña de categoría. Se aplica tanto al inventario como al banco."
+L["Configure which bottom subtabs appear within each category tab. Applies to both inventory and bank."] = "Configura qué subpestañas inferiores aparecen dentro de cada pestaña de categoría. Se aplica tanto al inventario como al banco."
 L["Normal"] = "Normal"
 L["Trade Bags"] = "Bolsas de Profesión"
 L["Show the Normal bags subtab (non-profession bags)."] = "Mostrar la subpestaña de bolsas normales (no profesionales)."
 L["Show the Trade bags subtab (profession bags)."] = "Mostrar la subpestaña de bolsas de profesión."
-L["Show the Armor subtab."] = "Mostrar la subpestaña Armadura."
-L["Show the Weapon subtab."] = "Mostrar la subpestaña Arma."
-L["Show the Trinket subtab."] = "Mostrar la subpestaña Abalorio."
-L["Show the Consumable subtab."] = "Mostrar la subpestaña Consumible."
-L["Show the Devices subtab."] = "Mostrar la subpestaña Dispositivos."
-L["Show the Trade Goods subtab."] = "Mostrar la subpestaña Bienes Comerciales."
-L["Show the Gem subtab."] = "Mostrar la subpestaña Gema."
-L["Show the Recipe subtab."] = "Mostrar la subpestaña Receta."
-L["Configure Combuctor bag replacement settings."] = "Configurar las opciones del reemplazo de bolsas Combuctor."
+L["Show the Armor subtab."] = "Mostrar la subpestaña de Armadura."
+L["Show the Weapon subtab."] = "Mostrar la subpestaña de Armas."
+L["Show the Trinket subtab."] = "Mostrar la subpestaña de Abalorios."
+L["Show the Consumable subtab."] = "Mostrar la subpestaña de Consumibles."
+L["Show the Devices subtab."] = "Mostrar la subpestaña de Dispositivos."
+L["Show the Trade Goods subtab."] = "Mostrar la subpestaña de Comercio."
+L["Show the Gem subtab."] = "Mostrar la subpestaña de Gemas."
+L["Show the Recipe subtab."] = "Mostrar la subpestaña de Recetas."
+L["Configure Combuctor bag replacement settings."] = "Configura los ajustes de reemplazo de bolsas de Combuctor."
 L["Category Tabs"] = "Pestañas de Categoría"
-L["Inventory Tabs"] = "Pestañas de Inventario"
+L["Inventory Tabs"] = "Pestañas del Inventario"
 L["Bank Tabs"] = "Pestañas del Banco"
 L["Inventory"] = "Inventario"
 L["Bank"] = "Banco"
-L["Choose which category tabs appear on the bag frame. Changes require closing and reopening bags to take effect."] = "Elegir qué pestañas de categoría aparecen en el marco de bolsas. Los cambios requieren cerrar y reabrir las bolsas para aplicarse."
-L["Choose which category tabs appear on the inventory bag frame."] = "Elegir qué pestañas de categoría aparecen en el marco de inventario."
-L["Choose which category tabs appear on the bank frame."] = "Elegir qué pestañas de categoría aparecen en el marco del banco."
-L["Display"] = "Visualización"
+L["Choose which category tabs appear on the bag frame. Changes require closing and reopening bags to take effect."] = "Elige qué pestañas de categoría aparecen en el marco de bolsas. Los cambios requieren cerrar y volver a abrir las bolsas para aplicarse."
+L["Choose which category tabs appear on the inventory bag frame."] = "Elige qué pestañas de categoría aparecen en el marco de la mochila."
+L["Choose which category tabs appear on the bank frame."] = "Elige qué pestañas de categoría aparecen en el marco del banco."
+L["Display"] = "Mostrar"
 
 -- Advanced modules - Fallback display names
 L["Main Bars"] = "Barras Principales"
 L["Vehicle"] = "Vehículo"
-L["Stance Bar"] = "Barra de Postura"
-L["Pet Bar"] = "Barra de Mascota"
 L["Multicast"] = "Multicast"
 L["Buttons"] = "Botones"
 L["Hide Blizzard Elements"] = "Ocultar Elementos de Blizzard"
@@ -275,7 +281,7 @@ L["Buffs"] = "Beneficios"
 L["KeyBinding"] = "Atajos de Tecla"
 L["Cooldowns"] = "Temporizadores"
 
--- Advanced modules - RegisterModule display names
+-- Advanced modules - RegisterModule display names (from module files)
 L["Micro Menu"] = "Micro Menú"
 L["Loot Roll"] = "Tirada de Botín"
 L["Key Binding"] = "Atajos de Tecla"
@@ -284,7 +290,7 @@ L["Buff Frame"] = "Marco de Beneficios"
 L["Hide Blizzard"] = "Ocultar Blizzard"
 L["Tooltip"] = "Tooltip"
 
--- Advanced modules - RegisterModule descriptions
+-- Advanced modules - RegisterModule descriptions (from module files)
 L["Micro menu and bags system styling and positioning"] = "Estilo y posición del micro menú y bolsas"
 L["Quest tracker positioning and styling"] = "Posición y estilo del rastreador de misiones"
 L["Enhanced tooltip styling with class colors and health bars"] = "Tooltip mejorado con colores de clase y barras de vida"
@@ -300,6 +306,10 @@ L["Vehicle interface enhancements"] = "Mejoras de interfaz de vehículo"
 L["Stance/shapeshift bar positioning and styling"] = "Posición y estilo de barra de postura/forma"
 L["Pet action bar positioning and styling"] = "Posición y estilo de barra de mascota"
 L["Multicast (totem/possess) bar positioning and styling"] = "Posición y estilo de barra multicast (tótems/posesión)"
+L["Chat Mods"] = "Mods de Chat"
+L["Chat enhancements: hide buttons, editbox position, URL copy, chat copy, link hover, tell target"] = "Mejoras de chat: ocultar botones, posición de caja de texto, copiar URL, copiar chat, enlaces al pasar el cursor y susurrar al objetivo"
+L["Combuctor"] = "Combuctor"
+L["All-in-one bag replacement with filtering and search"] = "Reemplazo de bolsas todo en uno con filtros y búsqueda"
 
 -- ============================================================================
 -- ACTION BARS TAB
@@ -330,10 +340,8 @@ L["All action bar scales reset to 0.9"] = "Todas las escalas de barras de acció
 L["Action Bar Positions"] = "Posiciones de Barras de Acción"
 L["Tip: Use the Move UI Elements button above to reposition action bars with your mouse."] = "Consejo: Usa el botón Mover Elementos de la IU de arriba para reposicionar las barras con el ratón."
 L["Left Bar Horizontal"] = "Barra Izquierda Horizontal"
-L["Make the left secondary bar horizontal instead of vertical"] = "Hacer la barra secundaria izquierda horizontal en lugar de vertical"
 L["Make the left secondary bar horizontal instead of vertical."] = "Hacer la barra secundaria izquierda horizontal en lugar de vertical."
 L["Right Bar Horizontal"] = "Barra Derecha Horizontal"
-L["Make the right secondary bar horizontal instead of vertical"] = "Hacer la barra secundaria derecha horizontal en lugar de vertical"
 L["Make the right secondary bar horizontal instead of vertical."] = "Hacer la barra secundaria derecha horizontal en lugar de vertical."
 
 -- Button Appearance section
@@ -353,6 +361,7 @@ L["Show Count Text"] = "Mostrar Texto de Cantidad"
 L["Hotkey Text"] = "Texto de Atajo"
 L["Show Hotkey"] = "Mostrar Atajo"
 L["Show Hotkey Text"] = "Mostrar Texto de Atajo"
+L["Range Indicator"] = "Indicador de Alcance"
 L["Show small range indicator point on buttons"] = "Mostrar pequeño indicador de alcance en los botones"
 L["Show range indicator dot on buttons."] = "Mostrar punto indicador de alcance en los botones."
 L["Macro Text"] = "Texto de Macro"
@@ -367,10 +376,7 @@ L["Min Duration"] = "Duración Mínima"
 L["Minimum duration for text triggering"] = "Duración mínima para activar el texto"
 L["Minimum duration for cooldown text to appear."] = "Duración mínima para que aparezca el texto de reutilización."
 L["Text Color"] = "Color del Texto"
-L["Cooldown text color"] = "Color del texto de reutilización"
 L["Cooldown Text Color"] = "Color del Texto de Reutilización"
-L["Font Size"] = "Tamaño de Fuente"
-L["Size of cooldown text"] = "Tamaño del texto de reutilización"
 L["Size of cooldown text."] = "Tamaño del texto de reutilización."
 
 -- Colors
@@ -447,6 +453,7 @@ L["Space between buttons for all additional bars"] = "Espacio entre botones para
 L["Stance Bar"] = "Barra de Postura"
 L["Warriors, Druids, Death Knights"] = "Guerreros, Druidas, Caballeros de la Muerte"
 L["X Position"] = "Posición X"
+L["Y Position"] = "Posición Y"
 L["Y Offset"] = "Desplazamiento Y"
 L["Horizontal position of stance bar from screen center. Negative values move left, positive values move right."] = "Posición horizontal de la barra de postura desde el centro de la pantalla. Valores negativos mueven a la izquierda, positivos a la derecha."
 
@@ -474,6 +481,10 @@ L["TIP: Use Editor Mode to position the totem bar (type /dragonui edit)."] = "CO
 -- CAST BARS TAB
 -- ============================================================================
 
+L["Player Castbar"] = "Barra de Lanzamiento del Jugador"
+L["Target Castbar"] = "Barra de Lanzamiento del Objetivo"
+L["Focus Castbar"] = "Barra de Lanzamiento del Foco"
+
 -- Sub-tabs
 L["Player"] = "Jugador"
 L["Target"] = "Objetivo"
@@ -500,10 +511,8 @@ L["Simple"] = "Simple"
 L["Detailed (Name + Time)"] = "Detallado (Nombre + Tiempo)"
 L["Detailed"] = "Detallado"
 L["Time Precision"] = "Precisión de Tiempo"
-L["Decimal places for remaining time"] = "Decimales para el tiempo restante"
 L["Decimal places for remaining time."] = "Decimales para el tiempo restante."
 L["Max Time Precision"] = "Precisión de Tiempo Máximo"
-L["Decimal places for total time"] = "Decimales para el tiempo total"
 L["Decimal places for total time."] = "Decimales para el tiempo total."
 L["Hold Time (Success)"] = "Tiempo de Retención (Éxito)"
 L["How long the bar stays visible after a successful cast."] = "Cuánto tiempo la barra permanece visible tras un lanzamiento exitoso."
@@ -513,7 +522,6 @@ L["Hold Time (Interrupt)"] = "Tiempo de Retención (Interrupción)"
 L["How long the bar stays visible after being interrupted."] = "Cuánto tiempo la barra permanece visible tras ser interrumpida."
 L["How long the bar stays after being interrupted."] = "Cuánto tiempo la barra permanece tras ser interrumpida."
 L["How long to show the castbar after interruption/failure"] = "Cuánto tiempo mostrar la barra tras interrupción/fallo"
-L["Auto Adjust for Auras"] = "Ajuste Automático por Auras"
 L["Auto-Adjust for Auras"] = "Ajuste Automático por Auras"
 L["Automatically adjust position based on target auras (CRITICAL FEATURE)"] = "Ajustar automáticamente la posición según las auras del objetivo (FUNCIÓN CRÍTICA)"
 L["Shift castbar when buff/debuff rows are showing."] = "Desplazar la barra de lanzamiento cuando se muestran filas de beneficios/perjuicios."
@@ -543,6 +551,8 @@ L["Time to show the castbar after cast interruption"] = "Tiempo para mostrar la 
 
 L["Enhancements"] = "Mejoras"
 L["Visual enhancements that add Dragonflight-style polish to the UI. These are optional — disable any you don't want."] = "Mejoras visuales que añaden el estilo Dragonflight a la IU. Son opcionales — desactiva las que no quieras."
+
+-- (Dark Mode, Range Indicator, Item Quality, Tooltips defined above in MODULES section)
 
 -- ============================================================================
 -- MICRO MENU TAB
@@ -588,13 +598,11 @@ L["Y offset when XP bar is not shown"] = "Desfase Y cuando no se muestra la barr
 
 L["Basic Settings"] = "Configuración Básica"
 L["Border Alpha"] = "Alfa del Borde"
-L["Top border alpha (0 to hide)"] = "Alfa del borde superior (0 para ocultar)"
 L["Top border alpha (0 to hide)."] = "Alfa del borde superior (0 para ocultar)."
 L["Addon Button Skin"] = "Skin de Botones de Addon"
 L["Apply DragonUI border styling to addon icons (e.g., bag addons)"] = "Aplicar estilo de borde de DragonUI a iconos de addons (ej., addons de bolsas)"
 L["Apply DragonUI border styling to addon icons."] = "Aplicar estilo de borde de DragonUI a iconos de addons."
 L["Addon Button Fade"] = "Desvanecimiento de Botones de Addon"
-L["Addon icons fade out when not hovered"] = "Los iconos de addons se desvanecen cuando no se pasa el cursor"
 L["Addon icons fade out when not hovered."] = "Los iconos de addons se desvanecen cuando no se pasa el cursor."
 L["Player Arrow Size"] = "Tamaño de Flecha del Jugador"
 L["Size of the player arrow on the minimap"] = "Tamaño de la flecha del jugador en el minimapa"
@@ -614,10 +622,8 @@ L["Font size for the clock numbers on the minimap"] = "Tamaño de fuente para lo
 -- Display Settings
 L["Display Settings"] = "Configuración de Visualización"
 L["Tracking Icons"] = "Iconos de Rastreo"
-L["Show current tracking icons (old style)"] = "Mostrar iconos de rastreo actuales (estilo antiguo)"
 L["Show current tracking icons (old style)."] = "Mostrar iconos de rastreo actuales (estilo antiguo)."
 L["Zoom Buttons"] = "Botones de Zoom"
-L["Show zoom buttons (+/-)"] = "Mostrar botones de zoom (+/-)"
 L["Show zoom buttons (+/-)."] = "Mostrar botones de zoom (+/-)."
 L["Zone Text Size"] = "Tamaño de Texto de Zona"
 L["Zone Text Font Size"] = "Tamaño de Fuente de Texto de Zona"
@@ -638,10 +644,8 @@ L["Minimap position reset."] = "Posición del minimapa restablecida."
 L["Configures the quest objective tracker position and behavior."] = "Configura la posición y comportamiento del rastreador de objetivos de misión."
 L["Position and display settings for the objective tracker."] = "Configuración de posición y visualización del rastreador de objetivos."
 L["Show Header Background"] = "Mostrar Fondo del Encabezado"
-L["Show/hide the decorative header background texture"] = "Mostrar/ocultar la textura decorativa del fondo del encabezado"
 L["Show/hide the decorative header background texture."] = "Mostrar/ocultar la textura decorativa del fondo del encabezado."
 L["Anchor Point"] = "Punto de Anclaje"
-L["Screen anchor point for the quest tracker"] = "Punto de anclaje en pantalla para el rastreador de misiones"
 L["Screen anchor point for the quest tracker."] = "Punto de anclaje en pantalla para el rastreador de misiones."
 L["Top Right"] = "Superior Derecha"
 L["Top Left"] = "Superior Izquierda"
@@ -703,7 +707,6 @@ L["Current Value Only (2345)"] = "Solo Valor Actual (2345)"
 L["Formatted Current (2.3k)"] = "Valor Formateado (2.3k)"
 L["Percentage Only (75%)"] = "Solo Porcentaje (75%)"
 L["Percentage + Current (75% | 2.3k)"] = "Porcentaje + Actual (75% | 2.3k)"
-L["Percentage + Current/Max"] = "Porcentaje + Actual/Máx"
 
 -- Health/Mana text
 L["Always Show Health Text"] = "Siempre Mostrar Texto de Vida"
@@ -735,6 +738,7 @@ L["Always Show"] = "Siempre Mostrar"
 L["Druid mana text visible at all times, not just on hover."] = "Texto de maná de druida visible en todo momento, no solo al pasar el cursor."
 L["Alternate Mana Text Format"] = "Formato de Texto de Maná Alternativo"
 L["Choose text format for alternate mana display"] = "Elegir formato de texto para la visualización de maná alternativo"
+L["Percentage + Current/Max"] = "Porcentaje + Actual/Máx"
 
 -- Fat Health Bar
 L["Health Bar Style"] = "Estilo de Barra de Vida"
@@ -765,6 +769,7 @@ L["Power Bar Colors"] = "Colores de Barra de Poder"
 L["Mana"] = "Maná"
 L["Rage"] = "Ira"
 L["Energy"] = "Energía"
+-- L["Focus"] = true  -- Already defined above
 L["Runic Power"] = "Poder Rúnico"
 L["Happiness"] = "Felicidad"
 L["Runes"] = "Runas"
@@ -776,10 +781,10 @@ L["Threat Glow"] = "Brillo de Amenaza"
 L["Show threat glow effect"] = "Mostrar efecto de brillo de amenaza"
 L["Show Name Background"] = "Mostrar Fondo del Nombre"
 L["Show the colored name background behind the target name."] = "Muestra el fondo de color detrás del nombre del objetivo."
-L["Show the colored name background behind the focus name."] = "Muestra el fondo de color detrás del nombre del foco."
 
 -- Focus frame
 L["Focus Frame"] = "Marco del Foco"
+L["Show the colored name background behind the focus name."] = "Muestra el fondo de color detrás del nombre del foco."
 L["Override Position"] = "Anular Posición"
 L["Override default positioning"] = "Anular el posicionamiento predeterminado"
 L["Move the pet frame independently from the player frame."] = "Mover el marco de mascota independientemente del marco del jugador."
@@ -791,28 +796,103 @@ L["Horizontal position (only active if Override is checked)"] = "Posición horiz
 L["Vertical position (only active if Override is checked)"] = "Posición vertical (solo activo si Anular está marcado)"
 
 -- Target of Target
+L["Target of Target"] = "Objetivo del Objetivo"
 L["Follows the Target frame by default. Move it in Editor Mode (/dragonui edit) to detach and position freely."] = "Sigue al marco del Objetivo por defecto. Muévelo en el Modo Editor (/dragonui edit) para desanclar y posicionar libremente."
 L["Detached — positioned freely via Editor Mode"] = "Desanclado — posicionado libremente mediante el Modo Editor"
-L["Re-attach to Target"] = "Reanclaje al Objetivo"
-L["Re-attach to Focus"] = "Reanclaje al Foco"
+L["Attached — follows Target frame"] = "Anclado — sigue al marco del Objetivo"
+L["Re-attach to Target"] = "Re-anclar al Objetivo"
+
+-- Target of Focus
+L["Target of Focus"] = "Objetivo del Foco"
+L["Follows the Focus frame by default. Move it in Editor Mode (/dragonui edit) to detach and position freely."] = "Sigue al marco del Foco por defecto. Muévelo en el Modo Editor (/dragonui edit) para desanclar y posicionar libremente."
+L["Attached — follows Focus frame"] = "Anclado — sigue al marco del Foco"
+L["Re-attach to Focus"] = "Re-anclar al Foco"
 
 -- Party Frames
 L["Party Frames"] = "Marcos de Grupo"
 L["Party Frames Configuration"] = "Configuración de Marcos de Grupo"
-L["Custom styling for party member frames with automatic health/mana text display and class colors."] = "Estilo personalizado para marcos de grupo con visualización automática de texto de vida/maná y colores de clase."
+L["Custom styling for party member frames with automatic health/mana text display and class colors."] = "Estilo personalizado para marcos de miembros de grupo con texto automático de vida/maná y colores de clase."
+
+-- Boss Frames
+L["Boss Frames"] = "Marcos de Jefe"
+L["Enabled"] = "Activado"
+
 L["Orientation"] = "Orientación"
 L["Vertical"] = "Vertical"
 L["Horizontal"] = "Horizontal"
 L["Party frame orientation"] = "Orientación de marcos de grupo"
 L["Vertical Padding"] = "Espaciado Vertical"
-L["Space between party frames in vertical mode"] = "Espacio entre marcos de grupo en modo vertical"
+L["Space between party frames in vertical mode."] = "Espacio entre marcos de grupo en modo vertical."
 L["Horizontal Padding"] = "Espaciado Horizontal"
-L["Space between party frames in horizontal mode"] = "Espacio entre marcos de grupo en modo horizontal"
-L["Show Party Buffs"] = "Mostrar Beneficios de Grupo"
-L["Show buff icons on party frames"] = "Mostrar iconos de beneficios en marcos de grupo"
-L["Show Party Debuffs"] = "Mostrar Perjuicios de Grupo"
-L["Show debuff icons on party frames"] = "Mostrar iconos de perjuicios en marcos de grupo"
+L["Space between party frames in horizontal mode."] = "Espacio entre marcos de grupo en modo horizontal."
 
--- Boss Frames
-L["Boss Frames"] = "Marcos de Jefe"
-L["Enabled"] = "Activado"
+-- ============================================================================
+-- XP & REP BARS TAB
+-- ============================================================================
+
+L["Bar Style"] = "Estilo de Barra"
+L["XP / Rep Bar Style"] = "Estilo de Barra de XP / Rep"
+L["DragonflightUI: fully custom bars with rested XP background.\nRetailUI: atlas-based reskin of Blizzard bars.\n\nChanging style requires a UI reload."] = "DragonflightUI: barras completamente personalizadas con fondo de XP descansada.\nRetailUI: reskin basado en atlas de las barras de Blizzard.\n\nCambiar el estilo requiere recargar la IU."
+L["DragonflightUI"] = "DragonflightUI"
+L["RetailUI"] = "RetailUI"
+L["XP bar style changed to "] = "Estilo de barra de XP cambiado a "
+L["A UI reload is required to apply this change."] = "Se requiere recargar la IU para aplicar este cambio."
+
+-- Size & Scale
+L["Size & Scale"] = "Tamaño y Escala"
+L["Bar Height"] = "Altura de Barra"
+L["Height of the XP and Reputation bars (in pixels)."] = "Altura de las barras de XP y Reputación (en píxeles)."
+L["Experience Bar Scale"] = "Escala de Barra de Experiencia"
+L["Scale of the experience bar."] = "Escala de la barra de experiencia."
+L["Reputation Bar Scale"] = "Escala de Barra de Reputación"
+L["Scale of the reputation bar."] = "Escala de la barra de reputación."
+
+-- Rested XP
+L["Rested XP"] = "XP Descansada"
+L["Show Rested XP Background"] = "Mostrar Fondo de XP Descansada"
+L["Display a translucent bar showing the total available rested XP range.\n(DragonflightUI style only)"] = "Mostrar una barra translúcida con el rango total de XP descansada disponible.\n(Solo estilo DragonflightUI)"
+L["Show Exhaustion Tick"] = "Mostrar Marca de Agotamiento"
+L["Show the exhaustion tick indicator on the XP bar, marking where rested XP ends."] = "Mostrar el indicador de agotamiento en la barra de XP, marcando dónde termina la XP descansada."
+
+-- Text Display
+L["Text Display"] = "Visualización de Texto"
+L["Always Show Text"] = "Siempre Mostrar Texto"
+L["Always display XP/Rep text instead of only on hover."] = "Mostrar siempre el texto de XP/Reputación en lugar de solo al pasar el cursor."
+L["Show XP Percentage"] = "Mostrar Porcentaje de XP"
+L["Display XP percentage alongside the value text."] = "Mostrar el porcentaje de XP junto al texto de valor."
+
+-- ============================================================================
+-- PROFILES TAB
+-- ============================================================================
+
+L["Database not available."] = "Base de datos no disponible."
+L["Save and switch between different configurations per character."] = "Guardar y cambiar entre diferentes configuraciones por personaje."
+L["Current Profile"] = "Perfil Actual"
+L["Active: "] = "Activo: "
+L["Switch or Create Profile"] = "Cambiar o Crear Perfil"
+L["Select Profile"] = "Seleccionar Perfil"
+L["New Profile Name"] = "Nombre del Nuevo Perfil"
+L["Copy From"] = "Copiar Desde"
+L["Copies all settings from the selected profile into your current one."] = "Copia todas las configuraciones del perfil seleccionado al actual."
+L["Copied profile: "] = "Perfil copiado: "
+L["Delete Profile"] = "Eliminar Perfil"
+L["Warning: Deleting a profile is permanent and cannot be undone."] = "Aviso: Eliminar un perfil es permanente y no se puede deshacer."
+L["Delete"] = "Eliminar"
+L["Deleted profile: "] = "Perfil eliminado: "
+L["Are you sure you want to delete the profile '%s'? This cannot be undone."] = "¿Estás seguro de que quieres eliminar el perfil '%s'? Esto no se puede deshacer."
+L["Reset Current Profile"] = "Restablecer Perfil Actual"
+L["Restores the current profile to its defaults. This cannot be undone."] = "Restaura el perfil actual a sus valores predeterminados. Esto no se puede deshacer."
+L["Reset Profile"] = "Restablecer Perfil"
+L["All changes will be lost and the UI will be reloaded.\nAre you sure you want to reset your profile?"] = "Todos los cambios se perderán y la IU se recargará.\n¿Estás seguro de que quieres restablecer tu perfil?"
+L["Profile reset to defaults."] = "Perfil restablecido a los valores predeterminados."
+
+-- UNIT FRAME LAYERS MODULE
+L["Unit Frame Layers"] = "Capas de Marcos de Unidad"
+L["Enable Unit Frame Layers"] = "Activar Capas de Marcos de Unidad"
+L["Heal prediction, absorb shields, and animated health loss on unit frames"] = "Predicción de sanación, escudos de absorción y pérdida de salud animada en marcos de unidad"
+L["Heal prediction bars, absorb shields, and animated health loss overlays on unit frames."] = "Barras de predicción de sanación, escudos de absorción y capas de pérdida de salud animada en marcos de unidad."
+L["Show heal prediction, absorb shields, and animated health loss on all unit frames."] = "Mostrar predicción de sanación, escudos de absorción y pérdida de salud animada en todos los marcos de unidad."
+L["Animated Health Loss"] = "Pérdida de Vida Animada"
+L["Show animated red health loss bar on player frame when taking damage."] = "Mostrar barra roja animada de pérdida de salud en el marco del jugador al recibir daño."
+L["Builder/Spender Feedback"] = "Retroalimentación de Generadores/Gastadores"
+L["Show mana gain/loss glow feedback on player mana bar (experimental)."] = "Mostrar brillo de ganancia/pérdida de maná en la barra de maná del jugador (experimental)."

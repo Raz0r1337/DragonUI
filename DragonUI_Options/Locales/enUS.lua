@@ -6,7 +6,7 @@ Base locale for the options panel: labels, descriptions, section headers,
 dropdown values, print messages, popup text.
 
 When adding new strings:
-1. Add L["Your String"] = true here
+1. Add L[<your key>] = true here
 2. Use L["Your String"] in your options code
 3. Add translations to other locale files
 ================================================================================
@@ -20,7 +20,7 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = true
-L["experimental"] = true
+L["Use the tabs on the left to customize action bars, unit frames, minimap, cast bars, and more."] = true
 L["Editor Mode"] = true
 L["KeyBind Mode"] = true
 L["Exit Editor Mode"] = true
@@ -33,11 +33,21 @@ L["Use /dragonui to open the full settings panel."] = true
 
 -- Quick Actions
 L["Quick Actions"] = true
+L["Jump to popular settings sections."] = true
+L["Action Bar Layout"] = true
+L["Configure dark tinting for all UI chrome."] = true
+L["Full-width health bar that fills the entire player frame."] = true
+L["Add a decorative dragon to your player frame."] = true
+L["Heal prediction, absorb shields and animated health loss."] = true
+L["Change columns, rows, and buttons shown per action bar."] = true
+L["Switch micro menu icons between colored and grayscale style."] = true
 L["About"] = true
 L["Dragonflight-inspired UI for WotLK 3.3.5a."] = true
-L["Experimental Branch — This options panel is in early beta."] = true
-L["Features may change or be incomplete. Report issues on GitHub."] = true
+
 L["Use /dragonui or /pi to toggle this panel."]  = true
+L["All"] = true
+L["Error:"] = true
+L["Error: DragonUI addon not found!"] = true
 
 -- ============================================================================
 -- STATIC POPUPS
@@ -91,6 +101,12 @@ L["Cast Bars"] = true
 L["Other Modules"] = true
 L["UI Systems"] = true
 L["Enable All Action Bar Modules"] = true
+L["Cast Bar"] = true
+L["Custom player, target, and focus cast bars"] = true
+L["Cooldown text on action buttons"] = true
+L["Shaman totem bar positioning and styling"] = true
+L["Dragonflight-styled player unit frame"] = true
+L["Dragonflight-styled boss target frames"] = true
 
 -- Toggle labels
 L["Player Castbar"] = true
@@ -189,7 +205,6 @@ L["Legendary"] = true
 
 -- Enhanced Tooltips
 L["Enhanced Tooltips"] = true
-L["Improve GameTooltip with class-colored borders, class-colored names, target-of-target info, and styled health bars."] = true
 L["Improves GameTooltip with class-colored borders, class-colored names, target-of-target info, and styled health bars."] = true
 L["Activate all tooltip improvements. Sub-options below control individual features."] = true
 L["Class-Colored Border"] = true
@@ -204,7 +219,6 @@ L["Restyle the tooltip health bar with class/reaction colors."] = true
 L["Restyle the tooltip health bar with class/reaction colors and slimmer look."] = true
 L["Anchor to Cursor"] = true
 L["Make the tooltip follow the cursor position instead of the default anchor."] = true
-L["Make the tooltip follow the cursor position instead of using the default anchor."] = true
 
 -- Chat Mods
 L["Chat Mods"] = true
@@ -343,10 +357,8 @@ L["All action bar scales reset to 0.9"] = true
 L["Action Bar Positions"] = true
 L["Tip: Use the Move UI Elements button above to reposition action bars with your mouse."] = true
 L["Left Bar Horizontal"] = true
-L["Make the left secondary bar horizontal instead of vertical"] = true
 L["Make the left secondary bar horizontal instead of vertical."] = true
 L["Right Bar Horizontal"] = true
-L["Make the right secondary bar horizontal instead of vertical"] = true
 L["Make the right secondary bar horizontal instead of vertical."] = true
 
 -- Button Appearance section
@@ -381,10 +393,8 @@ L["Min Duration"] = true
 L["Minimum duration for text triggering"] = true
 L["Minimum duration for cooldown text to appear."] = true
 L["Text Color"] = true
-L["Cooldown text color"] = true
 L["Cooldown Text Color"] = true
 L["Font Size"] = true
-L["Size of cooldown text"] = true
 L["Size of cooldown text."] = true
 
 -- Colors
@@ -519,10 +529,8 @@ L["Simple"] = true
 L["Detailed (Name + Time)"] = true
 L["Detailed"] = true
 L["Time Precision"] = true
-L["Decimal places for remaining time"] = true
 L["Decimal places for remaining time."] = true
 L["Max Time Precision"] = true
-L["Decimal places for total time"] = true
 L["Decimal places for total time."] = true
 L["Hold Time (Success)"] = true
 L["How long the bar stays visible after a successful cast."] = true
@@ -532,7 +540,6 @@ L["Hold Time (Interrupt)"] = true
 L["How long the bar stays visible after being interrupted."] = true
 L["How long the bar stays after being interrupted."] = true
 L["How long to show the castbar after interruption/failure"] = true
-L["Auto Adjust for Auras"] = true
 L["Auto-Adjust for Auras"] = true
 L["Automatically adjust position based on target auras (CRITICAL FEATURE)"] = true
 L["Shift castbar when buff/debuff rows are showing."] = true
@@ -609,13 +616,11 @@ L["Y offset when XP bar is not shown"] = true
 
 L["Basic Settings"] = true
 L["Border Alpha"] = true
-L["Top border alpha (0 to hide)"] = true
 L["Top border alpha (0 to hide)."] = true
 L["Addon Button Skin"] = true
 L["Apply DragonUI border styling to addon icons (e.g., bag addons)"] = true
 L["Apply DragonUI border styling to addon icons."] = true
 L["Addon Button Fade"] = true
-L["Addon icons fade out when not hovered"] = true
 L["Addon icons fade out when not hovered."] = true
 L["Player Arrow Size"] = true
 L["Size of the player arrow on the minimap"] = true
@@ -635,10 +640,8 @@ L["Font size for the clock numbers on the minimap"] = true
 -- Display Settings
 L["Display Settings"] = true
 L["Tracking Icons"] = true
-L["Show current tracking icons (old style)"] = true
 L["Show current tracking icons (old style)."] = true
 L["Zoom Buttons"] = true
-L["Show zoom buttons (+/-)"] = true
 L["Show zoom buttons (+/-)."] = true
 L["Zone Text Size"] = true
 L["Zone Text Font Size"] = true
@@ -659,10 +662,8 @@ L["Minimap position reset."] = true
 L["Configures the quest objective tracker position and behavior."] = true
 L["Position and display settings for the objective tracker."] = true
 L["Show Header Background"] = true
-L["Show/hide the decorative header background texture"] = true
 L["Show/hide the decorative header background texture."] = true
 L["Anchor Point"] = true
-L["Screen anchor point for the quest tracker"] = true
 L["Screen anchor point for the quest tracker."] = true
 L["Top Right"] = true
 L["Top Left"] = true
@@ -840,10 +841,8 @@ L["Vertical"] = true
 L["Horizontal"] = true
 L["Party frame orientation"] = true
 L["Vertical Padding"] = true
-L["Space between party frames in vertical mode"] = true
 L["Space between party frames in vertical mode."] = true
 L["Horizontal Padding"] = true
-L["Space between party frames in horizontal mode"] = true
 L["Space between party frames in horizontal mode."] = true
 
 -- ============================================================================
@@ -899,6 +898,7 @@ L["Delete Profile"] = true
 L["Warning: Deleting a profile is permanent and cannot be undone."] = true
 L["Delete"] = true
 L["Deleted profile: "] = true
+L["Are you sure you want to delete the profile '%s'? This cannot be undone."] = true
 L["Reset Current Profile"] = true
 L["Restores the current profile to its defaults. This cannot be undone."] = true
 L["Reset Profile"] = true
