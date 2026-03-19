@@ -1820,43 +1820,6 @@ InitializePartyFramesForEditor() -- First: register with centralized system
 StylePartyFrames() -- Second: visual properties and positioning
 SetupPartyHooks() -- Third: safe hooks only
 
--- ===============================================================
--- PARTY BACKGROUND CVAR CHECK
--- ===============================================================
--- Blizzard's "Party/Arena Background" option (showPartyBackground CVar)
--- conflicts with DragonUI's custom party frame styling. Detect it and
--- offer to auto-disable it at startup.
-do
-    local cvarCheckFrame = CreateFrame("Frame")
-    cvarCheckFrame:RegisterEvent("PLAYER_LOGIN")
-    cvarCheckFrame:SetScript("OnEvent", function(self)
-        self:UnregisterEvent("PLAYER_LOGIN")
-        local val = GetCVar("showPartyBackground")
-        if val and val == "1" then
-            -- Define popup
-            StaticPopupDialogs["DRAGONUI_PARTY_BG_CVAR"] = {
-                text = "|cFF00CCFFDragonUI|r\n\n" ..
-                    (L and L["The Blizzard option |cFFFFFF00Party/Arena Background|r is enabled. This conflicts with DragonUI's party frames."] or
-                    "The Blizzard option |cFFFFFF00Party/Arena Background|r is enabled. This conflicts with DragonUI's party frames.") ..
-                    "\n\n" ..
-                    (L and L["Disable it now?"] or "Disable it now?"),
-                button1 = L and L["Disable"] or "Disable",
-                button2 = L and L["Ignore"] or "Ignore",
-                OnAccept = function()
-                    SetCVar("showPartyBackground", "0")
-                    ReloadUI()
-                end,
-                OnCancel = function() end,
-                timeout = 0,
-                whileDead = true,
-                hideOnEscape = true,
-                preferredIndex = 3,
-            }
-            StaticPopup_Show("DRAGONUI_PARTY_BG_CVAR")
-        end
-    end)
-end
-
 -- Listener for when the addon is fully loaded
 local readyFrame = CreateFrame("Frame")
 readyFrame:RegisterEvent("ADDON_LOADED")

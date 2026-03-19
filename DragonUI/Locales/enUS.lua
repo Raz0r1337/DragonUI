@@ -239,6 +239,17 @@ L["Ignore"] = true
 L["Skip"] = true
 L["The Blizzard option |cFFFFFF00Party/Arena Background|r is enabled. This conflicts with DragonUI's party frames."] = true
 L["Disable it now?"] = true
+L["Some interface settings are not configured optimally for DragonUI."] = true
+L["This includes settings that conflict with DragonUI and settings recommended for the best visual experience."] = true
+L["Affected settings:"] = true
+L["Some interface settings are not configured optimally for DragonUI. Do you want to fix them?"] = true
+L["Do you want to fix them now?"] = true
+L["Party/Arena Background"] = true
+L["Default Status Text"] = true
+L["Always Show Action Bars"] = true
+L["Show Clock"] = true
+L["Conflict"] = true
+L["Recommended"] = true
 
 -- Bag Sort
 L["Sort Bags"] = true

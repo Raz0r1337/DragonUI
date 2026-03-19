@@ -6,9 +6,7 @@
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
 ![Version](https://img.shields.io/badge/Version-2.4.0-green)
 
-**Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI Classic**
-
-Created and maintained by **Neticsoul**, with community contributions.
+**DragonUI is a modular UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King), inspired by Dragonflight UI Classic.**
 
 </div>
 
@@ -50,6 +48,7 @@ DragonUI is in active development. While already in an advanced state, occasiona
 | `/dragonui`, `/dui` or `/pi` | Opens the configuration UI |
 | `/dragonui edit` | Toggles editor mode |
 | `/dragonui help` | Shows available commands |
+| `/duicomp` | Opens compatibility commands |
 | `/sort` | Sorts your bags |
 | `/tt <message>` | Whisper your current target |
 | `/rl` | Reloads the UI |

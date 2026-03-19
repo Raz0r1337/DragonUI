@@ -75,6 +75,274 @@ local function IsRegistryAddonLoaded(addonName)
 end
 
 -- ============================================================================
+-- INTERFACE SETTINGS FIXER (UNIFIED BLIZZARD SETTINGS)
+-- ============================================================================
+
+local InterfaceSettingsFixer = {
+    popupName = "DRAGONUI_INTERFACE_SETTINGS_FIXER",
+    initialized = false,
+    scanPending = false,
+    popupVisible = false,
+    applyingFixes = false,
+    dismissedForSession = false,
+    lastIssues = nil,
+    settings = {
+        {
+            setting = "showPartyBackground",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Party/Arena Background"
+        },
+        {
+            setting = "statusText",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "playerStatusText",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "petStatusText",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "partyStatusText",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "targetStatusText",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "statusTextPercentage",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "xpBarText",
+            desiredValue = "0",
+            type = "CVar",
+            category = "conflict",
+            displayName = "Default Status Text"
+        },
+        {
+            setting = "alwaysShowActionBars",
+            desiredValue = "1",
+            type = "CVar",
+            category = "recommended",
+            displayName = "Always Show Action Bars"
+        },
+        {
+            setting = "showClock",
+            desiredValue = "1",
+            type = "CVar",
+            category = "recommended",
+            displayName = "Show Clock"
+        }
+    }
+}
+
+local function NormalizeSettingValue(value)
+    if value == nil then return "" end
+    return tostring(value):lower()
+end
+
+local function GetSettingValue(def)
+    if def.type == "CVar" then
+        return GetCVar(def.setting)
+    elseif def.type == "API" and def.getter then
+        return def.getter()
+    end
+    return nil
+end
+
+local function SetSettingValue(def, value)
+    if def.type == "CVar" then
+        SetCVar(def.setting, tostring(value))
+    elseif def.type == "API" and def.setter then
+        def.setter(value)
+    end
+end
+
+local function IsSettingOutOfSpec(def)
+    local currentValue = GetSettingValue(def)
+
+    -- If a CVar is unavailable in this client/version, skip it.
+    if def.type == "CVar" and (currentValue == nil or currentValue == "") then
+        return false
+    end
+
+    return NormalizeSettingValue(currentValue) ~= NormalizeSettingValue(def.desiredValue)
+end
+
+local function GetOutOfSpecInterfaceSettings()
+    local issues = {}
+    for _, def in ipairs(InterfaceSettingsFixer.settings) do
+        if IsSettingOutOfSpec(def) then
+            table.insert(issues, def)
+        end
+    end
+    return issues
+end
+
+local function ApplyInterfaceSettingsFixes(issues)
+    InterfaceSettingsFixer.applyingFixes = true
+    for _, def in ipairs(issues) do
+        SetSettingValue(def, def.desiredValue)
+    end
+
+    -- Force immediate visual refresh where Blizzard normally reacts to CVar changes.
+    if MainMenuBar_Update then
+        MainMenuBar_Update()
+    end
+    if UpdateTextStatusBarText then
+        UpdateTextStatusBarText()
+    end
+    if TimeManagerClockButton then
+        if GetCVar("showClock") == "1" then
+            TimeManagerClockButton:Show()
+        else
+            TimeManagerClockButton:Hide()
+        end
+    end
+
+    InterfaceSettingsFixer.applyingFixes = false
+end
+
+local function BuildInterfaceSettingsIssueLines(issues)
+    local seen = {}
+    local lines = {}
+
+    for _, def in ipairs(issues) do
+        local key = def.category .. ":" .. (def.displayName or def.setting)
+        if not seen[key] then
+            seen[key] = true
+            local categoryLabel
+            if def.category == "conflict" then
+                categoryLabel = L["Conflict"] or "Conflict"
+            else
+                categoryLabel = L["Recommended"] or "Recommended"
+            end
+            local displayName = L[def.displayName] or def.displayName or def.setting
+            table.insert(lines, string.format("- %s: %s", categoryLabel, displayName))
+        end
+    end
+
+    return table.concat(lines, "\n")
+end
+
+local function ShowInterfaceSettingsFixerPopup(issues)
+    if InterfaceSettingsFixer.popupVisible then
+        return
+    end
+
+    InterfaceSettingsFixer.lastIssues = issues
+
+    if not StaticPopupDialogs[InterfaceSettingsFixer.popupName] then
+        StaticPopupDialogs[InterfaceSettingsFixer.popupName] = {
+            text = "",
+            button1 = YES,
+            button2 = NO,
+            OnAccept = function()
+                local activeIssues = InterfaceSettingsFixer.lastIssues or GetOutOfSpecInterfaceSettings()
+                ApplyInterfaceSettingsFixes(activeIssues)
+                InterfaceSettingsFixer.dismissedForSession = false
+                InterfaceSettingsFixer.popupVisible = false
+                ReloadUI()
+            end,
+            OnCancel = function()
+                InterfaceSettingsFixer.dismissedForSession = true
+                InterfaceSettingsFixer.popupVisible = false
+            end,
+            OnHide = function()
+                InterfaceSettingsFixer.popupVisible = false
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3
+        }
+    end
+
+    local issueLines = BuildInterfaceSettingsIssueLines(issues)
+    local popupText = "|cFF00CCFFDragonUI|r\n\n" ..
+        (L["Some interface settings are not configured optimally for DragonUI."] or "Some interface settings are not configured optimally for DragonUI.") ..
+        "\n\n" ..
+        (L["This includes settings that conflict with DragonUI and settings recommended for the best visual experience."] or
+        "This includes settings that conflict with DragonUI and settings recommended for the best visual experience.") ..
+        "\n\n" ..
+        (L["Affected settings:"] or "Affected settings:") .. "\n" ..
+        issueLines ..
+        "\n\n" ..
+        (L["Do you want to fix them now?"] or "Do you want to fix them now?")
+
+    StaticPopupDialogs[InterfaceSettingsFixer.popupName].text = popupText
+    InterfaceSettingsFixer.popupVisible = true
+    StaticPopup_Show(InterfaceSettingsFixer.popupName)
+end
+
+local function ScanAndPromptInterfaceSettingsFixer()
+    if InterfaceSettingsFixer.applyingFixes then
+        return
+    end
+
+    local issues = GetOutOfSpecInterfaceSettings()
+    if #issues == 0 then
+        InterfaceSettingsFixer.lastIssues = nil
+        InterfaceSettingsFixer.dismissedForSession = false
+        return
+    end
+
+    if InterfaceSettingsFixer.dismissedForSession then
+        return
+    end
+
+    ShowInterfaceSettingsFixerPopup(issues)
+end
+
+local function ScheduleInterfaceSettingsScan(delay)
+    if InterfaceSettingsFixer.scanPending then
+        return
+    end
+
+    InterfaceSettingsFixer.scanPending = true
+    DelayedCall(function()
+        InterfaceSettingsFixer.scanPending = false
+        ScanAndPromptInterfaceSettingsFixer()
+    end, delay or 0.2)
+end
+
+local function IsFixerMonitoredCVar(cvarName)
+    if not cvarName then return false end
+
+    for _, def in ipairs(InterfaceSettingsFixer.settings) do
+        if def.type == "CVar" and def.setting == cvarName then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- ============================================================================
 -- BEHAVIOR SYSTEM
 -- ============================================================================
 
@@ -725,6 +993,7 @@ local function InitializeEvents()
     local eventFrame = CreateFrame("Frame")
     eventFrame:RegisterEvent("ADDON_LOADED")
     eventFrame:RegisterEvent("PLAYER_LOGIN")
+    eventFrame:RegisterEvent("CVAR_UPDATE")
 
     eventFrame:SetScript("OnEvent", function(self, event, loadedAddonName)
         if event == "ADDON_LOADED" then
@@ -776,6 +1045,17 @@ local function InitializeEvents()
 
         elseif event == "PLAYER_LOGIN" then
             state.initialized = true
+
+            if not InterfaceSettingsFixer.initialized then
+                InterfaceSettingsFixer.initialized = true
+                ScheduleInterfaceSettingsScan(0.5)
+            end
+
+        elseif event == "CVAR_UPDATE" then
+            local cvarName = loadedAddonName
+            if InterfaceSettingsFixer.initialized and IsFixerMonitoredCVar(cvarName) then
+                ScheduleInterfaceSettingsScan(0.2)
+            end
         end
     end)
 end
