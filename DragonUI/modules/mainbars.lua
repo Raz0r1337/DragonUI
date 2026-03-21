@@ -1954,12 +1954,8 @@ end
             blizzardFrame = nil,
             configPath = {"widgets", "xpbar"},
             editorVisible = function()
-                local style = GetXpBarStyle()
-                if style == "dragonflightui" then
-                    return dfXpBar and dfXpBar:IsShown()
-                else
-                    return MainMenuExpBar and MainMenuExpBar:IsShown()
-                end
+                -- Always editable in editor mode, regardless of current XP state
+                return true
             end
         },
         {
@@ -1968,12 +1964,8 @@ end
             blizzardFrame = nil,
             configPath = {"widgets", "repbar"},
             editorVisible = function()
-                local style = GetXpBarStyle()
-                if style == "dragonflightui" then
-                    return dfRepBar and dfRepBar:IsShown()
-                else
-                    return ReputationWatchBar and ReputationWatchBar:IsShown()
-                end
+                -- Always editable in editor mode, regardless of current reputation state
+                return true
             end
         }}
 

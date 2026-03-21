@@ -95,7 +95,7 @@ L["Are you sure you want to reset all interface elements to their default positi
 L["Yes"] = "Да"
 L["No"] = "Нет"
 L["UI elements have been repositioned. Reload UI to ensure all graphics display correctly?"] = "Элементы интерфейса были перемещены. Перезагрузить интерфейс для корректного отображения?"
-L["Reload Now"] = "Перезагрузить сейчас"
+L["Reload Now"] = "Перезагрузить"
 L["Later"] = "Позже"
 
 -- ============================================================================

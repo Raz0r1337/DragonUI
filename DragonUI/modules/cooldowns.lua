@@ -70,6 +70,16 @@ end
 function addon.cooldownMixin:create_string()
     local text = self:CreateFontString(nil, 'OVERLAY')
     text:SetPoint('CENTER')
+    
+    -- Set default font immediately to prevent "Font not set" errors in OnUpdate
+    local db = addon.db and addon.db.profile and addon.db.profile.buttons and addon.db.profile.buttons.cooldown
+    if db and db.font then
+        local fontPath = db.font[1]
+        local fontSize = db.font_size or db.font[2]
+        local fontFlags = db.font[3]
+        text:SetFont(fontPath, fontSize, fontFlags)
+    end
+    
     self.text = text
     self:SetScript('OnUpdate', addon.cooldownMixin.update_cooldown)
     return text

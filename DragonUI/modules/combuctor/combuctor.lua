@@ -902,6 +902,7 @@ do
         item:SetScript("OnLeave", self.OnLeave)
         item:SetScript("OnShow", self.OnShow)
         item:SetScript("OnHide", self.OnHide)
+        item:SetScript("OnUpdate", self.OnUpdate)
         item:RegisterForClicks("anyUp")
         item.UpdateTooltip = nil
 
@@ -960,25 +961,54 @@ do
             dummySlot:Show()
         else
             dummySlot:Hide()
-            if self:IsBankSlot() then
+            self._lastShiftState = nil  -- reset so OnUpdate detects shift on first hover
+            if self:IsBank() then
+                -- BANK_CONTAINER slots: use SetInventoryItem (bank-specific API)
                 if self:GetItem() then
                     self:AnchorTooltip()
-                    local bag = self:GetBag()
-                    if bag == BANK_CONTAINER then
-                        GameTooltip:SetInventoryItem("player", BankButtonIDToInvSlotID(self:GetID()))
-                    else
-                        GameTooltip:SetBagItem(bag, self:GetID())
-                    end
+                    GameTooltip:SetInventoryItem("player", BankButtonIDToInvSlotID(self:GetID()))
                     GameTooltip:Show()
                     CursorUpdate(self)
+                    if IsModifiedClick("COMPAREITEMS") then
+                        GameTooltip_ShowCompareItem()
+                    end
+                    self.UpdateTooltip = self.OnEnter
                 end
             else
+                -- Inventory/bank-bag slots: native Blizzard handler correctly shows
+                -- Soulbound, durability, and handles initial shift+compare
                 ContainerFrameItemButton_OnEnter(self)
             end
         end
     end
 
+    function ItemSlot:OnUpdate()
+        -- Detect shift key state change WHILE hovering and show/hide the comparison
+        -- tooltip WITHOUT rebuilding the main GameTooltip (which would corrupt
+        -- Soulbound/durability text).
+        if not self:IsMouseOver() or self:IsCached() then
+            self._lastShiftState = nil
+            return
+        end
+        if not GameTooltip:IsOwned(self) then return end
+        local shiftDown = IsModifiedClick("COMPAREITEMS")
+        if self._lastShiftState == shiftDown then return end
+        self._lastShiftState = shiftDown
+        if shiftDown then
+            -- Shift just pressed: show comparison side-tooltip (does NOT touch main GameTooltip)
+            GameTooltip_ShowCompareItem()
+        else
+            -- Shift released: hide comparison side-tooltips
+            if GameTooltip.shoppingTooltips then
+                for _, tt in ipairs(GameTooltip.shoppingTooltips) do
+                    tt:Hide()
+                end
+            end
+        end
+    end
+
     function ItemSlot:OnLeave()
+        self._lastShiftState = nil
         GameTooltip:Hide()
         ResetCursor()
     end
