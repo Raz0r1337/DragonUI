@@ -808,6 +808,8 @@ L["Show the colored name background behind the target name."] = true
 -- Focus frame
 L["Focus Frame"] = true
 L["Show the colored name background behind the focus name."] = true
+L["Show Buff/Debuff on Focus"] = true
+L["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."] = true
 L["Override Position"] = true
 L["Override default positioning"] = true
 L["Move the pet frame independently from the player frame."] = true

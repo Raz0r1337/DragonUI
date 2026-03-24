@@ -329,8 +329,9 @@ local function BuildFocusSection(scroll)
     })
 
     C:AddToggle(s, {
-        label = LO["Override Position"],
-        dbPath = "unitframe.focus.override",
+        label = LO["Show Buff/Debuff on Focus"],
+        desc = LO["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."],
+        dbPath = "unitframe.focus.show_buff_debuff",
         callback = refreshFocus,
     })
 end

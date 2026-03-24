@@ -789,6 +789,8 @@ L["Show the colored name background behind the target name."] = "대상 이름 �
 -- Focus frame
 L["Focus Frame"] = "주시 대상 프레임"
 L["Show the colored name background behind the focus name."] = "주시 대상 이름 뒤의 색상 배경을 표시합니다."
+L["Show Buff/Debuff on Focus"] = "주시 대상에 버프/디버프 표시"
+L["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."] = "기본 대형 주시 대상 프레임 모드를 사용해 주시 대상 프레임에 버프와 디버프를 표시합니다."
 L["Override Position"] = "위치 수동 설정"
 L["Override default positioning"] = "기본 위치 설정 재정의"
 L["Move the pet frame independently from the player frame."] = "소환수 프레임을 플레이어 프레임과 별개로 이동시킵니다."

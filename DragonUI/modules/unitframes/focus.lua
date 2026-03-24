@@ -20,6 +20,66 @@ local FocusFrameTextureFrameName      = _G.FocusFrameTextureFrameName
 local FocusFrameTextureFrameLevelText = _G.FocusFrameTextureFrameLevelText
 local FocusFrameNameBackground        = _G.FocusFrameNameBackground
 
+local FULL_SIZE_FOCUS_FRAME_CVAR = "fullSizeFocusFrame"
+local isApplyingFocusAuraSetting = false
+
+local function GetFocusConfig()
+    return addon.db and addon.db.profile and addon.db.profile.unitframe
+        and addon.db.profile.unitframe.focus
+end
+
+local function SyncFocusAuraSetting(smallSize)
+    local config = GetFocusConfig()
+    if not config then return end
+
+    config.show_buff_debuff = (smallSize == false)
+end
+
+local function ShouldShowFocusAuras()
+    local config = GetFocusConfig()
+    if config and config.show_buff_debuff ~= nil then
+        return config.show_buff_debuff
+    end
+
+    return GetCVarBool(FULL_SIZE_FOCUS_FRAME_CVAR) and true or false
+end
+
+local function ApplyFocusAuraSetting()
+    local setSmallSize = _G.FocusFrame_SetSmallSize
+    if isApplyingFocusAuraSetting or not FocusFrame or type(setSmallSize) ~= "function" then
+        return
+    end
+
+    if InCombatLockdown() then
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("focus_aura_mode", ApplyFocusAuraSetting)
+        end
+        return
+    end
+
+    local showAuras = ShouldShowFocusAuras()
+    local wantSmallSize = not showAuras
+    isApplyingFocusAuraSetting = true
+
+    if GetCVar(FULL_SIZE_FOCUS_FRAME_CVAR) ~= (showAuras and "1" or "0") then
+        SetCVar(FULL_SIZE_FOCUS_FRAME_CVAR, showAuras and "1" or "0")
+    end
+
+    if FocusFrame.smallSize ~= wantSmallSize then
+        setSmallSize(wantSmallSize)
+    end
+
+    if FocusFrame.UpdateAuras then
+        FocusFrame:UpdateAuras()
+    end
+
+    if addon.RefreshToFFrame then
+        addon:RefreshToFFrame()
+    end
+
+    isApplyingFocusAuraSetting = false
+end
+
 -- ============================================================================
 -- CREATE VIA FACTORY
 -- ============================================================================
@@ -83,7 +143,9 @@ local api = UF.TargetStyle.Create({
     -- After-init: FocusFrame_SetSmallSize hook
     afterInit = function(ctx)
         if not ctx.Module.scaleHooked then
-            hooksecurefunc("FocusFrame_SetSmallSize", function()
+            hooksecurefunc("FocusFrame_SetSmallSize", function(smallSize)
+                SyncFocusAuraSetting(smallSize)
+                if isApplyingFocusAuraSetting then return end
                 if InCombatLockdown() then return end
                 local config = ctx.GetConfig()
                 local correctScale = config.scale or 1
@@ -96,27 +158,40 @@ local api = UF.TargetStyle.Create({
             end)
             ctx.Module.scaleHooked = true
         end
+
+        ApplyFocusAuraSetting()
     end,
 })
+
+local function RefreshFocusFrame()
+    ApplyFocusAuraSetting()
+    api.Refresh()
+end
+
+local function ResetFocusFrame()
+    api.Reset()
+    ApplyFocusAuraSetting()
+    api.Refresh()
+end
 
 -- ============================================================================
 -- PUBLIC API
 -- ============================================================================
 
 addon.FocusFrame = {
-    Refresh               = api.Refresh,
-    RefreshFocusFrame      = api.Refresh,
-    Reset                  = api.Reset,
+    Refresh               = RefreshFocusFrame,
+    RefreshFocusFrame     = RefreshFocusFrame,
+    Reset                 = ResetFocusFrame,
     anchor                 = api.anchor,
-    ChangeFocusFrame       = api.Refresh,
+    ChangeFocusFrame       = RefreshFocusFrame,
     UpdateFocusClassPortrait = api.UpdateClassPortrait,
 }
 
 -- Legacy compatibility
 addon.unitframe = addon.unitframe or {}
-addon.unitframe.ChangeFocusFrame  = api.Refresh
-addon.unitframe.ReApplyFocusFrame = api.Refresh
+addon.unitframe.ChangeFocusFrame  = RefreshFocusFrame
+addon.unitframe.ReApplyFocusFrame = RefreshFocusFrame
 
 function addon:RefreshFocusFrame()
-    api.Refresh()
+    RefreshFocusFrame()
 end

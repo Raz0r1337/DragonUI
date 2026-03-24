@@ -488,9 +488,9 @@ local defaults = {
                 textFormat = 'both',
                 showHealthTextAlways = false,
                 showManaTextAlways = false,
+                show_buff_debuff = true,
                 show_name_background = true,
-                scale = 0.9,
-                override = false
+                scale = 0.9
             },
             pet = {
                 breakUpLargeNumbers = true,

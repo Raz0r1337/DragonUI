@@ -785,6 +785,8 @@ L["Show the colored name background behind the target name."] = "在目標名稱
 -- 焦點框架
 L["Focus Frame"] = "焦點框架"
 L["Show the colored name background behind the focus name."] = "在焦點名稱後面顯示有顏色的名稱背景。"
+L["Show Buff/Debuff on Focus"] = "在焦點上顯示增益/減益"
+L["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."] = "使用原生的大型焦點框架模式，在焦點框架上顯示增益和減益。"
 L["Override Position"] = "覆蓋預設位置"
 L["Override default positioning"] = "覆蓋預設位置設定"
 L["Move the pet frame independently from the player frame."] = "將寵物框架與玩家框架分開移動。"

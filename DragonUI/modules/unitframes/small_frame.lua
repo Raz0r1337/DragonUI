@@ -792,6 +792,22 @@ function UF.SmallFrame.Create(opts)
             InitializeFrame()
         else
             if frames.main and not InCombatLockdown() then
+                local config = GetConfig()
+                if config and config.override and Module.anchorFrame then
+                    frames.main:ClearAllPoints()
+                    frames.main:SetPoint("CENTER", Module.anchorFrame, "CENTER", 0, 0)
+                else
+                    frames.main:ClearAllPoints()
+                    frames.main:SetPoint(
+                        (config and config.anchor) or opts.defaultAnchor or "BOTTOMRIGHT",
+                        frames.parent,
+                        (config and config.anchorParent) or opts.defaultAnchorParent or "BOTTOMRIGHT",
+                        (config and config.x) or opts.defaultX or 0,
+                        (config and config.y) or opts.defaultY or 0
+                    )
+                end
+                frames.main:SetScale((config and config.scale) or 1.0)
+
                 if ShouldShow() then
                     frames.main:Show()
                 else

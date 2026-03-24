@@ -787,6 +787,8 @@ L["Show the colored name background behind the target name."] = "Zeigt den farbi
 -- Focus frame
 L["Focus Frame"] = "Fokusfenster"
 L["Show the colored name background behind the focus name."] = "Zeigt den farbigen Hintergrund hinter dem Fokusnamen an."
+L["Show Buff/Debuff on Focus"] = "Buffs/Debuffs beim Fokus anzeigen"
+L["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."] = "Verwendet den nativen großen Fokusfenster-Modus, um Buffs und Debuffs am Fokusfenster anzuzeigen."
 L["Override Position"] = "Position überschreiben"
 L["Override default positioning"] = "Standardpositionierung überschreiben"
 L["Move the pet frame independently from the player frame."] = "Begleiterfenster unabhängig vom Spielerfenster bewegen."
