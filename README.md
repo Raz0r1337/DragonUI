@@ -16,6 +16,8 @@
 
 DragonUI is in active development. While already in an advanced state, occasional bugs may occur.
 
+Latest stable release: [v2.4.1](https://github.com/NeticSoul/DragonUI/releases/tag/v2.4.1)
+
 ## ✨ Features
 
 - 🧩 Modular system: enable or disable any major UI component independently.
