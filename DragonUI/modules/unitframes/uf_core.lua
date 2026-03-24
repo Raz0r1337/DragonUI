@@ -90,6 +90,8 @@ UF.TEXTURES = {
     },
 
     -- Shared class icon texture (used by class portrait system)
+    CLASS_ICON_ALTERNATIVE_PREFIX = "Interface\\AddOns\\DragonUI\\Textures\\ClassIcons\\",
+    CLASS_ICON_ALTERNATIVE_SUFFIX = ".blp",
     CLASS_ICON = "Interface\\TargetingFrame\\UI-Classes-Circles",
 }
 
@@ -244,6 +246,40 @@ end
 -- Overlays a class icon on the unit portrait when enabled.
 -- Lazy-creates the background and icon textures on first call.
 
+function UF.UseAlternativeClassIcons(unitKey)
+    local config = UF.GetConfig(unitKey)
+    return config and config.classPortrait and config.alternativeClassIcons or false
+end
+
+function UF.ApplyClassPortraitIcon(icon, classFileName, useAlternative)
+    if not icon or not classFileName then
+        return false
+    end
+
+    if useAlternative then
+        icon:SetTexture(nil)
+        icon:SetTexture(
+            UF.TEXTURES.CLASS_ICON_ALTERNATIVE_PREFIX
+            .. classFileName
+            .. UF.TEXTURES.CLASS_ICON_ALTERNATIVE_SUFFIX)
+        icon:SetTexCoord(0, 1, 0, 1)
+        return true
+    end
+
+    local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[classFileName]
+    if not coords then
+        return false
+    end
+
+    local inset = 0.02
+    icon:SetTexture(nil)
+    icon:SetTexture(UF.TEXTURES.CLASS_ICON)
+    icon:SetTexCoord(
+        coords[1] + inset, coords[2] - inset,
+        coords[3] + inset, coords[4] - inset)
+    return true
+end
+
 function UF.UpdateClassPortrait(unit, portrait, parentFrame, elements, enabled)
     -- If disabled, hide portrait overlay and return
     if not enabled then
@@ -280,18 +316,11 @@ function UF.UpdateClassPortrait(unit, portrait, parentFrame, elements, enabled)
         local icon = elements.classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
         icon:SetPoint("CENTER", elements.classPortraitFrame, "CENTER", 0, 0)
         icon:SetSize(portrait:GetWidth() * 0.75, portrait:GetHeight() * 0.75)
-        icon:SetTexture(UF.TEXTURES.CLASS_ICON)
         elements.classPortraitIcon = icon
     end
 
-    -- Set class icon tex coords from Blizzard's global table
-    local coords = CLASS_ICON_TCOORDS[class]
-    if coords and elements.classPortraitIcon then
-        -- Inset tex coords slightly to fill the circle frame without gap
-        local inset = 0.02
-        elements.classPortraitIcon:SetTexCoord(
-            coords[1] + inset, coords[2] - inset,
-            coords[3] + inset, coords[4] - inset)
+    local useAlternative = parentFrame and parentFrame.unitKey and UF.UseAlternativeClassIcons(parentFrame.unitKey) or false
+    if elements.classPortraitIcon and UF.ApplyClassPortraitIcon(elements.classPortraitIcon, class, useAlternative) then
         elements.classPortraitFrame:Show()
         elements.classPortraitBg:Show()
         elements.classPortraitIcon:Show()

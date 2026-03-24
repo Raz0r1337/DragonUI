@@ -193,7 +193,7 @@ function UF.TargetStyle.Create(opts)
                 updateCache.lastPortraitClass = classFileName
                 updateCache.lastBigDebuffsPortraitActive = bigDebuffsActive
 
-                local coords = CLASS_ICON_TCOORDS[classFileName]
+                local useAlternative = config.alternativeClassIcons
 
                 if frameElements.classPortraitFrame then
                     frameElements.classPortraitFrame:Hide()
@@ -208,7 +208,6 @@ function UF.TargetStyle.Create(opts)
 
                 if not classPortraitIcon then
                     classPortraitIcon = BlizzFrame:CreateTexture(nil, "ARTWORK", nil, 1)
-                    classPortraitIcon:SetTexture(UF.TEXTURES.CLASS_ICON)
                 end
 
                 classPortraitBg:ClearAllPoints()
@@ -221,10 +220,7 @@ function UF.TargetStyle.Create(opts)
                 classPortraitIcon:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
                 classPortraitIcon:SetSize(54, 54)
                 classPortraitIcon:SetDrawLayer("ARTWORK", 1)
-                local inset = 0.02
-                classPortraitIcon:SetTexCoord(
-                    coords[1] + inset, coords[2] - inset,
-                    coords[3] + inset, coords[4] - inset)
+                UF.ApplyClassPortraitIcon(classPortraitIcon, classFileName, useAlternative)
                 if bigDebuffsActive then
                     classPortraitIcon:Hide()
                     portraitBlackout:Show()

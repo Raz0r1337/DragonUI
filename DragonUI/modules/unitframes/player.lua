@@ -136,9 +136,6 @@ local ROLE_COORDS = {
     DAMAGER = {0 / 256, 17 / 256, 0 / 256, 17 / 256}
 }
 
--- Class icon texture path (must be declared before UpdatePlayerDragonDecoration)
-local CLASS_ICON_TEXTURE = "Interface\\TargetingFrame\\UI-Classes-Circles"
-
 -- ============================================================================
 -- UTILITY FUNCTIONS
 -- ============================================================================
@@ -1446,6 +1443,7 @@ local function UpdatePlayerDragonDecoration()
             -- Handle class portrait: if enabled, show class icon on the portrait overlay frame
             local pConfig = GetPlayerConfig()
             if pConfig and pConfig.classPortrait then
+                local useAlternative = pConfig.alternativeClassIcons
                 -- Hide the model portrait and show class icon instead
                 dragonFrame.PortraitOverlay:SetAlpha(0)
                 if not dragonFrame.ClassPortraitOverlay then
@@ -1456,7 +1454,6 @@ local function UpdatePlayerDragonDecoration()
                     cpf.bg:SetVertexColor(0, 0, 0, 1)
                     cpf.bg:SetAllPoints()
                     cpf.icon = cpf:CreateTexture(nil, "OVERLAY", nil, 7)
-                    cpf.icon:SetTexture(CLASS_ICON_TEXTURE)
                     cpf.icon:SetSize(56, 56)
                     cpf.icon:SetPoint("CENTER", cpf, "CENTER", 0, 0)
                     dragonFrame.ClassPortraitOverlay = cpf
@@ -1467,11 +1464,7 @@ local function UpdatePlayerDragonDecoration()
                 dragonFrame.ClassPortraitOverlay:Show()
                 local _, classFileName = UnitClass("player")
                 if classFileName and CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[classFileName] then
-                    local cCoords = CLASS_ICON_TCOORDS[classFileName]
-                    local inset = 0.02
-                    dragonFrame.ClassPortraitOverlay.icon:SetTexCoord(
-                        cCoords[1] + inset, cCoords[2] - inset,
-                        cCoords[3] + inset, cCoords[4] - inset)
+                    UF.ApplyClassPortraitIcon(dragonFrame.ClassPortraitOverlay.icon, classFileName, useAlternative)
                     dragonFrame.ClassPortraitOverlay.icon:Show()
                     dragonFrame.ClassPortraitOverlay.bg:Show()
                 end
@@ -1966,6 +1959,7 @@ local function UpdatePlayerClassPortrait()
         and addon.compatibility:IsBigDebuffsPortraitActive("player")
     
     local useClassPortrait = config.classPortrait
+    local useAlternative = config.alternativeClassIcons
     
     -- In vehicle: NEVER show class portrait — Blizzard handles vehicle portrait
     if IsInVehicle() then
@@ -2006,7 +2000,6 @@ local function UpdatePlayerClassPortrait()
             -- Create class icon texture if it doesn't exist (separate from portrait)
             if not classPortraitIcon then
                 classPortraitIcon = classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
-                classPortraitIcon:SetTexture(CLASS_ICON_TEXTURE)
             end
 
             classPortraitFrame:ClearAllPoints()
@@ -2023,11 +2016,7 @@ local function UpdatePlayerClassPortrait()
             classPortraitIcon:ClearAllPoints()
             classPortraitIcon:SetPoint("CENTER", classPortraitFrame, "CENTER", 0, 0)
             classPortraitIcon:SetSize(56, 56)
-            -- Inset tex coords slightly so class cell fills circle cleanly
-            local inset = 0.02
-            classPortraitIcon:SetTexCoord(
-                coords[1] + inset, coords[2] - inset,
-                coords[3] + inset, coords[4] - inset)
+            UF.ApplyClassPortraitIcon(classPortraitIcon, classFileName, useAlternative)
             if bigDebuffsActive then
                 classPortraitIcon:Hide()
                 playerPortraitBlackout:Show()

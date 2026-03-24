@@ -206,9 +206,9 @@ function UF.SmallFrame.Create(opts)
             return
         end
 
-        local coords = CLASS_ICON_TCOORDS[classFileName]
         local portraitSize = portrait:GetWidth()
         if portraitSize < 1 then portraitSize = 32 end
+        local useAlternative = config.alternativeClassIcons
 
         if not frameElements.classPortraitFrame then
             frameElements.classPortraitFrame = CreateFrame("Frame", nil, frames.main)
@@ -227,7 +227,6 @@ function UF.SmallFrame.Create(opts)
         -- Lazy-create class icon
         if not frameElements.classPortraitIcon then
             frameElements.classPortraitIcon = frameElements.classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
-            frameElements.classPortraitIcon:SetTexture(UF.TEXTURES.CLASS_ICON)
         end
 
         frameElements.classPortraitFrame:ClearAllPoints()
@@ -243,11 +242,11 @@ function UF.SmallFrame.Create(opts)
         frameElements.classPortraitIcon:ClearAllPoints()
         frameElements.classPortraitIcon:SetPoint("CENTER", frameElements.classPortraitFrame, "CENTER", 0, -2)
         frameElements.classPortraitIcon:SetSize(portraitSize, portraitSize)
-        local inset = 0.02
-        frameElements.classPortraitIcon:SetTexCoord(
-            coords[1] + inset, coords[2] - inset,
-            coords[3] + inset, coords[4] - inset)
-        frameElements.classPortraitIcon:Show()
+        if UF.ApplyClassPortraitIcon(frameElements.classPortraitIcon, classFileName, useAlternative) then
+            frameElements.classPortraitIcon:Show()
+        else
+            frameElements.classPortraitIcon:Hide()
+        end
 
         portrait:SetAlpha(0)
     end

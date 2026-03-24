@@ -44,6 +44,22 @@ local partyOrientationValues = {
     horizontal = LO["Horizontal"],
 }
 
+local function RefreshUnitFramesTabAfterToggle(refreshFunc)
+    if refreshFunc then
+        refreshFunc()
+    end
+    if Panel and Panel.SelectTab then
+        Panel:SelectTab("unitframes")
+    end
+end
+
+local function HandleClassPortraitToggle(unitKey, refreshFunc, enabled)
+    if enabled then
+        C:SetDBValue("unitframe." .. unitKey .. ".alternativeClassIcons", true)
+    end
+    RefreshUnitFramesTabAfterToggle(refreshFunc)
+end
+
 -- ============================================================================
 -- ACTIVE SUB-TAB STATE
 -- ============================================================================
@@ -85,6 +101,18 @@ local function AddCommonControls(parent, unitKey, refreshFunc, opts)
             label = LO["Class Portrait"],
             desc = LO["Class icon instead of 3D model for players."],
             dbPath = "unitframe." .. unitKey .. ".classPortrait",
+            callback = function(value)
+                HandleClassPortraitToggle(unitKey, refreshFunc, value)
+            end,
+        })
+
+        C:AddToggle(parent, {
+            label = LO["Alternative Class Icons"],
+            desc = LO["Use DragonUI alternative class icons instead of Blizzard's class icon atlas."],
+            dbPath = "unitframe." .. unitKey .. ".alternativeClassIcons",
+            disabled = function()
+                return not C:GetDBValue("unitframe." .. unitKey .. ".classPortrait")
+            end,
             callback = refreshFunc,
         })
     end
@@ -442,6 +470,18 @@ local function BuildToTSection(scroll)
     C:AddToggle(tot, {
         label = LO["Class Portrait"],
         dbPath = "unitframe.tot.classPortrait",
+        callback = function(value)
+            HandleClassPortraitToggle("tot", refreshToT, value)
+        end,
+    })
+
+    C:AddToggle(tot, {
+        label = LO["Alternative Class Icons"],
+        desc = LO["Use DragonUI alternative class icons instead of Blizzard's class icon atlas."],
+        dbPath = "unitframe.tot.alternativeClassIcons",
+        disabled = function()
+            return not C:GetDBValue("unitframe.tot.classPortrait")
+        end,
         callback = refreshToT,
     })
 
@@ -496,6 +536,18 @@ local function BuildToTSection(scroll)
     C:AddToggle(fot, {
         label = LO["Class Portrait"],
         dbPath = "unitframe.fot.classPortrait",
+        callback = function(value)
+            HandleClassPortraitToggle("fot", refreshToF, value)
+        end,
+    })
+
+    C:AddToggle(fot, {
+        label = LO["Alternative Class Icons"],
+        desc = LO["Use DragonUI alternative class icons instead of Blizzard's class icon atlas."],
+        dbPath = "unitframe.fot.alternativeClassIcons",
+        disabled = function()
+            return not C:GetDBValue("unitframe.fot.classPortrait")
+        end,
         callback = refreshToF,
     })
 
