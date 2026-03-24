@@ -107,6 +107,12 @@ local api = UF.TargetStyle.Create({
 
     -- Events
     unitChangedEvent = "PLAYER_FOCUS_CHANGED",
+    extraEvents      = {
+        "UNIT_MODEL_CHANGED",
+        "UNIT_LEVEL",
+        "UNIT_NAME_UPDATE",
+        "UNIT_PORTRAIT_UPDATE",
+    },
 
     -- Feature flags
     nameFrameAlpha   = 0.9,   -- SetAlpha on name background
@@ -138,6 +144,22 @@ local api = UF.TargetStyle.Create({
                 texture:SetVertexColor(1, 1, 1, 1)
             end
         end)
+    end,
+
+    extraEventHandler = function(event, unitToken, UpdateClassification,
+                                  UpdateHealthBarColor, ForceUpdatePowerBar,
+                                  textSystem, ...)
+        local unit = ...
+        if unit ~= unitToken or not UnitExists(unitToken) then return end
+
+        if event == "UNIT_MODEL_CHANGED" then
+            UpdateClassification()
+            UpdateHealthBarColor()
+            if textSystem then textSystem.update() end
+        elseif event == "UNIT_LEVEL"
+            or event == "UNIT_NAME_UPDATE" then
+            UpdateClassification()
+        end
     end,
 
     -- After-init: FocusFrame_SetSmallSize hook

@@ -181,6 +181,7 @@ function UF.SmallFrame.Create(opts)
         if not portrait or not frames.main then return end
 
         if not enabled then
+            if frameElements.classPortraitFrame then frameElements.classPortraitFrame:Hide() end
             if frameElements.classPortraitBg then frameElements.classPortraitBg:Hide() end
             if frameElements.classPortraitIcon then frameElements.classPortraitIcon:Hide() end
             if portrait then portrait:SetAlpha(1) end
@@ -188,6 +189,7 @@ function UF.SmallFrame.Create(opts)
         end
 
         if not UnitExists(opts.unitToken) or not UnitIsPlayer(opts.unitToken) then
+            if frameElements.classPortraitFrame then frameElements.classPortraitFrame:Hide() end
             if frameElements.classPortraitBg then frameElements.classPortraitBg:Hide() end
             if frameElements.classPortraitIcon then frameElements.classPortraitIcon:Hide() end
             if portrait then portrait:SetAlpha(1) end
@@ -196,6 +198,7 @@ function UF.SmallFrame.Create(opts)
 
         local _, classFileName = UnitClass(opts.unitToken)
         if not classFileName or not CLASS_ICON_TCOORDS or not CLASS_ICON_TCOORDS[classFileName] then
+            if frameElements.classPortraitFrame then frameElements.classPortraitFrame:Hide() end
             if frameElements.classPortraitBg then frameElements.classPortraitBg:Hide() end
             if frameElements.classPortraitIcon then frameElements.classPortraitIcon:Hide() end
             if portrait then portrait:SetAlpha(1) end
@@ -206,27 +209,38 @@ function UF.SmallFrame.Create(opts)
         local portraitSize = portrait:GetWidth()
         if portraitSize < 1 then portraitSize = 32 end
 
+        if not frameElements.classPortraitFrame then
+            frameElements.classPortraitFrame = CreateFrame("Frame", nil, frames.main)
+            frameElements.classPortraitFrame:SetFrameStrata(frames.main:GetFrameStrata())
+            frameElements.classPortraitFrame:SetFrameLevel(frames.main:GetFrameLevel())
+            frameElements.classPortraitFrame:EnableMouse(false)
+        end
+
         -- Lazy-create background circle
         if not frameElements.classPortraitBg then
-            frameElements.classPortraitBg = frames.main:CreateTexture(nil, "BACKGROUND", nil, 2)
+            frameElements.classPortraitBg = frameElements.classPortraitFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
             frameElements.classPortraitBg:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
             frameElements.classPortraitBg:SetVertexColor(0, 0, 0, 1)
         end
 
         -- Lazy-create class icon
         if not frameElements.classPortraitIcon then
-            frameElements.classPortraitIcon = frames.main:CreateTexture(nil, "ARTWORK", nil, -1)
+            frameElements.classPortraitIcon = frameElements.classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
             frameElements.classPortraitIcon:SetTexture(UF.TEXTURES.CLASS_ICON)
         end
 
+        frameElements.classPortraitFrame:ClearAllPoints()
+        frameElements.classPortraitFrame:SetAllPoints(portrait)
+        frameElements.classPortraitFrame:Show()
+
         -- Position & show  (small vertical offset aligns with border circle)
         frameElements.classPortraitBg:ClearAllPoints()
-        frameElements.classPortraitBg:SetPoint("CENTER", portrait, "CENTER", 0, -2)
+        frameElements.classPortraitBg:SetPoint("CENTER", frameElements.classPortraitFrame, "CENTER", 0, -2)
         frameElements.classPortraitBg:SetSize(portraitSize, portraitSize)
         frameElements.classPortraitBg:Show()
 
         frameElements.classPortraitIcon:ClearAllPoints()
-        frameElements.classPortraitIcon:SetPoint("CENTER", portrait, "CENTER", 0, -2)
+        frameElements.classPortraitIcon:SetPoint("CENTER", frameElements.classPortraitFrame, "CENTER", 0, -2)
         frameElements.classPortraitIcon:SetSize(portraitSize, portraitSize)
         local inset = 0.02
         frameElements.classPortraitIcon:SetTexCoord(

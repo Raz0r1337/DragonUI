@@ -383,8 +383,15 @@ local function UnitFrameLayer_Initialize(self, myHealPredictionBar, otherHealPre
 	self.totalAbsorbBar.overlay = self.totalAbsorbBarOverlay;
 	self.totalAbsorbBarOverlay:SetAllPoints(self.totalAbsorbBar);
 	self.totalAbsorbBarOverlay.tileSize = 32;
-	self.totalAbsorbBar:SetDrawLayer("ARTWORK", 0);
-	self.totalAbsorbBarOverlay:SetDrawLayer("OVERLAY", 1);
+	local isSmallCompanionFrame = (self == _G.TargetFrameToT or self == _G.FocusFrameToT);
+	if isSmallCompanionFrame then
+		self.totalAbsorbBar:SetDrawLayer("ARTWORK", 2);
+		self.totalAbsorbBarOverlay:SetDrawLayer("OVERLAY", 3);
+		self.overAbsorbGlow:SetDrawLayer("OVERLAY", 4);
+	else
+		self.totalAbsorbBar:SetDrawLayer("ARTWORK", 0);
+		self.totalAbsorbBarOverlay:SetDrawLayer("OVERLAY", 1);
+	end
 
 	self.overAbsorbGlow:ClearAllPoints();
 	self.overAbsorbGlow:SetWidth(16);

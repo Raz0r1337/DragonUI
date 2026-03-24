@@ -64,11 +64,14 @@ function UF.TargetStyle.Create(opts)
         lastThreatUpdate  = 0,
         lastFamousMessage = 0,
         lastFamousTarget  = nil,
+        lastBigDebuffsPortraitActive = nil,
     }
 
     -- Class portrait overlays (lazy-created)
     local classPortraitBg   = nil
     local classPortraitIcon = nil
+    local portraitBlackout  = nil
+    local portraitRefreshFrame = nil
 
     -- ================================================================
     -- CONFIG
@@ -140,64 +143,148 @@ function UF.TargetStyle.Create(opts)
         local config = GetConfig()
         if not config then return end
 
+        local bigDebuffsActive = addon.compatibility
+            and addon.compatibility.IsBigDebuffsPortraitActive
+            and addon.compatibility:IsBigDebuffsPortraitActive(unitToken)
+
+        if not portraitBlackout then
+            portraitBlackout = BlizzFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
+            portraitBlackout:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
+            portraitBlackout:SetVertexColor(0, 0, 0, 1)
+        end
+
+        portraitBlackout:ClearAllPoints()
+        portraitBlackout:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
+        portraitBlackout:SetSize(54, 54)
+
+        local function RestoreNativePortrait()
+            updateCache.lastPortraitClass = nil
+            if classPortraitBg then classPortraitBg:Hide() end
+            if classPortraitIcon then classPortraitIcon:Hide() end
+
+            if bigDebuffsActive and UnitExists(unitToken) then
+                portraitBlackout:Show()
+                Portrait:SetAlpha(0)
+            else
+                portraitBlackout:Hide()
+                if UnitExists(unitToken) then
+                    SetPortraitTexture(Portrait, unitToken)
+                    Portrait:SetTexCoord(0, 1, 0, 1)
+                end
+                Portrait:SetAlpha(1)
+            end
+        end
+
         if config.classPortrait and UnitExists(unitToken)
            and UnitIsPlayer(unitToken) then
             local _, classFileName = UnitClass(unitToken)
             if classFileName and CLASS_ICON_TCOORDS
                and CLASS_ICON_TCOORDS[classFileName] then
+                     local shouldShowClassIcon = not bigDebuffsActive
 
                 -- Skip if already showing the correct class portrait
                 if updateCache.lastPortraitClass == classFileName
-                   and classPortraitIcon and classPortraitIcon:IsShown() then
+                   and updateCache.lastBigDebuffsPortraitActive == bigDebuffsActive
+                         and classPortraitBg and classPortraitBg:IsShown()
+                         and classPortraitIcon
+                         and classPortraitIcon:IsShown() == shouldShowClassIcon then
                     return
                 end
                 updateCache.lastPortraitClass = classFileName
+                updateCache.lastBigDebuffsPortraitActive = bigDebuffsActive
 
                 local coords = CLASS_ICON_TCOORDS[classFileName]
 
-                -- Lazy-create background circle
+                if frameElements.classPortraitFrame then
+                    frameElements.classPortraitFrame:Hide()
+                end
+
                 if not classPortraitBg then
-                    classPortraitBg = BlizzFrame:CreateTexture(nil, "BACKGROUND", nil, 2)
+                    classPortraitBg = BlizzFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
                     classPortraitBg:SetTexture(
                         "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
                     classPortraitBg:SetVertexColor(0, 0, 0, 1)
                 end
 
-                -- Lazy-create class icon
                 if not classPortraitIcon then
-                    classPortraitIcon = BlizzFrame:CreateTexture(nil, "ARTWORK", nil, -1)
+                    classPortraitIcon = BlizzFrame:CreateTexture(nil, "ARTWORK", nil, 1)
                     classPortraitIcon:SetTexture(UF.TEXTURES.CLASS_ICON)
                 end
 
-                -- Position & show  (nudge keeps icon inside border circle)
                 classPortraitBg:ClearAllPoints()
                 classPortraitBg:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
                 classPortraitBg:SetSize(54, 54)
+                classPortraitBg:SetDrawLayer("BACKGROUND", 0)
                 classPortraitBg:Show()
 
                 classPortraitIcon:ClearAllPoints()
                 classPortraitIcon:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
                 classPortraitIcon:SetSize(54, 54)
-                -- Inset tex coords slightly so class cell fills circle cleanly
+                classPortraitIcon:SetDrawLayer("ARTWORK", 1)
                 local inset = 0.02
                 classPortraitIcon:SetTexCoord(
                     coords[1] + inset, coords[2] - inset,
                     coords[3] + inset, coords[4] - inset)
-                classPortraitIcon:Show()
+                if bigDebuffsActive then
+                    classPortraitIcon:Hide()
+                    portraitBlackout:Show()
+                else
+                    classPortraitIcon:Show()
+                    portraitBlackout:Hide()
+                end
 
                 Portrait:SetAlpha(0)
+
+                if addon.compatibility and addon.compatibility.RefreshBigDebuffsUnitFrame then
+                    addon.compatibility:RefreshBigDebuffsUnitFrame(unitToken)
+                end
+            else
+                RestoreNativePortrait()
             end
         else
             -- Disable: hide overlay, restore native portrait
-            updateCache.lastPortraitClass = nil
-            if classPortraitBg  then classPortraitBg:Hide()  end
-            if classPortraitIcon then classPortraitIcon:Hide() end
-            if UnitExists(unitToken) then
-                SetPortraitTexture(Portrait, unitToken)
-                Portrait:SetTexCoord(0, 1, 0, 1)
+            updateCache.lastBigDebuffsPortraitActive = bigDebuffsActive
+            if frameElements.classPortraitFrame then frameElements.classPortraitFrame:Hide() end
+            RestoreNativePortrait()
+
+            if addon.compatibility and addon.compatibility.RefreshBigDebuffsUnitFrame then
+                addon.compatibility:RefreshBigDebuffsUnitFrame(unitToken)
             end
-            Portrait:SetAlpha(1)
         end
+    end
+
+    local function QueuePortraitRefresh(delay)
+        if not portraitRefreshFrame then
+            portraitRefreshFrame = CreateFrame("Frame")
+        end
+
+        portraitRefreshFrame.delay = delay or 0.05
+        portraitRefreshFrame.elapsed = 0
+        portraitRefreshFrame.passes = 0
+        portraitRefreshFrame.maxPasses = 3
+        portraitRefreshFrame.targetGUID = UnitGUID(unitToken)
+
+        portraitRefreshFrame:SetScript("OnUpdate", function(self, dt)
+            self.elapsed = self.elapsed + dt
+            if self.elapsed < self.delay then
+                return
+            end
+
+            self.elapsed = 0
+            self.passes = self.passes + 1
+
+            if UnitExists(unitToken) then
+                updateCache.lastPortraitClass = nil
+                updateCache.lastBigDebuffsPortraitActive = nil
+                UpdateClassPortrait()
+            else
+                portraitBlackout:Hide()
+            end
+
+            if self.passes >= self.maxPasses then
+                self:SetScript("OnUpdate", nil)
+            end
+        end)
     end
 
     -- ================================================================
@@ -998,7 +1085,24 @@ function UF.TargetStyle.Create(opts)
             UpdateThreat()
             UpdateHealthBarColor()
             UpdateClassPortrait()
+            QueuePortraitRefresh(0.05)
             if Module.textSystem then Module.textSystem.update() end
+
+        elseif event == "UNIT_MODEL_CHANGED"
+            or event == "UNIT_PORTRAIT_UPDATE" then
+            local unit = ...
+            if unit == unitToken and UnitExists(unitToken) then
+                updateCache.lastPortraitClass = nil
+                updateCache.lastBigDebuffsPortraitActive = nil
+                UpdateClassPortrait()
+                QueuePortraitRefresh(0.05)
+
+                if event == "UNIT_MODEL_CHANGED" then
+                    UpdateClassification()
+                    UpdateHealthBarColor()
+                    if Module.textSystem then Module.textSystem.update() end
+                end
+            end
 
         elseif event == "UNIT_CLASSIFICATION_CHANGED" then
             local unit = ...

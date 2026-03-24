@@ -247,6 +247,7 @@ end
 function UF.UpdateClassPortrait(unit, portrait, parentFrame, elements, enabled)
     -- If disabled, hide portrait overlay and return
     if not enabled then
+        if elements.classPortraitFrame then elements.classPortraitFrame:Hide() end
         if elements.classPortraitBg then elements.classPortraitBg:Hide() end
         if elements.classPortraitIcon then elements.classPortraitIcon:Hide() end
         return false
@@ -257,16 +258,27 @@ function UF.UpdateClassPortrait(unit, portrait, parentFrame, elements, enabled)
     local _, class = UnitClass(unit)
     if not class then return false end
 
+    if not elements.classPortraitFrame then
+        local overlay = CreateFrame("Frame", nil, parentFrame)
+        overlay:SetFrameStrata(parentFrame:GetFrameStrata())
+        overlay:SetFrameLevel(parentFrame:GetFrameLevel())
+        overlay:EnableMouse(false)
+        elements.classPortraitFrame = overlay
+    end
+
+    elements.classPortraitFrame:ClearAllPoints()
+    elements.classPortraitFrame:SetAllPoints(portrait)
+
     -- Lazy-create portrait elements on first call
     if not elements.classPortraitBg then
-        local bg = parentFrame:CreateTexture(nil, "BACKGROUND", nil, 2)
-        bg:SetAllPoints(portrait)
+        local bg = elements.classPortraitFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
+        bg:SetAllPoints(elements.classPortraitFrame)
         bg:SetTexture(0, 0, 0, 1)
         bg:SetTexCoord(0.15, 0.85, 0.15, 0.85)
         elements.classPortraitBg = bg
 
-        local icon = parentFrame:CreateTexture(nil, "ARTWORK", nil, -1)
-        icon:SetPoint("CENTER", portrait, "CENTER", 0, 0)
+        local icon = elements.classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
+        icon:SetPoint("CENTER", elements.classPortraitFrame, "CENTER", 0, 0)
         icon:SetSize(portrait:GetWidth() * 0.75, portrait:GetHeight() * 0.75)
         icon:SetTexture(UF.TEXTURES.CLASS_ICON)
         elements.classPortraitIcon = icon
@@ -280,6 +292,7 @@ function UF.UpdateClassPortrait(unit, portrait, parentFrame, elements, enabled)
         elements.classPortraitIcon:SetTexCoord(
             coords[1] + inset, coords[2] - inset,
             coords[3] + inset, coords[4] - inset)
+        elements.classPortraitFrame:Show()
         elements.classPortraitBg:Show()
         elements.classPortraitIcon:Show()
         return true
