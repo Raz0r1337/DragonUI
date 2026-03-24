@@ -56,6 +56,7 @@ function UF.SmallFrame.Create(opts)
     local frameElements = {
         background = nil,
         border = nil,
+        borderFrame = nil,
         elite = nil,
         classPortraitBg = nil,
         classPortraitIcon = nil,
@@ -501,8 +502,14 @@ function UF.SmallFrame.Create(opts)
         end
 
         -- Create custom border texture
+        if not frameElements.borderFrame then
+            frameElements.borderFrame = CreateFrame("Frame", nil, frames.main)
+            frameElements.borderFrame:SetAllPoints(frames.main)
+            frameElements.borderFrame:EnableMouse(false)
+        end
+
         if not frameElements.border then
-            frameElements.border = frames.healthBar:CreateTexture(opts.namePrefix .. "Border", "OVERLAY", nil, 1)
+            frameElements.border = frameElements.borderFrame:CreateTexture(opts.namePrefix .. "Border", "OVERLAY", nil, 1)
             frameElements.border:SetTexture(UF.TEXTURES.smallStyle.BORDER)
             frameElements.border:SetPoint("LEFT", frames.portrait, "CENTER", -25 + 1, -10)
             frameElements.border:Show()
@@ -550,6 +557,12 @@ function UF.SmallFrame.Create(opts)
         frames.healthBar:SetSize(70.5, 10)
         frames.healthBar:SetPoint("LEFT", frames.portrait, "RIGHT", 1 + 1, 0)
         frames.healthBar:Show()
+
+        if frameElements.borderFrame then
+            frameElements.borderFrame:SetFrameStrata(frames.healthBar:GetFrameStrata())
+            frameElements.borderFrame:SetFrameLevel(frames.healthBar:GetFrameLevel() + 3)
+            frameElements.borderFrame:Show()
+        end
 
         -- ----------------------------------------------------------------
         -- Configure power bar
