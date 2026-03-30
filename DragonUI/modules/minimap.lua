@@ -65,8 +65,6 @@ local WHITE_LIST = {'MiniMapBattlefieldFrame', 'MiniMapTrackingButton', 'MiniMap
                     'GameTimeFrame',
                     -- Questie minimap POI icons (quest markers inside the minimap)
                     'QuestieFrame', 'Questie_MiniMapNote',
-                    -- Generic LibDBIcon minimap launcher pattern (LibDBIcon10_AddonName)
-                    'LibDBIcon',
                     -- Explicit fallback for VoiceOver button variants
                     'VoiceOver'}
 
