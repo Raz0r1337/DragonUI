@@ -87,8 +87,8 @@ local function createExitButton()
     exitEditorButton:SetText(L["Exit Edit Mode"]);
     exitEditorButton:SetSize(140, 28);
     exitEditorButton:SetPoint("CENTER", UIParent, "CENTER", 0, 200);
-    exitEditorButton:SetFrameStrata("DIALOG");
-    exitEditorButton:SetFrameLevel(100);
+    exitEditorButton:SetFrameStrata("TOOLTIP");
+    exitEditorButton:SetFrameLevel(1000);
 
     -- Apply modern grey + blue style
     styleEditorButton(exitEditorButton)
@@ -107,8 +107,8 @@ local function createResetAllButton()
     resetAllButton:SetText(L["Reset All Positions"]);
     resetAllButton:SetSize(140, 28);
     resetAllButton:SetPoint("CENTER", UIParent, "CENTER", 0, 165);
-    resetAllButton:SetFrameStrata("DIALOG");
-    resetAllButton:SetFrameLevel(100);
+    resetAllButton:SetFrameStrata("TOOLTIP");
+    resetAllButton:SetFrameLevel(1000);
 
     -- Apply modern grey + blue style
     styleEditorButton(resetAllButton)
