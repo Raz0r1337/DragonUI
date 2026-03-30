@@ -189,6 +189,7 @@ function UF.TargetStyle.Create(opts)
             if bigDebuffsActive and UnitExists(unitToken) then
                 portraitBlackout:Show()
                 Portrait:SetAlpha(0)
+                Portrait:Hide()
             else
                 portraitBlackout:Hide()
                 if UnitExists(unitToken) then
@@ -196,6 +197,7 @@ function UF.TargetStyle.Create(opts)
                     Portrait:SetTexCoord(0, 1, 0, 1)
                 end
                 Portrait:SetAlpha(1)
+                Portrait:Show()
             end
         end
 
@@ -253,7 +255,9 @@ function UF.TargetStyle.Create(opts)
                     portraitBlackout:Hide()
                 end
 
+                -- Hide vanilla portrait completely - class icon replaces it entirely
                 Portrait:SetAlpha(0)
+                Portrait:Hide()
 
                 if addon.compatibility and addon.compatibility.RefreshBigDebuffsUnitFrame then
                     addon.compatibility:RefreshBigDebuffsUnitFrame(unitToken)
