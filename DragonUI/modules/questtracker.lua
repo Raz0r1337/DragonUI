@@ -403,13 +403,8 @@ local function InstallQuestTrackerHooks()
         end)
     end
 
-    -- Hook WatchFrame_Update to fix quest display height and apply styling.
-    -- When Blizzard calls WatchFrame_Update internally (from events), it may use
-    -- a stale/small maxHeight. This post-hook:
-    -- 1) Re-asserts WatchFrame height to prevent shrinking
-    -- 2) Re-asserts WatchFrameLines position below header
-    -- 3) Re-runs OBJECTIVEHANDLERS with our explicit maxHeight so all quests show
-    -- 4) Applies DragonUI header styling
+    -- Hook WatchFrame_Update to keep our visual adjustments without replacing
+    -- Blizzard objective layout logic (quests, achievements, timed entries).
     local watchFrameHookActive = false
     if WatchFrame_Update then
         hooksecurefunc('WatchFrame_Update', function()
@@ -433,33 +428,10 @@ local function InstallQuestTrackerHooks()
 
             watchFrameHookActive = true
 
-            -- Use our explicit height, NOT GetTop()-GetBottom() which can be stale
-            local maxHeight = QUESTTRACKER_MAX_HEIGHT
-            local totalOffset = WATCHFRAME_INITIAL_OFFSET or 0
-            local maxFrameWidth = WATCHFRAME_MAXLINEWIDTH or 192
-            local totalObjectives = 0
-
-            -- STEP 1: Apply font to .text/.dash FontStrings BEFORE handlers re-run.
-            -- Handlers use GetHeight() on these FontStrings during layout, so setting
-            -- the font first ensures the layout math reflects the new size.
+            -- Apply font after Blizzard layout pass.
             ApplyQuestTrackerFonts()
 
-            -- STEP 2: Re-run objective handlers to reposition all lines.
-            pcall(function()
-                if WATCHFRAME_OBJECTIVEHANDLERS then
-                    for i = 1, #WATCHFRAME_OBJECTIVEHANDLERS do
-                        local pixelsUsed, maxLineWidth, numObjectives = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, totalOffset, maxHeight, maxFrameWidth)
-                        if numObjectives then
-                            totalObjectives = totalObjectives + numObjectives
-                        end
-                    end
-                end
-            end)
-
-            -- STEP 3: Re-apply font in case any handler called SetFont/SetFontObject.
-            ApplyQuestTrackerFonts()
-
-            -- Apply background styling after handler re-run
+            -- Apply background styling after layout.
             pcall(ApplyQuestTrackerStyling)
 
             watchFrameHookActive = false
@@ -474,6 +446,19 @@ local function InstallQuestTrackerHooks()
     hooksecurefunc('RemoveQuestWatch', function(questIndex)
         ScheduleTimer(0.05, ForceUpdateQuestTracker)
     end)
+
+    -- Keep tracker consistent when tracked achievements are toggled.
+    if AddTrackedAchievement then
+        hooksecurefunc('AddTrackedAchievement', function()
+            ScheduleTimer(0.05, ForceUpdateQuestTracker)
+        end)
+    end
+
+    if RemoveTrackedAchievement then
+        hooksecurefunc('RemoveTrackedAchievement', function()
+            ScheduleTimer(0.05, ForceUpdateQuestTracker)
+        end)
+    end
     
     -- Add hook for abandoning quests
     if AbandonQuest then
@@ -576,32 +561,16 @@ function QuestTrackerModule:ShowEditorTest()
             if addon.ApplySelectionTint then
                 addon.ApplySelectionTint(frame)
             end
-            -- Calculate position relative to screen quadrant (same logic as movers system)
+            -- Keep quest tracker persistence in TOPRIGHT space so reload position is
+            -- stable even when editor-test frame size differs from runtime frame size.
             local screenWidth = UIParent:GetRight()
             local screenHeight = UIParent:GetTop()
-            local screenCenterX = UIParent:GetCenter()
-            local cx, cy = frame:GetCenter()
-            if cx and cy then
-                local LEFT = screenWidth / 3
-                local RIGHT = screenWidth * 2 / 3
-                local TOP = screenHeight / 2
-                local point, x, y
-                if cy >= TOP then
-                    point = "TOP"
-                    y = -(screenHeight - frame:GetTop())
-                else
-                    point = "BOTTOM"
-                    y = frame:GetBottom()
-                end
-                if cx >= RIGHT then
-                    point = point .. "RIGHT"
-                    x = frame:GetRight() - screenWidth
-                elseif cx <= LEFT then
-                    point = point .. "LEFT"
-                    x = frame:GetLeft()
-                else
-                    x = cx - screenCenterX
-                end
+            local right = frame:GetRight()
+            local top = frame:GetTop()
+            if right and top and screenWidth and screenHeight then
+                local point = "TOPRIGHT"
+                local x = right - screenWidth
+                local y = -(screenHeight - top)
                 x = math.floor(x + 0.5)
                 y = math.floor(y + 0.5)
                 -- Re-anchor the frame properly
