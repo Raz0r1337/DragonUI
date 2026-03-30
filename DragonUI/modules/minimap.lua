@@ -1029,6 +1029,34 @@ local function ApplyAddonIconSkin(button)
         button.DragonUI_DecoRegions = {}
         button.DragonUI_HighlightRegions = {}
         button.DragonUI_IconRegions = {}
+        button.DragonUI_PrimaryIconRegions = {}
+        button.DragonUI_ExtraIconRegions = {}
+        button.DragonUI_UsesStateTextures = false
+        local seenRegions = {}
+
+        local function SaveRegionState(region)
+            if not region or seenRegions[region] then
+                return
+            end
+            seenRegions[region] = true
+
+            local numPoints = region:GetNumPoints()
+            region.DragonUI_OrigPoints = {}
+            for p = 1, numPoints do
+                region.DragonUI_OrigPoints[p] = { region:GetPoint(p) }
+            end
+            region.DragonUI_OrigW, region.DragonUI_OrigH = region:GetWidth(), region:GetHeight()
+            region.DragonUI_OrigLayer = region:GetDrawLayer()
+            region.DragonUI_OrigAlpha = region:GetAlpha()
+            region.DragonUI_OrigTexCoord = { region:GetTexCoord() }
+        end
+
+        local normalTex = button:GetNormalTexture()
+        local pushedTex = button:GetPushedTexture()
+        if normalTex and pushedTex and normalTex:GetTexture() and pushedTex:GetTexture() then
+            button.DragonUI_UsesStateTextures = true
+        end
+
         for index = 1, button:GetNumRegions() do
             local region = select(index, button:GetRegions())
             if region:GetObjectType() == 'Texture' then
@@ -1037,28 +1065,48 @@ local function ApplyAddonIconSkin(button)
                 local layer = region:GetDrawLayer()
                 if layer == 'HIGHLIGHT' then
                     -- Highlight textures: save original state for restore
-                    local numPoints = region:GetNumPoints()
-                    region.DragonUI_OrigPoints = {}
-                    for p = 1, numPoints do
-                        region.DragonUI_OrigPoints[p] = { region:GetPoint(p) }
-                    end
-                    region.DragonUI_OrigW, region.DragonUI_OrigH = region:GetWidth(), region:GetHeight()
+                    SaveRegionState(region)
                     table.insert(button.DragonUI_HighlightRegions, region)
                 elseif texStr:find('Border') or texStr:find('Background') or texStr:find('AlphaMask') then
                     region.DragonUI_OrigAlpha = region:GetAlpha()
                     table.insert(button.DragonUI_DecoRegions, region)
                 else
                     -- Save original anchoring/size for icon regions
-                    local numPoints = region:GetNumPoints()
-                    region.DragonUI_OrigPoints = {}
-                    for p = 1, numPoints do
-                        region.DragonUI_OrigPoints[p] = { region:GetPoint(p) }
-                    end
-                    region.DragonUI_OrigW, region.DragonUI_OrigH = region:GetWidth(), region:GetHeight()
-                    region.DragonUI_OrigLayer = region:GetDrawLayer()
+                    SaveRegionState(region)
                     table.insert(button.DragonUI_IconRegions, region)
                 end
             end
+        end
+
+        -- Ensure state textures are tracked even when not exposed by GetRegions().
+        if normalTex and normalTex:GetObjectType() == 'Texture' and not seenRegions[normalTex] then
+            SaveRegionState(normalTex)
+            table.insert(button.DragonUI_IconRegions, normalTex)
+        end
+        if pushedTex and pushedTex:GetObjectType() == 'Texture' and not seenRegions[pushedTex] then
+            SaveRegionState(pushedTex)
+            table.insert(button.DragonUI_IconRegions, pushedTex)
+        end
+
+        local highlightTex = button:GetHighlightTexture()
+        if highlightTex and highlightTex:GetObjectType() == 'Texture' and not seenRegions[highlightTex] then
+            SaveRegionState(highlightTex)
+            table.insert(button.DragonUI_HighlightRegions, highlightTex)
+        end
+
+        -- Select icon textures to skin: for stateful buttons use normal+pushed only.
+        if button.DragonUI_UsesStateTextures and normalTex and normalTex:GetObjectType() == 'Texture' then
+            table.insert(button.DragonUI_PrimaryIconRegions, normalTex)
+            if pushedTex and pushedTex:GetObjectType() == 'Texture' then
+                table.insert(button.DragonUI_PrimaryIconRegions, pushedTex)
+            end
+            for _, region in ipairs(button.DragonUI_IconRegions) do
+                if region ~= normalTex and region ~= pushedTex then
+                    table.insert(button.DragonUI_ExtraIconRegions, region)
+                end
+            end
+        else
+            button.DragonUI_PrimaryIconRegions = button.DragonUI_IconRegions
         end
 
         -- Create circle border overlay (once)
@@ -1077,19 +1125,33 @@ local function ApplyAddonIconSkin(button)
 
     -- === ACTIVATE skinned state ===
     button.DragonUI_SkinActive = true
-    button:SetSize(21, 21)
+    local skinSize = button.DragonUI_UsesStateTextures and 24 or 21
+    button:SetSize(skinSize, skinSize)
 
     -- Hide decoration regions (borders, backgrounds)
     for _, region in ipairs(button.DragonUI_DecoRegions) do
         region:SetAlpha(0)
     end
 
-    -- Reposition icon regions: crop and center
-    for _, region in ipairs(button.DragonUI_IconRegions) do
+    -- Keep only primary icon regions visible while skinned.
+    for _, region in ipairs(button.DragonUI_ExtraIconRegions) do
+        region:SetAlpha(0)
+    end
+
+    -- Reposition primary icon regions.
+    for _, region in ipairs(button.DragonUI_PrimaryIconRegions) do
+        region:SetAlpha(1)
         region:ClearAllPoints()
-        region:SetPoint('TOPLEFT', button, 'TOPLEFT', 2, -2)
-        region:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -2, 2)
-        region:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+        local inset = button.DragonUI_UsesStateTextures and 0 or 2
+        region:SetPoint('TOPLEFT', button, 'TOPLEFT', inset, -inset)
+        region:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -inset, inset)
+
+        if button.DragonUI_UsesStateTextures and region.DragonUI_OrigTexCoord then
+            region:SetTexCoord(unpack(region.DragonUI_OrigTexCoord))
+        else
+            region:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+        end
+
         region:SetDrawLayer('ARTWORK')
     end
 
@@ -1100,7 +1162,10 @@ local function ApplyAddonIconSkin(button)
     end
 
     -- Show DragonUI circle border
-    if button.circle then button.circle:Show() end
+    if button.circle then
+        button.circle:SetSize(button.DragonUI_UsesStateTextures and 26 or 23, button.DragonUI_UsesStateTextures and 26 or 23)
+        button.circle:Show()
+    end
 
     -- Set alpha based on fade setting
     button:SetAlpha(IsFadeEnabled() and 0.2 or 1)
@@ -1127,7 +1192,12 @@ local function UnskinAddonButton(button)
     -- Restore icon regions to original positioning
     if button.DragonUI_IconRegions then
         for _, region in ipairs(button.DragonUI_IconRegions) do
-            region:SetTexCoord(0, 1, 0, 1)
+            region:SetAlpha(region.DragonUI_OrigAlpha or 1)
+            if region.DragonUI_OrigTexCoord then
+                region:SetTexCoord(unpack(region.DragonUI_OrigTexCoord))
+            else
+                region:SetTexCoord(0, 1, 0, 1)
+            end
             region:SetDrawLayer(region.DragonUI_OrigLayer or 'ARTWORK')
             region:ClearAllPoints()
             if region.DragonUI_OrigPoints then
