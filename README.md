@@ -16,7 +16,7 @@
 
 DragonUI is in active development. While already in an advanced state, occasional bugs may occur.
 
-Download: [Last Main](https://github.com/NeticSoul/DragonUI/archive/refs/heads/main.zip)
+> 📥 **Get the latest version:** [Download from main branch](https://github.com/NeticSoul/DragonUI/archive/refs/heads/main.zip) for the most up-to-date features and fixes.
 
 ## ✨ Features
 
@@ -38,7 +38,7 @@ Download: [Last Main](https://github.com/NeticSoul/DragonUI/archive/refs/heads/m
 
 ## 📦 Installation
 
-1. Download the [latest release archive](https://github.com/NeticSoul/DragonUI/releases/download/v2.4.1/DragonUI.zip).
+1. Download the [latest main branch archive](https://github.com/NeticSoul/DragonUI/archive/refs/heads/main.zip).
 2. Extract the archive.
 3. Copy `DragonUI` and `DragonUI_Options` into your client's `Interface\AddOns\` folder.
 
