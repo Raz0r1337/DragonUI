@@ -1286,6 +1286,49 @@ local function GetAllMinimapButtons()
     return buttons
 end
 
+-- Compatibility: some addons ship LibDBIcon with a larger default radius,
+-- which pushes minimap addon buttons farther from the map edge.
+-- Keep this defensive and minimal: only clamp excessive defaults while DragonUI minimap is active.
+local function NormalizeLibDBIconRadius()
+    if not LibStub or not LibStub.GetLibrary then
+        return
+    end
+
+    local ok, libDBIcon = pcall(LibStub.GetLibrary, LibStub, "LibDBIcon-1.0", true)
+    if not ok or not libDBIcon or type(libDBIcon.SetButtonRadius) ~= "function" then
+        return
+    end
+
+    local currentRadius = tonumber(libDBIcon.radius)
+    if not currentRadius or currentRadius <= 5 then
+        return
+    end
+
+    if MinimapModule.originalStates.LibDBIconRadius == nil then
+        MinimapModule.originalStates.LibDBIconRadius = currentRadius
+    end
+
+    libDBIcon:SetButtonRadius(-5)
+end
+
+local function RestoreLibDBIconRadius()
+    local originalRadius = MinimapModule.originalStates.LibDBIconRadius
+    if originalRadius == nil then
+        return
+    end
+
+    if not LibStub or not LibStub.GetLibrary then
+        return
+    end
+
+    local ok, libDBIcon = pcall(LibStub.GetLibrary, LibStub, "LibDBIcon-1.0", true)
+    if ok and libDBIcon and type(libDBIcon.SetButtonRadius) == "function" then
+        libDBIcon:SetButtonRadius(originalRadius)
+    end
+
+    MinimapModule.originalStates.LibDBIconRadius = nil
+end
+
 -- Function to apply skins to all minimap buttons (exposed for re-application on addon load)
 local function ApplySkinsToAllMinimapButtons()
     if not IsMinimapSystemActive() then return end
@@ -1387,6 +1430,9 @@ minimapButtonSkinFrame:SetScript("OnEvent", function(self, event, addonName)
     -- ADDON_LOADED handling
     -- Skip DragonUI's own loading to avoid double-processing
     if addonName == "DragonUI" then return end
+
+    -- Apply defensive LibDBIcon compatibility for late-loading addons.
+    NormalizeLibDBIconRadius()
     
     -- Apply skins to any new buttons after a tiny delay (allow addon to create its buttons)
     if addon.db and addon.db.profile and addon.db.profile.minimap and addon.db.profile.minimap.addon_button_skin then
@@ -1815,6 +1861,9 @@ function MinimapModule:ApplyMinimapSystem()
 
     -- Store original settings before applying DragonUI changes
     self:StoreOriginalSettings()
+
+    -- Defensive compatibility for LibDBIcon-based addon buttons.
+    NormalizeLibDBIconRadius()
     
     -- Initialize the DragonUI minimap system
     self:InitializeMinimapSystem()
@@ -1926,6 +1975,9 @@ function MinimapModule:RestoreMinimapSystem()
         Minimap:SetBlipTexture('Interface\\Minimap\\ObjectIcons')
         MinimapModule._settingBlipTexture = false
     end
+
+    -- Restore external LibDBIcon radius if we normalized it.
+    RestoreLibDBIconRadius()
 
     -- Fully disable minimap icon/calendar styling when the module is toggled off.
     UnskinAllMinimapButtons()
