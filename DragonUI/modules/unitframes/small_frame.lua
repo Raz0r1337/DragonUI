@@ -68,6 +68,8 @@ function UF.SmallFrame.Create(opts)
         lastPowerUpdate = 0,
     }
 
+    local pendingWidgetPositionUpdate = false
+
 
     -- ========================================================================
     -- CONFIG
@@ -379,10 +381,27 @@ function UF.SmallFrame.Create(opts)
     -- ========================================================================
 
     local function SetupAdditionalHooks()
+        local function QueueWidgetPositionUpdate()
+            if pendingWidgetPositionUpdate then
+                return
+            end
+            if addon and addon.CombatQueue then
+                pendingWidgetPositionUpdate = true
+                addon.CombatQueue:Add(opts.configKey .. "_widget_position", function()
+                    pendingWidgetPositionUpdate = false
+                    Module:UpdateWidgets()
+                end)
+            end
+        end
+
         local function ReapplyDetachedWidgetPositionIfNeeded()
             if not IsEnabled() then return end
             local config = GetConfig()
             if config and config.override then
+                if InCombatLockdown() then
+                    QueueWidgetPositionUpdate()
+                    return
+                end
                 Module:UpdateWidgets()
             end
         end
@@ -809,6 +828,17 @@ function UF.SmallFrame.Create(opts)
     function Module:ApplyWidgetPosition()
         if not Module.anchorFrame then return end
 
+        if InCombatLockdown() then
+            if not pendingWidgetPositionUpdate and addon and addon.CombatQueue then
+                pendingWidgetPositionUpdate = true
+                addon.CombatQueue:Add(opts.configKey .. "_widget_position", function()
+                    pendingWidgetPositionUpdate = false
+                    Module:UpdateWidgets()
+                end)
+            end
+            return
+        end
+
         local config = GetConfig()
         if config and config.override then
             -- Detached mode: use saved widget position from DB
@@ -864,9 +894,20 @@ function UF.SmallFrame.Create(opts)
     end
 
     function Module:UpdateWidgets()
+        if InCombatLockdown() then
+            if not pendingWidgetPositionUpdate and addon and addon.CombatQueue then
+                pendingWidgetPositionUpdate = true
+                addon.CombatQueue:Add(opts.configKey .. "_widget_position", function()
+                    pendingWidgetPositionUpdate = false
+                    Module:UpdateWidgets()
+                end)
+            end
+            return
+        end
+
         Module:ApplyWidgetPosition()
         -- Reposition the main frame relative to the updated anchor if overridden
-        if not InCombatLockdown() and frames.main then
+        if frames.main then
             local config = GetConfig()
             if config and config.override and Module.anchorFrame then
                 frames.main:ClearAllPoints()

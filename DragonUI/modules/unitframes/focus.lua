@@ -23,77 +23,7 @@ local FocusFrameNameBackground        = _G.FocusFrameNameBackground
 local FULL_SIZE_FOCUS_FRAME_CVAR = "fullSizeFocusFrame"
 local isApplyingFocusAuraSetting = false
 
-local function IsToFDetached()
-    local cfg = addon.db and addon.db.profile and addon.db.profile.unitframe and addon.db.profile.unitframe.fot
-    if cfg and cfg.override then
-        return true
-    end
-
-    local tofFrame = _G.FocusFrameToT
-    if tofFrame and tofFrame.GetPoint then
-        local _, relativeTo = tofFrame:GetPoint(1)
-        if relativeTo and relativeTo ~= FocusFrame then
-            return true
-        end
-    end
-
-    return false
-end
-
-local function InstallFocusAuraVisibilityWrapper()
-    if not _G.DragonUI_FocusAuraVisibilityWrapped and FocusFrame and FocusFrame.UpdateAuras then
-        local originalUpdateAuras = FocusFrame.UpdateAuras
-        FocusFrame.UpdateAuras = function(self, ...)
-            local tofFrame = self and (self.totFrame or _G.FocusFrameToT)
-            if self == FocusFrame and IsToFDetached() and tofFrame then
-                local originalIsShown = tofFrame.IsShown
-
-                tofFrame.IsShown = function()
-                    return false
-                end
-
-                local ok, err = pcall(originalUpdateAuras, self, ...)
-
-                tofFrame.IsShown = originalIsShown
-
-                if not ok then
-                    error(err)
-                end
-                return
-            end
-
-            return originalUpdateAuras(self, ...)
-        end
-
-        _G.DragonUI_FocusAuraVisibilityWrapped = true
-    end
-
-    if not _G.DragonUI_FocusAuraVisibilityWrappedGlobal and _G.TargetFrame_UpdateAuras then
-        local originalTargetFrameUpdateAuras = _G.TargetFrame_UpdateAuras
-        _G.TargetFrame_UpdateAuras = function(frame, ...)
-            local tofFrame = frame and (frame.totFrame or _G.FocusFrameToT)
-            if frame == FocusFrame and IsToFDetached() and tofFrame then
-                local originalIsShown = tofFrame.IsShown
-
-                tofFrame.IsShown = function()
-                    return false
-                end
-
-                local ok, err = pcall(originalTargetFrameUpdateAuras, frame, ...)
-
-                tofFrame.IsShown = originalIsShown
-
-                if not ok then
-                    error(err)
-                end
-                return
-            end
-
-            return originalTargetFrameUpdateAuras(frame, ...)
-        end
-        _G.DragonUI_FocusAuraVisibilityWrappedGlobal = true
-    end
-end
+-- Vanilla behavior: no aura expansion override
 
 local function GetFocusConfig()
     return addon.db and addon.db.profile and addon.db.profile.unitframe
@@ -252,8 +182,6 @@ local api = UF.TargetStyle.Create({
             end)
             ctx.Module.scaleHooked = true
         end
-
-        InstallFocusAuraVisibilityWrapper()
 
         ApplyFocusAuraSetting()
     end,

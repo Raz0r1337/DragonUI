@@ -20,52 +20,246 @@ local TargetFrameTextureFrameName      = _G.TargetFrameTextureFrameName
 local TargetFrameTextureFrameLevelText = _G.TargetFrameTextureFrameLevelText
 local TargetFrameNameBackground        = _G.TargetFrameNameBackground
 
+local FocusFrame = _G.FocusFrame
+
+-- Detached ToT/FoT aura layout hook (safe: post-hook only, no ToT/FoT Hide/Show)
+local MAX_TARGET_BUFFS = _G.MAX_TARGET_BUFFS or 32
+local MAX_TARGET_DEBUFFS = _G.MAX_TARGET_DEBUFFS or 16
+local AURA_OFFSET_Y = _G.AURA_OFFSET_Y or 3
+local AURA_START_X = _G.AURA_START_X or 5
+local AURA_START_Y = _G.AURA_START_Y or 32
+local SMALL_AURA_SIZE = _G.SMALL_AURA_SIZE or 17
+local LARGE_AURA_SIZE = _G.LARGE_AURA_SIZE or 21
+local DEFAULT_AURA_ROW_WIDTH = 122
+
 local function IsToTDetached()
     local cfg = addon.db and addon.db.profile and addon.db.profile.unitframe and addon.db.profile.unitframe.tot
-    if cfg and cfg.override then
-        return true
-    end
+    return cfg and cfg.override == true
+end
 
-    local totFrame = _G.TargetFrameToT
-    if totFrame and totFrame.GetPoint then
-        local _, relativeTo = totFrame:GetPoint(1)
-        if relativeTo and relativeTo ~= TargetFrame then
-            return true
-        end
-    end
+local function IsToFDetached()
+    local cfg = addon.db and addon.db.profile and addon.db.profile.unitframe and addon.db.profile.unitframe.fot
+    return cfg and cfg.override == true
+end
 
+local function ShouldUseDetachedAuraLayout(frame)
+    if frame == TargetFrame then
+        return IsToTDetached()
+    end
+    if frame == FocusFrame then
+        return IsToFDetached()
+    end
     return false
 end
 
-local function InstallTargetAuraVisibilityWrapper()
-    if _G.DragonUI_TargetAuraVisibilityWrapped or not _G.TargetFrame_UpdateAuras then
+local function GetAuraCountsAndSizes(frame)
+    local selfName = frame and frame.GetName and frame:GetName()
+    if not selfName then
+        return 0, 0, {}, {}
+    end
+
+    local numBuffs = 0
+    local numDebuffs = 0
+    local largeBuffList = {}
+    local largeDebuffList = {}
+
+    for i = 1, MAX_TARGET_BUFFS do
+        local buff = _G[selfName .. "Buff" .. i]
+        if not buff or not buff:IsShown() then
+            break
+        end
+        numBuffs = i
+        largeBuffList[i] = (buff:GetWidth() or SMALL_AURA_SIZE) > SMALL_AURA_SIZE
+    end
+
+    for i = 1, MAX_TARGET_DEBUFFS do
+        local debuff = _G[selfName .. "Debuff" .. i]
+        if not debuff or not debuff:IsShown() then
+            break
+        end
+        numDebuffs = i
+        largeDebuffList[i] = (debuff:GetWidth() or SMALL_AURA_SIZE) > SMALL_AURA_SIZE
+    end
+
+    return numBuffs, numDebuffs, largeBuffList, largeDebuffList
+end
+
+local function UpdateAuraPositionsDetached(self, auraName, numAuras, numOppositeAuras, largeAuraList, updateFunc,
+                                           maxRowWidth, offsetX, mirrorAurasVertically)
+    local size
+    local offsetY = AURA_OFFSET_Y
+    local rowWidth = 0
+    local firstAuraOnRow = 1
+
+    for i = 1, numAuras do
+        if largeAuraList[i] then
+            size = LARGE_AURA_SIZE
+            offsetY = AURA_OFFSET_Y + AURA_OFFSET_Y
+        else
+            size = SMALL_AURA_SIZE
+        end
+
+        if i == 1 then
+            rowWidth = size
+            self.auraRows = self.auraRows + 1
+        else
+            rowWidth = rowWidth + size + offsetX
+        end
+
+        if rowWidth > maxRowWidth then
+            updateFunc(self, auraName, i, numOppositeAuras, firstAuraOnRow, size, offsetX, offsetY, mirrorAurasVertically)
+            rowWidth = size
+            self.auraRows = self.auraRows + 1
+            firstAuraOnRow = i
+            offsetY = AURA_OFFSET_Y
+        else
+            updateFunc(self, auraName, i, numOppositeAuras, i - 1, size, offsetX, offsetY, mirrorAurasVertically)
+        end
+    end
+end
+
+local function UpdateBuffAnchorDetached(self, buffName, index, numDebuffs, anchorIndex, size, offsetX, offsetY,
+                                        mirrorVertically)
+    local point, relativePoint
+    local startY, auraOffsetY
+
+    if mirrorVertically then
+        point = "BOTTOM"
+        relativePoint = "TOP"
+        startY = -15
+        offsetY = -offsetY
+        auraOffsetY = -AURA_OFFSET_Y
+    else
+        point = "TOP"
+        relativePoint = "BOTTOM"
+        startY = AURA_START_Y
+        auraOffsetY = AURA_OFFSET_Y
+    end
+
+    local buff = _G[buffName .. index]
+    if not buff then
         return
     end
 
-    local originalUpdateAuras = _G.TargetFrame_UpdateAuras
-    _G.TargetFrame_UpdateAuras = function(frame, ...)
-        if frame == TargetFrame and IsToTDetached() and frame and frame.totFrame then
-            local totFrame = frame.totFrame
-            local originalIsShown = totFrame.IsShown
-
-            totFrame.IsShown = function()
-                return false
-            end
-
-            local ok, err = pcall(originalUpdateAuras, frame, ...)
-
-            totFrame.IsShown = originalIsShown
-
-            if not ok then
-                error(err)
-            end
-            return
+    if index == 1 then
+        if UnitIsFriend("player", self.unit) or numDebuffs == 0 then
+            buff:SetPoint(point .. "LEFT", self, relativePoint .. "LEFT", AURA_START_X, startY)
+        else
+            buff:SetPoint(point .. "LEFT", self.debuffs, relativePoint .. "LEFT", 0, -offsetY)
         end
-
-        return originalUpdateAuras(frame, ...)
+        self.buffs:SetPoint(point .. "LEFT", buff, point .. "LEFT", 0, 0)
+        self.buffs:SetPoint(relativePoint .. "LEFT", buff, relativePoint .. "LEFT", 0, -auraOffsetY)
+        self.spellbarAnchor = buff
+    elseif anchorIndex ~= (index - 1) then
+        buff:SetPoint(point .. "LEFT", _G[buffName .. anchorIndex], relativePoint .. "LEFT", 0, -offsetY)
+        self.buffs:SetPoint(relativePoint .. "LEFT", buff, relativePoint .. "LEFT", 0, -auraOffsetY)
+        self.spellbarAnchor = buff
+    else
+        buff:SetPoint(point .. "LEFT", _G[buffName .. anchorIndex], point .. "RIGHT", offsetX, 0)
     end
 
-    _G.DragonUI_TargetAuraVisibilityWrapped = true
+    buff:SetWidth(size)
+    buff:SetHeight(size)
+end
+
+local function UpdateDebuffAnchorDetached(self, debuffName, index, numBuffs, anchorIndex, size, offsetX, offsetY,
+                                          mirrorVertically)
+    local debuff = _G[debuffName .. index]
+    local isFriend = UnitIsFriend("player", self.unit)
+    local point, relativePoint
+    local startY, auraOffsetY
+
+    if mirrorVertically then
+        point = "BOTTOM"
+        relativePoint = "TOP"
+        startY = -15
+        offsetY = -offsetY
+        auraOffsetY = -AURA_OFFSET_Y
+    else
+        point = "TOP"
+        relativePoint = "BOTTOM"
+        startY = AURA_START_Y
+        auraOffsetY = AURA_OFFSET_Y
+    end
+
+    if not debuff then
+        return
+    end
+
+    if index == 1 then
+        if isFriend and numBuffs > 0 then
+            debuff:SetPoint(point .. "LEFT", self.buffs, relativePoint .. "LEFT", 0, -offsetY)
+        else
+            debuff:SetPoint(point .. "LEFT", self, relativePoint .. "LEFT", AURA_START_X, startY)
+        end
+        self.debuffs:SetPoint(point .. "LEFT", debuff, point .. "LEFT", 0, 0)
+        self.debuffs:SetPoint(relativePoint .. "LEFT", debuff, relativePoint .. "LEFT", 0, -auraOffsetY)
+        if isFriend or (not isFriend and numBuffs == 0) then
+            self.spellbarAnchor = debuff
+        end
+    elseif anchorIndex ~= (index - 1) then
+        debuff:SetPoint(point .. "LEFT", _G[debuffName .. anchorIndex], relativePoint .. "LEFT", 0, -offsetY)
+        self.debuffs:SetPoint(relativePoint .. "LEFT", debuff, relativePoint .. "LEFT", 0, -auraOffsetY)
+        if isFriend or (not isFriend and numBuffs == 0) then
+            self.spellbarAnchor = debuff
+        end
+    else
+        debuff:SetPoint(point .. "LEFT", _G[debuffName .. (index - 1)], point .. "RIGHT", offsetX, 0)
+    end
+
+    debuff:SetWidth(size)
+    debuff:SetHeight(size)
+    local border = _G[debuffName .. index .. "Border"]
+    if border then
+        border:SetWidth(size + 2)
+        border:SetHeight(size + 2)
+    end
+end
+
+local function ApplyDetachedAuraLayout(frame)
+    if not frame or not frame.unit or not UnitExists(frame.unit) then
+        return
+    end
+
+    local frameName = frame:GetName()
+    if frameName ~= "TargetFrame" and frameName ~= "FocusFrame" then
+        return
+    end
+
+    local numBuffs, numDebuffs, largeBuffList, largeDebuffList = GetAuraCountsAndSizes(frame)
+    if numBuffs == 0 and numDebuffs == 0 then
+        return
+    end
+
+    frame.auraRows = 0
+    local mirrorAurasVertically = frame.buffsOnTop and true or false
+    frame.spellbarAnchor = nil
+
+    UpdateAuraPositionsDetached(frame, frameName .. "Buff", numBuffs, numDebuffs, largeBuffList,
+        UpdateBuffAnchorDetached, DEFAULT_AURA_ROW_WIDTH, 3, mirrorAurasVertically)
+    UpdateAuraPositionsDetached(frame, frameName .. "Debuff", numDebuffs, numBuffs, largeDebuffList,
+        UpdateDebuffAnchorDetached, DEFAULT_AURA_ROW_WIDTH, 3, mirrorAurasVertically)
+
+    if frame.spellbar and _G.Target_Spellbar_AdjustPosition then
+        _G.Target_Spellbar_AdjustPosition(frame.spellbar)
+    end
+end
+
+local function InstallDetachedAuraLayoutHook()
+    if _G.DragonUI_DetachedAuraLayoutHooked then
+        return
+    end
+    if type(_G.TargetFrame_UpdateAuras) ~= "function" then
+        return
+    end
+
+    hooksecurefunc("TargetFrame_UpdateAuras", function(frame)
+        if ShouldUseDetachedAuraLayout(frame) then
+            ApplyDetachedAuraLayout(frame)
+        end
+    end)
+
+    _G.DragonUI_DetachedAuraLayoutHooked = true
 end
 
 -- ============================================================================
@@ -191,8 +385,8 @@ local api = UF.TargetStyle.Create({
             ctx.Module.classificationHooked = true
         end
 
-        InstallTargetAuraVisibilityWrapper()
-    end,
+        InstallDetachedAuraLayoutHook()
+     end,
 
     -- ----------------------------------------------------------------
     -- Class color hooks
