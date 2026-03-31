@@ -64,9 +64,7 @@ local WHITE_LIST = {'MiniMapBattlefieldFrame', 'MiniMapTrackingButton', 'MiniMap
                     'Spy_MapNoteList_mini', 'ZGVMarker', 'poiWorldMapPOIFrame', 'WorldMapPOIFrame', 'QuestMapPOI',
                     'GameTimeFrame',
                     -- Questie minimap POI icons (quest markers inside the minimap)
-                    'QuestieFrame', 'Questie_MiniMapNote',
-                    -- Explicit fallback for VoiceOver button variants
-                    'VoiceOver'}
+                    'QuestieFrame', 'Questie_MiniMapNote'}
 
 local function IsFrameWhitelisted(frameName)
     if not frameName then
