@@ -443,7 +443,15 @@ function Controls:AddCopyableText(parent, text)
     editBox:SetText(text)
     editBox:SetFullWidth(true)
     editBox:DisableButton(true)
-    editBox:SetCallback("OnEnterPressed", function(w) w:ClearFocus() end)
+    editBox:SetCallback("OnEnterPressed", function(w)
+        if w and w.ClearFocus then
+            w:ClearFocus()
+            return
+        end
+        if w and w.editbox and w.editbox.ClearFocus then
+            w.editbox:ClearFocus()
+        end
+    end)
     editBox:SetCallback("OnTextChanged", function(w) w:SetText(text) end)
     parent:AddChild(editBox)
     return editBox

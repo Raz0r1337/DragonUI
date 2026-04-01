@@ -145,26 +145,62 @@ local function ShouldApplyCompanionSpacing(unitType, hasCompanion, auraRows)
         return false
     end
 
-    if not IsCompanionDetached(unitType) then
-        return true
+    -- Detached mode should not add companion spacing; use aura anchor spacing only.
+    if IsCompanionDetached(unitType) then
+        return false
     end
 
-    -- Detached ToT/FoT already consume aura space; keep castbar close for 0-1 rows.
-    return (tonumber(auraRows) or 0) >= 2
+    return true
+end
+
+local function HasCompanionUnit(unitType)
+    if unitType == "target" then
+        if not UnitExists("target") then
+            return false
+        end
+
+        -- Blizzard/DragonUI behavior: no ToT should be treated as visible when target is self.
+        if UnitIsUnit and UnitIsUnit("target", "player") then
+            return false
+        end
+
+        if not UnitExists("targettarget") then
+            return false
+        end
+
+        return TargetFrameToT and TargetFrameToT.IsShown and TargetFrameToT:IsShown() and true or false
+    elseif unitType == "focus" then
+        if not UnitExists("focus") then
+            return false
+        end
+
+        -- Keep attached spacing aligned with real ToF visibility when focus is self.
+        if UnitIsUnit and UnitIsUnit("focus", "player") then
+            return false
+        end
+
+        if not UnitExists("focustarget") then
+            return false
+        end
+
+        return FocusFrameToT and FocusFrameToT.IsShown and FocusFrameToT:IsShown() and true or false
+    end
+
+    return false
 end
 
 local function GetAuraAnchor(unitFrame, buffAnchor, debuffAnchor)
-    local spellbarAnchor = unitFrame and unitFrame.spellbarAnchor
-    if spellbarAnchor and spellbarAnchor.IsShown and spellbarAnchor:IsShown() then
-        return spellbarAnchor, "spellbarAnchor"
-    end
-
     if debuffAnchor then
         return debuffAnchor, "debuff1"
     end
 
     if buffAnchor then
         return buffAnchor, "buff1"
+    end
+
+    local spellbarAnchor = unitFrame and unitFrame.spellbarAnchor
+    if spellbarAnchor and spellbarAnchor.IsShown and spellbarAnchor:IsShown() then
+        return spellbarAnchor, "spellbarAnchor"
     end
 
     return nil, "none"
@@ -189,6 +225,89 @@ local function GetExtraAuraRowOffset(auraRows)
 
     local rowStep = (_G.SMALL_AURA_SIZE or 17) + (_G.AURA_OFFSET_Y or 3)
     return (rows - 2) * rowStep
+end
+
+-- Additive detached tuning applied after stable geometry offset.
+-- Negative values reduce gap; positive values increase gap.
+local DETACHED_GAP_TUNE = -6
+
+local function GetLowestVisibleAuraBottom(unitType)
+    local buffPrefix, debuffPrefix
+    if unitType == "target" then
+        buffPrefix = "TargetFrameBuff"
+        debuffPrefix = "TargetFrameDebuff"
+    elseif unitType == "focus" then
+        buffPrefix = "FocusFrameBuff"
+        debuffPrefix = "FocusFrameDebuff"
+    else
+        return nil
+    end
+
+    local lowestBottom = nil
+    local function ScanAuraPrefix(prefix)
+        for i = 1, 40 do
+            local aura = _G[prefix .. i]
+            if not aura then
+                break
+            end
+            if aura.IsShown and aura:IsShown() then
+                local auraBottom = aura:GetBottom()
+                if auraBottom and (not lowestBottom or auraBottom < lowestBottom) then
+                    lowestBottom = auraBottom
+                end
+            end
+        end
+    end
+
+    ScanAuraPrefix(buffPrefix)
+    ScanAuraPrefix(debuffPrefix)
+    return lowestBottom
+end
+
+local function GetSpellbarToLowestAuraOffset(unitType, unitFrame)
+    local spellbarAnchor = unitFrame and unitFrame.spellbarAnchor
+    if not spellbarAnchor then
+        return 0
+    end
+
+    local spellbarBottom = spellbarAnchor:GetBottom()
+    local lowestBottom = GetLowestVisibleAuraBottom(unitType)
+    if not spellbarBottom or not lowestBottom then
+        return 0
+    end
+
+    local offset = spellbarBottom - lowestBottom
+    if offset < 0 then
+        offset = 0
+    end
+
+    return offset
+end
+
+local function GetAuraStackGeometryOffset(unitType, unitFrame, auraAnchor, auraAnchorSource, fallbackOffset)
+    if auraAnchorSource == "spellbarAnchor" then
+        return 0
+    end
+
+    local offset = fallbackOffset or 0
+    local spellbarAnchor = unitFrame and unitFrame.spellbarAnchor
+    if not auraAnchor or not spellbarAnchor then
+        return offset
+    end
+
+    local auraBottom = auraAnchor:GetBottom()
+    local spellbarBottom = spellbarAnchor:GetBottom()
+    if not auraBottom or not spellbarBottom then
+        return offset
+    end
+
+    local geometryOffset = auraBottom - spellbarBottom
+
+    if geometryOffset < 0 then
+        geometryOffset = 0
+    end
+
+    return geometryOffset
 end
 
 local function GetTargetAuraDistanceCorrection()
@@ -1298,13 +1417,25 @@ function CastbarModule:RefreshCastbar(unitType)
         end
     elseif unitType == "target" then
         local blizzSpellBar = TargetFrameSpellBar
-        local hasCompanion = TargetFrameToT and TargetFrameToT:IsShown()
-        local auraRows = (TargetFrame and TargetFrame.auraRows) or 0
+        local hasUnit = UnitExists("target")
+        local hasCompanion = HasCompanionUnit("target")
+        local isDetached = IsCompanionDetached("target")
+        local auraRows = hasUnit and ((TargetFrame and TargetFrame.auraRows) or 0) or 0
         local extraAuraOffset = GetExtraAuraRowOffset(auraRows)
         local useCompanionSpacing = ShouldApplyCompanionSpacing("target", hasCompanion, auraRows)
-        local buffAnchor = TargetFrameBuff1 and TargetFrameBuff1:IsShown() and TargetFrameBuff1 or nil
-        local debuffAnchor = TargetFrameDebuff1 and TargetFrameDebuff1:IsShown() and TargetFrameDebuff1 or nil
-        local auraAnchor, auraAnchorSource = GetAuraAnchor(TargetFrame, buffAnchor, debuffAnchor)
+        local buffAnchor = hasUnit and TargetFrameBuff1 and TargetFrameBuff1:IsShown() and TargetFrameBuff1 or nil
+        local debuffAnchor = hasUnit and TargetFrameDebuff1 and TargetFrameDebuff1:IsShown() and TargetFrameDebuff1 or nil
+        local auraAnchor, auraAnchorSource = nil, "none"
+        if hasUnit then
+            auraAnchor, auraAnchorSource = GetAuraAnchor(TargetFrame, buffAnchor, debuffAnchor)
+        end
+        local fallbackAuraOffset = (auraAnchorSource == "spellbarAnchor") and 0 or extraAuraOffset
+        local auraAnchorOffset = GetAuraStackGeometryOffset("target", TargetFrame, auraAnchor, auraAnchorSource, fallbackAuraOffset)
+        local detachedStableOffset = 0
+        if isDetached then
+            detachedStableOffset = GetSpellbarToLowestAuraOffset("target", TargetFrame) + DETACHED_GAP_TUNE
+            auraAnchorOffset = detachedStableOffset
+        end
 
         AdjustSpellbarPositionSafely(blizzSpellBar)
         local spellPoint, spellRel, spellRelPoint, spellX, spellY = nil, nil, nil, 0, 0
@@ -1320,11 +1451,11 @@ function CastbarModule:RefreshCastbar(unitType)
             xPos = 25
             yPos = -21 - extraAuraOffset
         elseif auraAnchor then
-            anchorFrame = auraAnchor
+            anchorFrame = (isDetached and TargetFrame and TargetFrame.spellbarAnchor) and TargetFrame.spellbarAnchor or auraAnchor
             anchorPoint = "TOPLEFT"
             relativePoint = "BOTTOMLEFT"
             xPos = 20
-            yPos = GetAuraAnchorYOffset(cfg) - extraAuraOffset
+            yPos = GetAuraAnchorYOffset(cfg) - auraAnchorOffset
         else
             anchorFrame = TargetFrame or blizzSpellBar or UIParent
             anchorPoint = "TOPLEFT"
@@ -1333,7 +1464,7 @@ function CastbarModule:RefreshCastbar(unitType)
             yPos = 7
         end
 
-        local targetDistanceCorrection = GetTargetAuraDistanceCorrection()
+        local targetDistanceCorrection = isDetached and 0 or GetTargetAuraDistanceCorrection()
         yPos = yPos + targetDistanceCorrection
 
         if addon and addon.debugMode then
@@ -1349,6 +1480,8 @@ function CastbarModule:RefreshCastbar(unitType)
                 "companionSpacing=" .. tostring(useCompanionSpacing and 1 or 0),
                 "auraRows=" .. tostring(auraRows),
                 "extraAuraOffset=" .. tostring(extraAuraOffset),
+                "auraAnchorOffset=" .. tostring(auraAnchorOffset),
+                "detachedStableOffset=" .. tostring(detachedStableOffset),
                 "targetCorrection=" .. tostring(targetDistanceCorrection),
                 "auraAnchorSource=" .. tostring(auraAnchorSource),
                 "spellbarRel=" .. relName,
@@ -1363,13 +1496,25 @@ function CastbarModule:RefreshCastbar(unitType)
         end
     elseif unitType == "focus" then
         local blizzSpellBar = FocusFrameSpellBar
-        local hasCompanion = FocusFrameToT and FocusFrameToT:IsShown()
-        local auraRows = (FocusFrame and FocusFrame.auraRows) or 0
+        local hasUnit = UnitExists("focus")
+        local hasCompanion = HasCompanionUnit("focus")
+        local isDetached = IsCompanionDetached("focus")
+        local auraRows = hasUnit and ((FocusFrame and FocusFrame.auraRows) or 0) or 0
         local extraAuraOffset = GetExtraAuraRowOffset(auraRows)
         local useCompanionSpacing = ShouldApplyCompanionSpacing("focus", hasCompanion, auraRows)
-        local buffAnchor = FocusFrameBuff1 and FocusFrameBuff1:IsShown() and FocusFrameBuff1 or nil
-        local debuffAnchor = FocusFrameDebuff1 and FocusFrameDebuff1:IsShown() and FocusFrameDebuff1 or nil
-        local auraAnchor, auraAnchorSource = GetAuraAnchor(FocusFrame, buffAnchor, debuffAnchor)
+        local buffAnchor = hasUnit and FocusFrameBuff1 and FocusFrameBuff1:IsShown() and FocusFrameBuff1 or nil
+        local debuffAnchor = hasUnit and FocusFrameDebuff1 and FocusFrameDebuff1:IsShown() and FocusFrameDebuff1 or nil
+        local auraAnchor, auraAnchorSource = nil, "none"
+        if hasUnit then
+            auraAnchor, auraAnchorSource = GetAuraAnchor(FocusFrame, buffAnchor, debuffAnchor)
+        end
+        local fallbackAuraOffset = (auraAnchorSource == "spellbarAnchor") and 0 or extraAuraOffset
+        local auraAnchorOffset = GetAuraStackGeometryOffset("focus", FocusFrame, auraAnchor, auraAnchorSource, fallbackAuraOffset)
+        local detachedStableOffset = 0
+        if isDetached then
+            detachedStableOffset = GetSpellbarToLowestAuraOffset("focus", FocusFrame) + DETACHED_GAP_TUNE
+            auraAnchorOffset = detachedStableOffset
+        end
 
         AdjustSpellbarPositionSafely(blizzSpellBar)
         local spellPoint, spellRel, spellRelPoint, spellX, spellY = nil, nil, nil, 0, 0
@@ -1384,11 +1529,11 @@ function CastbarModule:RefreshCastbar(unitType)
             xPos = 25
             yPos = -21 - extraAuraOffset
         elseif auraAnchor then
-            anchorFrame = auraAnchor
+            anchorFrame = (isDetached and FocusFrame and FocusFrame.spellbarAnchor) and FocusFrame.spellbarAnchor or auraAnchor
             anchorPoint = "TOPLEFT"
             relativePoint = "BOTTOMLEFT"
             xPos = 20
-            yPos = GetAuraAnchorYOffset(cfg) - extraAuraOffset
+            yPos = GetAuraAnchorYOffset(cfg) - auraAnchorOffset
         else
             anchorFrame = FocusFrame or blizzSpellBar or UIParent
             anchorPoint = "TOPLEFT"
@@ -1397,7 +1542,7 @@ function CastbarModule:RefreshCastbar(unitType)
             yPos = 7
         end
 
-        local focusDistanceCorrection = GetFocusAuraDistanceCorrection()
+        local focusDistanceCorrection = isDetached and 0 or GetFocusAuraDistanceCorrection()
         yPos = yPos + focusDistanceCorrection
 
         if addon and addon.debugMode then
@@ -1413,6 +1558,8 @@ function CastbarModule:RefreshCastbar(unitType)
                 "companionSpacing=" .. tostring(useCompanionSpacing and 1 or 0),
                 "auraRows=" .. tostring(auraRows),
                 "extraAuraOffset=" .. tostring(extraAuraOffset),
+                "auraAnchorOffset=" .. tostring(auraAnchorOffset),
+                "detachedStableOffset=" .. tostring(detachedStableOffset),
                 "focusCorrection=" .. tostring(focusDistanceCorrection),
                 "auraAnchorSource=" .. tostring(auraAnchorSource),
                 "spellbarRel=" .. relName,
