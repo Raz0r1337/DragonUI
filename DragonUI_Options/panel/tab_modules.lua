@@ -151,6 +151,16 @@ local function BuildModulesTab(scroll)
     })
 
     ModuleToggle(uiSection, {
+        label = LO["Range Indicator"],
+        desc = LO["Tints action button icons based on range and usability: red = out of range, blue = not enough mana, gray = unusable."],
+        moduleName = "rage_indicator",
+        requiresReload = false,
+        callback = function()
+            if addon.RefreshRageIndicatorSystem then addon.RefreshRageIndicatorSystem() end
+        end,
+    })
+
+    ModuleToggle(uiSection, {
         label = LO["Quest Tracker"],
         desc = LO["DragonUI quest tracker positioning and styling."],
         moduleName = "questtracker",
@@ -192,6 +202,7 @@ local function BuildModulesTab(scroll)
             castbar = true,
             player = true,
             boss = true,
+            rage_indicator = true,
         }
 
         for _, moduleName in ipairs(MR.loadOrder) do

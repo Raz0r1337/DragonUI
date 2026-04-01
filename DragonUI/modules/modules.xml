@@ -5,6 +5,7 @@
     <!-- Actionbar modules -->
     <Script file="noop.lua"/>
     <Script file="buttons.lua"/>
+    <Script file="rage_indicator.lua"/>
     <Script file="cooldowns.lua"/>
     <Script file="mainbars.lua"/>
     

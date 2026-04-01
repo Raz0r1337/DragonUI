@@ -124,14 +124,12 @@ local function BuildEnhancementsTab(scroll)
     C:AddToggle(rangeSection, {
         label = LO["Enable Range Indicator"],
         desc = LO["Color action button icons when target is out of range or ability is unusable."],
-        getFunc = function()
-            local b = addon.db.profile.buttons
-            return b and b.range_indicator and b.range_indicator.enabled
-        end,
+        getFunc = function() return IsEnabled("rage_indicator") end,
         setFunc = function(val)
-            if not addon.db.profile.buttons then addon.db.profile.buttons = {} end
-            if not addon.db.profile.buttons.range_indicator then addon.db.profile.buttons.range_indicator = {} end
-            addon.db.profile.buttons.range_indicator.enabled = val
+            EnsureModuleTable("rage_indicator").enabled = val
+        end,
+        callback = function()
+            if addon.RefreshRageIndicatorSystem then addon.RefreshRageIndicatorSystem() end
         end,
         requiresReload = false,
     })

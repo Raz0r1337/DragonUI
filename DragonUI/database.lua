@@ -311,10 +311,7 @@ local defaults = {
                 font_size = 16,
                 position = {'CENTER', 0, 1}
             },
-            border_color = {1, 1, 1, 1},
-            range_indicator = {
-                enabled = true -- Tint action buttons red when target is out of range
-            }
+            border_color = {1, 1, 1, 1}
         },
 
         additional = {
@@ -575,6 +572,9 @@ local defaults = {
             },
             cooldowns = {
                 enabled = true -- Show cooldown timers on action buttons
+            },
+            rage_indicator = {
+                enabled = true -- Tint action button icons by range and usability
             },
             buttons = {
                 enabled = true -- Apply DragonUI button styling and enhancements
