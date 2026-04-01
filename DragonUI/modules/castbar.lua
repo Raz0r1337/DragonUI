@@ -191,6 +191,11 @@ local function GetExtraAuraRowOffset(auraRows)
     return (rows - 2) * rowStep
 end
 
+local function GetTargetAuraDistanceCorrection()
+    -- Default to 0 so current target spacing remains unchanged unless tuned.
+    return 4
+end
+
 local function GetFocusAuraDistanceCorrection()
     -- Focus aura anchors sit slightly lower than target in Blizzard layout.
     return 4
@@ -1328,6 +1333,9 @@ function CastbarModule:RefreshCastbar(unitType)
             yPos = 7
         end
 
+        local targetDistanceCorrection = GetTargetAuraDistanceCorrection()
+        yPos = yPos + targetDistanceCorrection
+
         if addon and addon.debugMode then
             local relName = "nil"
             if spellRel and spellRel.GetName then
@@ -1341,6 +1349,7 @@ function CastbarModule:RefreshCastbar(unitType)
                 "companionSpacing=" .. tostring(useCompanionSpacing and 1 or 0),
                 "auraRows=" .. tostring(auraRows),
                 "extraAuraOffset=" .. tostring(extraAuraOffset),
+                "targetCorrection=" .. tostring(targetDistanceCorrection),
                 "auraAnchorSource=" .. tostring(auraAnchorSource),
                 "spellbarRel=" .. relName,
                 "anchor=" .. tostring(anchorName),
@@ -1577,6 +1586,21 @@ function CastbarModule:HandleCastingEvent(event, unit)
     end
 end
 
+function CastbarModule:RefreshCompanionLayout(unitType)
+    if not IsEnabled(unitType) then
+        return
+    end
+
+    self:RefreshCastbar(unitType)
+    if addon and addon.core and addon.core.ScheduleTimer then
+        addon.core:ScheduleTimer(function()
+            if IsEnabled(unitType) then
+                CastbarModule:RefreshCastbar(unitType)
+            end
+        end, 0.05)
+    end
+end
+
 function CastbarModule:HandleTargetChanged()
     local frames = self.frames.target
     local statusBar = frames.castbar
@@ -1598,16 +1622,7 @@ function CastbarModule:HandleTargetChanged()
     HideBlizzardCastbar("target")
 
     -- Always refresh layout on target transitions so stale companion offsets are cleared.
-    if IsEnabled("target") then
-        self:RefreshCastbar("target")
-        if addon and addon.core and addon.core.ScheduleTimer then
-            addon.core:ScheduleTimer(function()
-                if IsEnabled("target") then
-                    CastbarModule:RefreshCastbar("target")
-                end
-            end, 0.05)
-        end
-    end
+    self:RefreshCompanionLayout("target")
     
     -- Check if new target has active cast
     if UnitExists("target") and IsEnabled("target") then
@@ -1640,16 +1655,7 @@ function CastbarModule:HandleFocusChanged()
     HideBlizzardCastbar("focus")
 
     -- Always refresh layout on focus transitions so stale companion offsets are cleared.
-    if IsEnabled("focus") then
-        self:RefreshCastbar("focus")
-        if addon and addon.core and addon.core.ScheduleTimer then
-            addon.core:ScheduleTimer(function()
-                if IsEnabled("focus") then
-                    CastbarModule:RefreshCastbar("focus")
-                end
-            end, 0.05)
-        end
-    end
+    self:RefreshCompanionLayout("focus")
     
     -- Check if new focus has active cast
     if UnitExists("focus") and IsEnabled("focus") then
@@ -1881,6 +1887,12 @@ local function OnEvent(self, event, unit, ...)
         CastbarModule:HandleTargetChanged()
     elseif event == 'PLAYER_FOCUS_CHANGED' then
         CastbarModule:HandleFocusChanged()
+    elseif event == 'UNIT_TARGET' then
+        if unit == "target" then
+            CastbarModule:RefreshCompanionLayout("target")
+        elseif unit == "focus" then
+            CastbarModule:RefreshCompanionLayout("focus")
+        end
     elseif event == 'PLAYER_ENTERING_WORLD' then
         SetupBlizzardLayoutHooks()
         -- Full protection for reload during combat
@@ -1950,6 +1962,7 @@ local events = {
     'UNIT_SPELLCAST_CHANNEL_START',
     'UNIT_SPELLCAST_CHANNEL_STOP',
     'UNIT_SPELLCAST_CHANNEL_UPDATE',
+    'UNIT_TARGET',
     'PLAYER_TARGET_CHANGED',
     'PLAYER_FOCUS_CHANGED'
 }
