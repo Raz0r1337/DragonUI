@@ -1947,7 +1947,6 @@ end
 local classPortraitBg = nil
 local classPortraitIcon = nil
 local classPortraitFrame = nil
-local playerPortraitBlackout = nil
 
 -- Apply class portrait if enabled in config
 local function UpdatePlayerClassPortrait()
@@ -1957,31 +1956,20 @@ local function UpdatePlayerClassPortrait()
     local bigDebuffsActive = addon.compatibility
         and addon.compatibility.IsBigDebuffsPortraitActive
         and addon.compatibility:IsBigDebuffsPortraitActive("player")
-    
+
     local useClassPortrait = config.classPortrait
     local useAlternative = config.alternativeClassIcons
-    
+
     -- In vehicle: NEVER show class portrait — Blizzard handles vehicle portrait
     if IsInVehicle() then
         useClassPortrait = false
         bigDebuffsActive = false
     end
 
-    if not playerPortraitBlackout then
-        playerPortraitBlackout = PlayerFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
-        playerPortraitBlackout:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
-        playerPortraitBlackout:SetVertexColor(0, 0, 0, 1)
-    end
-
-    playerPortraitBlackout:ClearAllPoints()
-    playerPortraitBlackout:SetPoint("CENTER", PlayerPortrait, "CENTER", 0, 0)
-    playerPortraitBlackout:SetSize(56, 56)
-    
     if useClassPortrait then
         -- Get player's class
         local _, classFileName = UnitClass("player")
         if classFileName and CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[classFileName] then
-            local coords = CLASS_ICON_TCOORDS[classFileName]
 
             if not classPortraitFrame then
                 classPortraitFrame = CreateFrame("Frame", nil, PlayerFrame)
@@ -1989,14 +1977,14 @@ local function UpdatePlayerClassPortrait()
                 classPortraitFrame:SetFrameLevel(PlayerFrame:GetFrameLevel())
                 classPortraitFrame:EnableMouse(false)
             end
-            
+
             -- Create black background circle if it doesn't exist
             if not classPortraitBg then
                 classPortraitBg = classPortraitFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
                 classPortraitBg:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
-                classPortraitBg:SetVertexColor(0, 0, 0, 1)  -- Black background
+                classPortraitBg:SetVertexColor(0, 0, 0, 1)
             end
-            
+
             -- Create class icon texture if it doesn't exist (separate from portrait)
             if not classPortraitIcon then
                 classPortraitIcon = classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
@@ -2005,56 +1993,45 @@ local function UpdatePlayerClassPortrait()
             classPortraitFrame:ClearAllPoints()
             classPortraitFrame:SetAllPoints(PlayerPortrait)
             classPortraitFrame:Show()
-            
+
             -- Position and size the background (full size)
             classPortraitBg:ClearAllPoints()
             classPortraitBg:SetPoint("CENTER", classPortraitFrame, "CENTER", 0, 0)
             classPortraitBg:SetSize(56, 56)
             classPortraitBg:Show()
-            
+
             -- Position and size the icon
             classPortraitIcon:ClearAllPoints()
             classPortraitIcon:SetPoint("CENTER", classPortraitFrame, "CENTER", 0, 0)
             classPortraitIcon:SetSize(56, 56)
             UF.ApplyClassPortraitIcon(classPortraitIcon, classFileName, useAlternative)
             if bigDebuffsActive then
+                -- BigDebuffs showing: hide our icon, keep bg as black backdrop
                 classPortraitIcon:Hide()
-                playerPortraitBlackout:Show()
             else
                 classPortraitIcon:Show()
-                playerPortraitBlackout:Hide()
             end
-            
-            -- Hide the original portrait
+
+            -- Hide the original portrait model
             PlayerPortrait:SetAlpha(0)
         end
     else
         -- Hide class portrait elements
-        if classPortraitFrame then
-            classPortraitFrame:Hide()
-        end
-        if classPortraitBg then
-            classPortraitBg:Hide()
-        end
-        if classPortraitIcon then
-            classPortraitIcon:Hide()
-        end
+        if classPortraitFrame then classPortraitFrame:Hide() end
+        if classPortraitBg then classPortraitBg:Hide() end
+        if classPortraitIcon then classPortraitIcon:Hide() end
+
         if bigDebuffsActive then
-            playerPortraitBlackout:Show()
+            -- BigDebuffs active without class portrait: keep portrait alpha 0
             PlayerPortrait:SetAlpha(0)
         else
-            playerPortraitBlackout:Hide()
             -- Restore normal portrait (skip in vehicle — Blizzard sets vehicle portrait)
             if not IsInVehicle() then
+                PlayerPortrait:SetDrawLayer("ARTWORK", 2)
                 SetPortraitTexture(PlayerPortrait, "player")
                 PlayerPortrait:SetTexCoord(0, 1, 0, 1)
             end
             PlayerPortrait:SetAlpha(1)
-        end
-
-        if not bigDebuffsActive and not IsInVehicle() then
-            SetPortraitTexture(PlayerPortrait, "player")
-            PlayerPortrait:SetTexCoord(0, 1, 0, 1)
         end
     end
 end

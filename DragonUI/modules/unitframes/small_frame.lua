@@ -184,11 +184,17 @@ function UF.SmallFrame.Create(opts)
         local portrait = frames.portrait
         if not portrait or not frames.main then return end
 
+        local bigDebuffsActive = addon.compatibility
+            and addon.compatibility.IsBigDebuffsPortraitActive
+            and addon.compatibility:IsBigDebuffsPortraitActive(opts.unitToken)
+
         if not enabled then
             if frameElements.classPortraitFrame then frameElements.classPortraitFrame:Hide() end
             if frameElements.classPortraitBg then frameElements.classPortraitBg:Hide() end
             if frameElements.classPortraitIcon then frameElements.classPortraitIcon:Hide() end
-            if portrait then portrait:SetAlpha(1) end
+            if portrait then
+                portrait:SetAlpha(bigDebuffsActive and 0 or 1)
+            end
             return
         end
 
@@ -246,7 +252,11 @@ function UF.SmallFrame.Create(opts)
         frameElements.classPortraitIcon:SetPoint("CENTER", frameElements.classPortraitFrame, "CENTER", 0, -2)
         frameElements.classPortraitIcon:SetSize(portraitSize, portraitSize)
         if UF.ApplyClassPortraitIcon(frameElements.classPortraitIcon, classFileName, useAlternative) then
-            frameElements.classPortraitIcon:Show()
+            if bigDebuffsActive then
+                frameElements.classPortraitIcon:Hide()
+            else
+                frameElements.classPortraitIcon:Show()
+            end
         else
             frameElements.classPortraitIcon:Hide()
         end
@@ -1084,5 +1094,6 @@ function UF.SmallFrame.Create(opts)
         anchor = function() return Module.anchorFrame end,
         IsEnabled = IsEnabled,
         GetConfig = GetConfig,
+        UpdateClassPortrait = UpdateSmallFrameClassPortrait,
     }
 end

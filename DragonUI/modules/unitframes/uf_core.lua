@@ -257,7 +257,6 @@ function UF.ApplyClassPortraitIcon(icon, classFileName, useAlternative)
     end
 
     if useAlternative then
-        icon:SetTexture(nil)
         icon:SetTexture(
             UF.TEXTURES.CLASS_ICON_ALTERNATIVE_PREFIX
             .. classFileName
@@ -272,7 +271,6 @@ function UF.ApplyClassPortraitIcon(icon, classFileName, useAlternative)
     end
 
     local inset = 0.02
-    icon:SetTexture(nil)
     icon:SetTexture(UF.TEXTURES.CLASS_ICON)
     icon:SetTexCoord(
         coords[1] + inset, coords[2] - inset,

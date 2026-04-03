@@ -40,6 +40,7 @@ addon.TargetOfFocus = {
     Reset = ToFModule.Reset,
     anchor = ToFModule.anchor,
     ChangeToFFrame = ToFModule.Refresh,
+    UpdateClassPortrait = ToFModule.UpdateClassPortrait,
 }
 
 -- Legacy compatibility aliases

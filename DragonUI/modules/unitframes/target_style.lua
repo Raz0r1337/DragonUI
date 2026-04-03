@@ -65,14 +65,12 @@ function UF.TargetStyle.Create(opts)
         lastThreatUpdate  = 0,
         lastFamousMessage = 0,
         lastFamousTarget  = nil,
-        lastBigDebuffsPortraitActive = nil,
     }
 
-    -- Class portrait overlays (lazy-created)
-    local classPortraitBg   = nil
-    local classPortraitIcon = nil
-    local portraitBlackout  = nil
-    local portraitRefreshFrame = nil
+    -- Class portrait overlays (lazy-created on a child frame)
+    local classPortraitFrame = nil
+    local classPortraitBg    = nil
+    local classPortraitIcon  = nil
 
     -- ================================================================
     -- CONFIG
@@ -171,144 +169,101 @@ function UF.TargetStyle.Create(opts)
             and addon.compatibility.IsBigDebuffsPortraitActive
             and addon.compatibility:IsBigDebuffsPortraitActive(unitToken)
 
-        if not portraitBlackout then
-            portraitBlackout = BlizzFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
-            portraitBlackout:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
-            portraitBlackout:SetVertexColor(0, 0, 0, 1)
-        end
-
-        portraitBlackout:ClearAllPoints()
-        portraitBlackout:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
-        portraitBlackout:SetSize(54, 54)
-
-        local function RestoreNativePortrait()
-            updateCache.lastPortraitClass = nil
-            if classPortraitBg then classPortraitBg:Hide() end
-            if classPortraitIcon then classPortraitIcon:Hide() end
-
-            if bigDebuffsActive and UnitExists(unitToken) then
-                portraitBlackout:Show()
-                Portrait:SetAlpha(0)
-                Portrait:Hide()
-            else
-                portraitBlackout:Hide()
-                if UnitExists(unitToken) then
-                    SetPortraitTexture(Portrait, unitToken)
-                    Portrait:SetTexCoord(0, 1, 0, 1)
-                end
-                Portrait:SetAlpha(1)
-                Portrait:Show()
-            end
-        end
-
         if config.classPortrait and UnitExists(unitToken)
            and UnitIsPlayer(unitToken) then
             local _, classFileName = UnitClass(unitToken)
             if classFileName and CLASS_ICON_TCOORDS
                and CLASS_ICON_TCOORDS[classFileName] then
-                     local shouldShowClassIcon = not bigDebuffsActive
+                local shouldShowClassIcon = not bigDebuffsActive
 
                 -- Skip if already showing the correct class portrait
                 if updateCache.lastPortraitClass == classFileName
-                   and updateCache.lastBigDebuffsPortraitActive == bigDebuffsActive
-                         and classPortraitBg and classPortraitBg:IsShown()
-                         and classPortraitIcon
-                         and classPortraitIcon:IsShown() == shouldShowClassIcon then
+                   and classPortraitFrame and classPortraitFrame:IsShown()
+                   and classPortraitIcon
+                   and classPortraitIcon:IsShown() == shouldShowClassIcon then
                     return
                 end
                 updateCache.lastPortraitClass = classFileName
-                updateCache.lastBigDebuffsPortraitActive = bigDebuffsActive
 
                 local useAlternative = config.alternativeClassIcons
 
+                -- Lazy-create portrait overlay frame (child of BlizzFrame,
+                -- same frame level so BigDebuffs at the same level renders
+                -- its icon on top via higher draw layer)
+                if not classPortraitFrame then
+                    classPortraitFrame = CreateFrame("Frame", nil, BlizzFrame)
+                    classPortraitFrame:SetFrameStrata(BlizzFrame:GetFrameStrata())
+                    classPortraitFrame:SetFrameLevel(BlizzFrame:GetFrameLevel())
+                    classPortraitFrame:EnableMouse(false)
+                end
+                -- Suppress the older uf_core portrait frame if it exists
                 if frameElements.classPortraitFrame then
                     frameElements.classPortraitFrame:Hide()
                 end
 
                 if not classPortraitBg then
-                    classPortraitBg = BlizzFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
+                    classPortraitBg = classPortraitFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
                     classPortraitBg:SetTexture(
                         "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
                     classPortraitBg:SetVertexColor(0, 0, 0, 1)
                 end
 
                 if not classPortraitIcon then
-                    classPortraitIcon = BlizzFrame:CreateTexture(nil, "ARTWORK", nil, 1)
+                    classPortraitIcon = classPortraitFrame:CreateTexture(nil, "ARTWORK", nil, 0)
                 end
 
+                classPortraitFrame:ClearAllPoints()
+                classPortraitFrame:SetAllPoints(Portrait)
+                classPortraitFrame:Show()
+
                 classPortraitBg:ClearAllPoints()
-                classPortraitBg:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
+                classPortraitBg:SetPoint("CENTER", classPortraitFrame, "CENTER", 0, 1)
                 classPortraitBg:SetSize(54, 54)
-                classPortraitBg:SetDrawLayer("BACKGROUND", 0)
                 classPortraitBg:Show()
 
                 classPortraitIcon:ClearAllPoints()
-                classPortraitIcon:SetPoint("CENTER", Portrait, "CENTER", 0, 1)
+                classPortraitIcon:SetPoint("CENTER", classPortraitFrame, "CENTER", 0, 1)
                 classPortraitIcon:SetSize(54, 54)
-                classPortraitIcon:SetDrawLayer("ARTWORK", 1)
                 UF.ApplyClassPortraitIcon(classPortraitIcon, classFileName, useAlternative)
                 if bigDebuffsActive then
+                    -- BigDebuffs is showing a debuff icon on the portrait.
+                    -- Hide our class icon so BD's icon is visible above the bg.
                     classPortraitIcon:Hide()
-                    portraitBlackout:Show()
                 else
                     classPortraitIcon:Show()
-                    portraitBlackout:Hide()
                 end
 
-                -- Hide vanilla portrait completely - class icon replaces it entirely
+                -- Hide vanilla portrait model — class icon replaces it
                 Portrait:SetAlpha(0)
-                Portrait:Hide()
-
-                if addon.compatibility and addon.compatibility.RefreshBigDebuffsUnitFrame then
-                    addon.compatibility:RefreshBigDebuffsUnitFrame(unitToken)
-                end
             else
-                RestoreNativePortrait()
+                -- Non-player or unknown class: restore native portrait
+                updateCache.lastPortraitClass = nil
+                if classPortraitFrame then classPortraitFrame:Hide() end
+                if UnitExists(unitToken) then
+                    Portrait:SetDrawLayer("ARTWORK", 0)
+                    SetPortraitTexture(Portrait, unitToken)
+                    Portrait:SetTexCoord(0, 1, 0, 1)
+                end
+                Portrait:SetAlpha(1)
             end
         else
-            -- Disable: hide overlay, restore native portrait
-            updateCache.lastBigDebuffsPortraitActive = bigDebuffsActive
+            -- Class portrait disabled: hide overlay, restore native portrait
+            updateCache.lastPortraitClass = nil
             if frameElements.classPortraitFrame then frameElements.classPortraitFrame:Hide() end
-            RestoreNativePortrait()
+            if classPortraitFrame then classPortraitFrame:Hide() end
 
-            if addon.compatibility and addon.compatibility.RefreshBigDebuffsUnitFrame then
-                addon.compatibility:RefreshBigDebuffsUnitFrame(unitToken)
-            end
-        end
-    end
-
-    local function QueuePortraitRefresh(delay)
-        if not portraitRefreshFrame then
-            portraitRefreshFrame = CreateFrame("Frame")
-        end
-
-        portraitRefreshFrame.delay = delay or 0.05
-        portraitRefreshFrame.elapsed = 0
-        portraitRefreshFrame.passes = 0
-        portraitRefreshFrame.maxPasses = 3
-        portraitRefreshFrame.targetGUID = UnitGUID(unitToken)
-
-        portraitRefreshFrame:SetScript("OnUpdate", function(self, dt)
-            self.elapsed = self.elapsed + dt
-            if self.elapsed < self.delay then
-                return
-            end
-
-            self.elapsed = 0
-            self.passes = self.passes + 1
-
-            if UnitExists(unitToken) then
-                updateCache.lastPortraitClass = nil
-                updateCache.lastBigDebuffsPortraitActive = nil
-                UpdateClassPortrait()
+            if bigDebuffsActive and UnitExists(unitToken) then
+                -- BigDebuffs active without class portrait: BD manages the portrait
+                Portrait:SetAlpha(0)
             else
-                portraitBlackout:Hide()
+                if UnitExists(unitToken) then
+                    Portrait:SetDrawLayer("ARTWORK", 0)
+                    SetPortraitTexture(Portrait, unitToken)
+                    Portrait:SetTexCoord(0, 1, 0, 1)
+                end
+                Portrait:SetAlpha(1)
             end
-
-            if self.passes >= self.maxPasses then
-                self:SetScript("OnUpdate", nil)
-            end
-        end)
+        end
     end
 
     -- ================================================================
@@ -404,11 +359,13 @@ function UF.TargetStyle.Create(opts)
             HealthBar:ClearAllPoints()
             HealthBar:SetSize(125, 20)
             HealthBar:SetPoint("RIGHT", Portrait, "LEFT", -1, 0)
+            HealthBar:SetFrameLevel(math.max(1, BlizzFrame:GetFrameLevel() - 1))
         end
         if ManaBar then
             ManaBar:ClearAllPoints()
             ManaBar:SetSize(132, 9.5)
             ManaBar:SetPoint("RIGHT", Portrait, "LEFT", 6.5, -16.5)
+            ManaBar:SetFrameLevel(math.max(1, BlizzFrame:GetFrameLevel() - 1))
         end
         if NameText then
             NameText:ClearAllPoints()
@@ -819,16 +776,18 @@ function UF.TargetStyle.Create(opts)
         Portrait:SetDrawLayer("ARTWORK", 0)
 
         -- ---- Configure health bar ----
+        -- Frame level -1 keeps bar fills below portrait area (level 0)
+        -- so the mana bar overlap doesn't render on top of the portrait.
         HealthBar:ClearAllPoints()
         HealthBar:SetSize(125, 20)
         HealthBar:SetPoint("RIGHT", Portrait, "LEFT", -1, 0)
-        HealthBar:SetFrameLevel(BlizzFrame:GetFrameLevel())
+        HealthBar:SetFrameLevel(math.max(1, BlizzFrame:GetFrameLevel() - 1))
 
         -- ---- Configure power bar ----
         ManaBar:ClearAllPoints()
         ManaBar:SetSize(132, 9.5)
         ManaBar:SetPoint("RIGHT", Portrait, "LEFT", 6.5, -16.5)
-        ManaBar:SetFrameLevel(BlizzFrame:GetFrameLevel())
+        ManaBar:SetFrameLevel(math.max(1, BlizzFrame:GetFrameLevel() - 1))
 
         -- ---- Configure text elements ----
         if NameText then
@@ -1111,7 +1070,6 @@ function UF.TargetStyle.Create(opts)
             UpdateThreat()
             UpdateHealthBarColor()
             UpdateClassPortrait()
-            QueuePortraitRefresh(0.05)
             if Module.textSystem then Module.textSystem.update() end
 
         elseif event == "UNIT_MODEL_CHANGED"
@@ -1119,9 +1077,7 @@ function UF.TargetStyle.Create(opts)
             local unit = ...
             if unit == unitToken and UnitExists(unitToken) then
                 updateCache.lastPortraitClass = nil
-                updateCache.lastBigDebuffsPortraitActive = nil
                 UpdateClassPortrait()
-                QueuePortraitRefresh(0.05)
 
                 if event == "UNIT_MODEL_CHANGED" then
                     UpdateClassification()

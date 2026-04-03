@@ -539,99 +539,13 @@ behaviors.CarboniteMinimapFix = function(addonName, addonInfo)
     end)
 end
 
-local function ApplyBigDebuffsTargetFocusFix(unit)
-    if unit ~= "target" and unit ~= "focus" then
-        return
-    end
-
-    local bigDebuffs = _G.BigDebuffs
-    if not bigDebuffs or not bigDebuffs.UnitFrames then
-        return
-    end
-
-    local frame = bigDebuffs.UnitFrames[unit] or _G["BigDebuffs" .. unit .. "UnitFrame"]
-    local blizzFrame = _G[(unit == "target") and "TargetFrame" or "FocusFrame"]
-    local parent = blizzFrame
-
-    if not frame or not parent then
-        return
-    end
-
-    local function applyLayerFix()
-        if frame:GetParent() ~= parent then
-            frame:SetParent(parent)
-        end
-
-        frame:SetFrameStrata(parent:GetFrameStrata())
-        frame:SetFrameLevel(parent:GetFrameLevel())
-
-        if frame.cooldown and frame.cooldown.SetFrameLevel then
-            frame.cooldown:SetFrameStrata(parent:GetFrameStrata())
-            frame.cooldown:SetFrameLevel(frame:GetFrameLevel())
-        end
-    end
-
-    if InCombatLockdown() then
-        if addon.CombatQueue then
-            addon.CombatQueue:Add("bigdebuffs_" .. unit, applyLayerFix)
-        end
-        return
-    end
-
-    applyLayerFix()
-end
-
-local function ApplyBigDebuffsPortraitStyle(unit)
-    if unit ~= "player" and unit ~= "target" and unit ~= "focus" then
-        return
-    end
-
-    local bigDebuffs = _G.BigDebuffs
-    if not bigDebuffs or not bigDebuffs.UnitFrames then
-        return
-    end
-
-    local frame = bigDebuffs.UnitFrames[unit] or _G["BigDebuffs" .. unit .. "UnitFrame"]
-    if not frame or not frame.icon or not frame.anchor or not frame.blizzard then
-        return
-    end
-
-    local function applyPortraitStyle()
-        local width, height = frame.anchor:GetSize()
-        if width and height and width > 0 and height > 0 and not frame.noPortait then
-            local portraitInset = 8
-            frame:SetSize(width - portraitInset, height - portraitInset)
-            frame:ClearAllPoints()
-            frame:SetPoint("CENTER", frame.anchor, 0, 0)
-
-            if frame.cooldown then
-                frame.cooldown:ClearAllPoints()
-                frame.cooldown:SetPoint("CENTER", frame, "CENTER", 0, 0)
-                frame.cooldown:SetSize(frame:GetWidth(), frame:GetHeight())
-            end
-        end
-
-        local texture = frame.current or frame.icon:GetTexture()
-        if texture then
-            if frame.icon.SetDrawLayer then
-                frame.icon:SetDrawLayer("BORDER", 1)
-            end
-            SetPortraitToTexture(frame.icon, texture)
-        end
-    end
-
-    if InCombatLockdown() then
-        if addon.CombatQueue then
-            addon.CombatQueue:Add("bigdebuffs_portrait_style_" .. unit, applyPortraitStyle)
-        end
-        return
-    end
-
-    applyPortraitStyle()
-end
+local BIGDEBUFFS_SUPPORTED_UNITS = {
+    player = true, target = true, focus = true,
+    targettarget = true, focustarget = true,
+}
 
 local function IsBigDebuffsPortraitActive(unit)
-    if unit ~= "player" and unit ~= "target" and unit ~= "focus" then
+    if not BIGDEBUFFS_SUPPORTED_UNITS[unit] then
         return false
     end
 
@@ -655,6 +569,10 @@ local function RefreshBigDebuffsAffectedPortrait(unit)
         addon.TargetFrame.UpdateTargetClassPortrait()
     elseif unit == "focus" and addon.FocusFrame and addon.FocusFrame.UpdateFocusClassPortrait then
         addon.FocusFrame.UpdateFocusClassPortrait()
+    elseif unit == "targettarget" and addon.TargetOfTarget and addon.TargetOfTarget.UpdateClassPortrait then
+        addon.TargetOfTarget.UpdateClassPortrait()
+    elseif unit == "focustarget" and addon.TargetOfFocus and addon.TargetOfFocus.UpdateClassPortrait then
+        addon.TargetOfFocus.UpdateClassPortrait()
     end
 end
 
@@ -664,41 +582,26 @@ behaviors.BigDebuffsTargetFocusCompatibility = function(addonName, addonInfo)
         return
     end
 
+    -- Only hook once to refresh DragonUI portraits when BigDebuffs state changes.
+    -- We never modify BigDebuffs frames — it handles its own positioning.
     if not bigDebuffs.__DragonUI_TargetFocusCompatHooked then
-        hooksecurefunc(bigDebuffs, "AttachUnitFrame", function(self, unit)
-            ApplyBigDebuffsTargetFocusFix(unit)
-            ApplyBigDebuffsPortraitStyle(unit)
-            RefreshBigDebuffsAffectedPortrait(unit)
-        end)
-
-        hooksecurefunc(bigDebuffs, "UNIT_AURA", function(self, unit)
-            ApplyBigDebuffsTargetFocusFix(unit)
-            ApplyBigDebuffsPortraitStyle(unit)
-            RefreshBigDebuffsAffectedPortrait(unit)
+        -- BigDebuffs:UNIT_AURA(event, unit) — event is first arg, unit is second
+        hooksecurefunc(bigDebuffs, "UNIT_AURA", function(self, event, unit)
+            if unit then
+                RefreshBigDebuffsAffectedPortrait(unit)
+            end
         end)
 
         hooksecurefunc(bigDebuffs, "Refresh", function()
-            ApplyBigDebuffsPortraitStyle("player")
             RefreshBigDebuffsAffectedPortrait("player")
-            ApplyBigDebuffsTargetFocusFix("target")
-            ApplyBigDebuffsTargetFocusFix("focus")
-            ApplyBigDebuffsPortraitStyle("target")
-            ApplyBigDebuffsPortraitStyle("focus")
             RefreshBigDebuffsAffectedPortrait("target")
             RefreshBigDebuffsAffectedPortrait("focus")
+            RefreshBigDebuffsAffectedPortrait("targettarget")
+            RefreshBigDebuffsAffectedPortrait("focustarget")
         end)
 
         bigDebuffs.__DragonUI_TargetFocusCompatHooked = true
     end
-
-    DelayedCall(function()
-        ApplyBigDebuffsPortraitStyle("player")
-        RefreshBigDebuffsAffectedPortrait("player")
-        ApplyBigDebuffsTargetFocusFix("target")
-        ApplyBigDebuffsTargetFocusFix("focus")
-        ApplyBigDebuffsPortraitStyle("target")
-        ApplyBigDebuffsPortraitStyle("focus")
-    end, 0.2)
 end
 
 -- ============================================================================
@@ -1027,7 +930,7 @@ ADDON_REGISTRY = {
     },
     ["bigdebuffs"] = {
         name = "BigDebuffs",
-        reason = "BigDebuffs anchors target and focus overlays to Blizzard portrait frames. DragonUI raises those overlay frames for compatibility.",
+        reason = "BigDebuffs overlays debuff icons on unit frame portraits. DragonUI refreshes its own class portraits when BigDebuffs state changes.",
         behavior = behaviors.BigDebuffsTargetFocusCompatibility,
         checkOnce = true
     },
@@ -1291,15 +1194,7 @@ function compatibility:GetActiveAddons()
     return state.activeAddons
 end
 
-function compatibility:RefreshBigDebuffsUnitFrame(unit)
-    ApplyBigDebuffsTargetFocusFix(unit)
-end
-
 function compatibility:IsBigDebuffsPortraitActive(unit)
-    return IsBigDebuffsPortraitActive(unit)
-end
-
-function compatibility:IsBigDebuffsTargetFocusActive(unit)
     return IsBigDebuffsPortraitActive(unit)
 end
 

@@ -41,6 +41,7 @@ addon.TargetOfTarget = {
     Reset = ToTModule.Reset,
     anchor = ToTModule.anchor,
     ChangeToTFrame = ToTModule.Refresh,
+    UpdateClassPortrait = ToTModule.UpdateClassPortrait,
 }
 
 -- Legacy compatibility aliases
