@@ -1267,13 +1267,21 @@ function CastbarModule:HandleCastStop_Simple(unitType, wasInterrupted, isChannel
     castbar.channelingEx = false
     -- Keep notInterruptible and desaturation alive through flash+fade;
     -- they are reset by HandleCastStart_Simple (new cast) or HideCastbar (cleanup).
-    
-    -- Channels always use the success flash on stop, even if stopped early.
-    -- Blizzard behavior: an interrupted channel fills the bar and plays the hold animation.
-    -- For normal casts, rely on the explicit UNIT_SPELLCAST_INTERRUPTED event (wasInterrupted=true)
-    -- to detect real interrupts; timing-based endedEarly detection caused false positives under lag.
+
+    -- Channels always use the success flash on stop — Blizzard behavior.
+    -- Player always uses UNIT_SPELLCAST_INTERRUPTED (wasInterrupted=true) — reliable in 3.3.5a.
+    -- Target/focus: UNIT_SPELLCAST_INTERRUPTED does NOT fire in 3.3.5a, so UNIT_SPELLCAST_STOP
+    -- is used for both success and interrupt. Use timing to distinguish them, but with a 400ms
+    -- grace window so normal lag (< 200ms) never causes false positives.
     castbar.selfInterrupt = false
-    
+    if not wasInterrupted and not isChannelStop and unitType ~= "player" then
+        local currentTime = GetTime()
+        local endedEarly = currentTime < (castbar.endTime or 0) - 0.4
+        if endedEarly then
+            castbar.selfInterrupt = true
+        end
+    end
+
     if wasInterrupted or castbar.selfInterrupt then
         -- Show interrupted state
         -- Shield stays visible and fades out with the container
