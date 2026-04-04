@@ -53,5 +53,6 @@
     <Script file="panel\tab_enhancements.lua"/>
     <Script file="panel\tab_auras.lua"/>
     <Script file="panel\tab_bags.lua"/>
+    <Script file="panel\tab_chat.lua"/>
     <Script file="panel\tab_profiles.lua"/>
 </Ui>

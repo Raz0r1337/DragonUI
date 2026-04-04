@@ -1,4 +1,4 @@
---[[
+﻿--[[
 ================================================================================
 DragonUI_Options - English Locale (Default)
 ================================================================================
@@ -75,6 +75,7 @@ L["Profiles"] = "Профили"
 L["Unit Frames"] = "Фреймы"
 L["XP & Rep Bars"] = "Опыт и репутация"
 L["Chat"] = "Чат"
+L["Appearance"] = "\u0412\u043d\u0435\u0448\u043d\u0438\u0439 \u0432\u0438\u0434"
 
 -- ============================================================================
 -- MODULES TAB
@@ -211,12 +212,23 @@ L["Make the tooltip follow the cursor position instead of the default anchor."] 
 
 -- Chat Mods
 L["Enable Chat Mods"] = "Включить улучшения чата"
-L["Chat enhancements: hide buttons, editbox positioning, URL detection & copy, chat copy, link hover tooltips, tell target, mousewheel scroll."] = "Улучшения чата: скрытие кнопок, позиция строки ввода, обнаружение и копирование URL, копирование чата, подсказки ссылок, шёпот цели, прокрутка колёсиком."
+L["Enables or disables Chat Mods."] = "Включает или отключает улучшения чата."
 L["Editbox Position"] = "Позиция строки ввода"
 L["Choose where the chat editbox is positioned."] = "Выбрать расположение строки ввода чата."
 L["Top"] = "Сверху"
 L["Bottom"] = "Снизу"
 L["Middle"] = "По центру"
+L["Tab & Button Fade"] = "Прозрачность вкладок и кнопок"
+L["How visible chat tabs are when not hovered. 0 = fully hidden, 1 = fully visible."] = "Видимость вкладок чата без наведения курсора. 0 = полностью скрыты, 1 = полностью видны."
+L["Style Min Opacity"] = "Мин. непрозрачность стиля"
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = "Минимальная непрозрачность стиля чата и поля ввода. При 0 повторяет вкладки; выше остаётся частично виден в паузе."
+L["Chat Style"] = "\u0421\u0442\u0438\u043b\u044c \u0447\u0430\u0442\u0430"
+L["Visual style for the chat frame background."] = "\u0412\u0438\u0437\u0443\u0430\u043b\u044c\u043d\u044b\u0439 \u0441\u0442\u0438\u043b\u044c \u0444\u043e\u043d\u0430 \u043e\u043a\u043d\u0430 \u0447\u0430\u0442\u0430."
+L["Editbox Style"] = "Стиль строки ввода"
+L["Visual style for the chat input box background."] = "Визуальный стиль фона поля ввода чата."
+L["Dark"] = "\u0422\u0451\u043c\u043d\u044b\u0439"
+L["DragonUI Style"] = "\u0421\u0442\u0438\u043b\u044c DragonUI"
+L["Midnight"] = "\u041f\u043e\u043b\u043d\u043e\u0447\u044c"
 
 -- Combuctor
 L["Enable Combuctor"] = "Включить Combuctor"

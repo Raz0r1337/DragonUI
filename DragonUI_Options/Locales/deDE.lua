@@ -1,4 +1,4 @@
---[[
+﻿--[[
 ================================================================================
 DragonUI_Options - English Locale (Default)
 ================================================================================
@@ -75,6 +75,7 @@ L["Profiles"] = "Profile"
 L["Unit Frames"] = "Einheitenfenster"
 L["XP & Rep Bars"] = "EP- & Rufleisten"
 L["Chat"] = "Chat"
+L["Appearance"] = "Erscheinungsbild"
 
 -- ============================================================================
 -- MODULES TAB
@@ -211,12 +212,23 @@ L["Make the tooltip follow the cursor position instead of the default anchor."] 
 
 -- Chat Mods
 L["Enable Chat Mods"] = "Chat-Mods aktivieren"
-L["Chat enhancements: hide buttons, editbox positioning, URL detection & copy, chat copy, link hover tooltips, tell target, mousewheel scroll."] = "Chat-Verbesserungen: Buttons ausblenden, Editbox-Positionierung, URL-Erkennung & Kopie, Chat kopieren, Link-Hover-Tooltips, Ziel anflüstern, Mausrad-Scrollen."
+L["Enables or disables Chat Mods."] = "Aktiviert oder deaktiviert Chat-Mods."
 L["Editbox Position"] = "Editbox-Position"
 L["Choose where the chat editbox is positioned."] = "Wähle die Position des Chat-Eingabefelds."
 L["Top"] = "Oben"
 L["Bottom"] = "Unten"
 L["Middle"] = "Mitte"
+L["Tab & Button Fade"] = "Tab- & Schaltflächen-Einblenden"
+L["How visible chat tabs are when not hovered. 0 = fully hidden, 1 = fully visible."] = "Wie sichtbar Chat-Tabs sind, wenn sie nicht überfahren werden. 0 = vollständig ausgeblendet, 1 = vollständig sichtbar."
+L["Style Min Opacity"] = "Minimale Stil-Deckkraft"
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = "Minimale Deckkraft des Chat- und Texteingabe-Stils. Bei 0 blendet er mit den Tabs aus; darüber bleibt er auch im Leerlauf teilweise sichtbar."
+L["Chat Style"] = "Chat-Stil"
+L["Visual style for the chat frame background."] = "Visueller Stil des Chat-Frame-Hintergrunds."
+L["Editbox Style"] = "Editbox-Stil"
+L["Visual style for the chat input box background."] = "Visueller Stil des Hintergrunds des Chat-Eingabefelds."
+L["Dark"] = "Dunkel"
+L["DragonUI Style"] = "DragonUI-Stil"
+L["Midnight"] = "Mitternacht"
 
 -- Combuctor
 L["Enable Combuctor"] = "Combuctor/Kombi-Beutel aktivieren"

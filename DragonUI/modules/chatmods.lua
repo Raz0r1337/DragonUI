@@ -210,7 +210,6 @@ local function EnsureChatButtonsHoverUpdater()
     end
 
     local updater = CreateFrame("Frame")
-    local BUTTON_FADE_SPEED = 10
     updater:SetScript("OnUpdate", function(_, elapsed)
         if not ChatModsModule.applied then return end
 
@@ -222,33 +221,24 @@ local function EnsureChatButtonsHoverUpdater()
                 StripButtonFrameBackground(entry.bf)
             end
 
-            local visible = false
+            -- Mirror the tab's current alpha (Blizzard fades it via noMouseAlpha).
+            -- This keeps buttons and the style background in perfect sync.
+            local tabAlpha = entry.tab and entry.tab:GetAlpha() or 0
+            SetChatHoverButtonsAlpha(entry.index, tabAlpha)
 
-            if IsTabHoverActive(entry.tab) then
-                visible = true
-            elseif entry.bf and entry.bf:IsMouseOver() then
-                visible = true
-            else
-                for _, button in ipairs(entry.buttons) do
-                    if button and button:IsMouseOver() then
-                        visible = true
-                        break
-                    end
-                end
+            -- Sync style background frame with tab fade.
+            -- chatBgIdleAlpha sets the minimum floor (0 = fully transparent when idle).
+            local cf = _G["ChatFrame" .. entry.index]
+            if cf and cf._dragonUIBgFrame and cf._dragonUIBgFrame:IsShown() then
+                local cfg = GetModuleConfig()
+                local idleAlpha = (cfg and cfg.chatBgIdleAlpha ~= nil) and cfg.chatBgIdleAlpha or 0
+                cf._dragonUIBgFrame:SetAlpha(math.max(idleAlpha, tabAlpha))
             end
 
-            local targetAlpha = visible and 1 or 0
-            entry.targetAlpha = targetAlpha
-
-            if entry.alpha ~= entry.targetAlpha then
-                local delta = BUTTON_FADE_SPEED * elapsed
-                if entry.alpha < entry.targetAlpha then
-                    entry.alpha = math.min(entry.targetAlpha, entry.alpha + delta)
-                else
-                    entry.alpha = math.max(entry.targetAlpha, entry.alpha - delta)
-                end
-
-                SetChatHoverButtonsAlpha(entry.index, entry.alpha)
+            -- Sync editbox style backdrop: visible only when typing.
+            local eb = _G["ChatFrame" .. entry.index .. "EditBox"]
+            if eb and eb:GetBackdrop() then
+                eb:SetAlpha(eb:HasFocus() and 1 or 0)
             end
         end
     end)
@@ -267,8 +257,10 @@ local function ApplyChatFrameTweaks()
             -- Fix tab fading
             local tab = _G["ChatFrame" .. i .. "Tab"]
             if tab then
+                local config = GetModuleConfig()
+                local idleAlpha = (config and config.tabIdleAlpha ~= nil) and config.tabIdleAlpha or 0
                 tab:SetAlpha(1)
-                tab.noMouseAlpha = 0.25
+                tab.noMouseAlpha = idleAlpha
             end
             cf:SetFading(true)
 
@@ -325,12 +317,140 @@ local function ApplyChatFrameTweaks()
 end
 
 -- ============================================================================
+-- CHAT FRAME STYLE (background skin)
+-- ============================================================================
+
+local BD_CHATBG = {
+    bgFile   = "Interface\\ChatFrame\\ChatFrameBackground",
+    edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
+    tile = false, edgeSize = 1,
+    insets = { left = 0, right = 0, top = 0, bottom = 0 },
+}
+
+-- style name -> { bg r/g/b/a, border r/g/b/a or nil }
+local CHAT_STYLES = {
+    dark = {
+        bg     = {0.03, 0.03, 0.04, 0.80},
+        border = nil,
+    },
+    dragon = {
+        bg     = {0.05, 0.05, 0.08, 0.88},
+        border = {0.30, 0.30, 0.40, 0.85},
+    },
+    midnight = {
+        bg     = {0.00, 0.00, 0.00, 0.95},
+        border = {0.75, 0.62, 0.18, 0.85},
+    },
+}
+
+-- Extra pixels the background frame extends beyond ChatFrame's edges.
+-- Tune these constants manually to adjust coverage.
+local CHATBG_LEFT_PAD     = 3  -- extends left past frame edge
+local CHATBG_TOP_EXTEND   = 3  -- extends above frame top edge
+local CHATBG_RIGHT_EXTEND = 2  -- extends right past frame edge
+local CHATBG_BOTTOM_EXTEND = 6 -- extends below frame bottom edge
+
+local function ApplyChatStyle()
+    local config = GetModuleConfig()
+    local style = (config and config.chatStyle) or "none"
+    local def = CHAT_STYLES[style]
+
+    for i = 1, 10 do
+        local cf = _G["ChatFrame" .. i]
+        if cf then
+            -- Always clear cf's native Blizzard backdrop so our bgFrame
+            -- (which sits behind cf at level-1) isn't obscured by it.
+            cf:SetBackdrop(nil)
+
+            if not def then
+                if cf._dragonUIBgFrame then
+                    cf._dragonUIBgFrame:Hide()
+                end
+            else
+                -- Create a dedicated backdrop frame as a child of cf.
+                -- It sits at level-1 (behind cf's text) with cf's backdrop
+                -- cleared above, so it's fully visible.
+                if not cf._dragonUIBgFrame then
+                    local bg = CreateFrame("Frame", nil, cf)
+                    bg:SetFrameLevel(cf:GetFrameLevel() - 1)
+                    cf._dragonUIBgFrame = bg
+                end
+                local bg = cf._dragonUIBgFrame
+                -- Always update anchor in case extend constants changed.
+                bg:ClearAllPoints()
+                bg:SetPoint("TOPLEFT",     cf, "TOPLEFT",     -CHATBG_LEFT_PAD,   CHATBG_TOP_EXTEND)
+                bg:SetPoint("BOTTOMRIGHT", cf, "BOTTOMRIGHT",  CHATBG_RIGHT_EXTEND, -CHATBG_BOTTOM_EXTEND)
+                bg:SetBackdrop(BD_CHATBG)
+                local r, g, b, a = unpack(def.bg)
+                bg:SetBackdropColor(r, g, b, a)
+                if def.border then
+                    local br, bg2, bb, ba = unpack(def.border)
+                    bg:SetBackdropBorderColor(br, bg2, bb, ba)
+                else
+                    bg:SetBackdropBorderColor(0, 0, 0, 0)
+                end
+                bg:SetAlpha(1)
+                bg:Show()
+            end
+        end
+    end
+end
+
+-- Editbox backdrop: slightly larger insets so the skin fills the full editbox
+-- including the bottom edge that Blizzard's default textures leave exposed.
+local BD_EDITBOX = {
+    bgFile   = "Interface\\ChatFrame\\ChatFrameBackground",
+    edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
+    tile = false, edgeSize = 1,
+    insets = { left = 0, right = 0, top = 0, bottom = 0 },
+}
+
+local function ApplyEditboxStyle()
+    local config = GetModuleConfig()
+    local style = (config and config.editboxStyle) or "none"
+    local def = CHAT_STYLES[style]
+
+    for i = 1, 10 do
+        local eb = _G["ChatFrame" .. i .. "EditBox"]
+        if eb then
+            -- Focus textures (Left/Mid/Right) render a solid black input indicator.
+            -- When our custom style is active they overlap it, so we hide them;
+            -- when no custom style is set we restore the default 0.8 alpha.
+            local focusAlpha = def and 0 or 0.8
+            for _, part in ipairs({"Left", "Mid", "Right"}) do
+                local focus = _G["ChatFrame" .. i .. "EditBoxFocus" .. part]
+                if focus then focus:SetTexture(0, 0, 0, focusAlpha) end
+            end
+
+            if not def then
+                eb:SetBackdrop(nil)
+            else
+                eb:SetBackdrop(BD_EDITBOX)
+                local r, g, b, a = unpack(def.bg)
+                eb:SetBackdropColor(r, g, b, a)
+                if def.border then
+                    local br, bg2, bb, ba = unpack(def.border)
+                    eb:SetBackdropBorderColor(br, bg2, bb, ba)
+                else
+                    eb:SetBackdropBorderColor(0, 0, 0, 0)
+                end
+            end
+        end
+    end
+end
+
+-- ============================================================================
 -- EDITBOX POSITIONING
 -- ============================================================================
 
+-- Height of the chat editbox in pixels. Default Blizzard is ~32; reduce for compact look.
+local EDITBOX_HEIGHT = 22
+-- Vertical gap between the chat frame bottom and the editbox. Increase to move it down.
+local EDITBOX_Y_OFFSET = -6
+
 local function ApplyEditBoxPosition()
     local config = GetModuleConfig()
-    local pos = config and config.editbox or "top"
+    local pos = config and config.editbox or "bottom"
 
     for i = 1, 10 do
         local cf = _G[format("ChatFrame%d", i)]
@@ -339,16 +459,17 @@ local function ApplyEditBoxPosition()
             eb:SetAltArrowKeyMode(false)
             eb:ClearAllPoints()
             eb:EnableMouse(false)
+            eb:SetHeight(EDITBOX_HEIGHT)
 
             if pos == "middle" then
-                eb:SetPoint("BOTTOMLEFT", UIParent, "BOTTOM", -200, 180)
+                eb:SetPoint("BOTTOMLEFT", UIParent, "BOTTOM", -200 - (CHATBG_LEFT_PAD - 1), 180)
                 eb:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOM", 200, 180)
             elseif pos == "top" then
-                eb:SetPoint("BOTTOMLEFT", cf, "TOPLEFT", 2, 20)
+                eb:SetPoint("BOTTOMLEFT", cf, "TOPLEFT", 2 - (CHATBG_LEFT_PAD - 0), 20)
                 eb:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", -2, 20)
-            else -- bottom
-                eb:SetPoint("TOPLEFT", cf, "BOTTOMLEFT")
-                eb:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT")
+            else -- bottom: place just below the chat frame with no gap
+                eb:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -(CHATBG_LEFT_PAD - 0), EDITBOX_Y_OFFSET)
+                eb:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", 2, EDITBOX_Y_OFFSET)
             end
         end
     end
@@ -681,7 +802,10 @@ local function ApplyChatModsSystem()
 
     ApplyChatFrameTweaks()
     ApplyEditBoxPosition()
+    ApplyChatStyle()
+    ApplyEditboxStyle()
     ApplyLinkHover()
+
     ApplyURLDetection()
     ApplyChatCopy()
     ApplyStickyChannels()
@@ -727,6 +851,18 @@ local function RestoreChatModsSystem()
         ChatModsModule.hooks.afkDndFilter = nil
     end
 
+    -- Restore chat frame and editbox backdrops
+    for i = 1, 10 do
+        local cf = _G["ChatFrame" .. i]
+        if cf then
+            if cf._dragonUIBgFrame then
+                cf._dragonUIBgFrame:Hide()
+            end
+        end
+        local eb = _G["ChatFrame" .. i .. "EditBox"]
+        if eb then eb:SetBackdrop(nil) end
+    end
+
     -- Restore original chat font heights
     if ChatModsModule.originalStates.CHAT_FONT_HEIGHTS then
         CHAT_FONT_HEIGHTS = ChatModsModule.originalStates.CHAT_FONT_HEIGHTS
@@ -767,11 +903,26 @@ local function OnProfileChanged()
             ApplyChatModsSystem()
         end
         ApplyEditBoxPosition()
+        ApplyChatStyle()
+        ApplyEditboxStyle()
     else
         if addon:ShouldDeferModuleDisable("chatmods", ChatModsModule) then
             return
         end
         RestoreChatModsSystem()
+    end
+end
+
+-- Public API for options panel
+addon.ApplyChatStyle = function()
+    if ChatModsModule.applied then
+        ApplyChatStyle()
+    end
+end
+
+addon.ApplyEditboxStyle = function()
+    if ChatModsModule.applied then
+        ApplyEditboxStyle()
     end
 end
 
@@ -799,6 +950,20 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
     elseif event == "PLAYER_ENTERING_WORLD" then
         if not IsModuleEnabled() then return end
         ApplyChatModsSystem()
+        -- Re-apply tab noMouseAlpha after a short delay so it isn't overwritten
+        -- by Blizzard's FCFManager_UpdateChatFrameListAlpha which fires after PEW.
+        addon:After(1, function()
+            if not ChatModsModule.applied then return end
+            local cfg = GetModuleConfig()
+            local idleAlpha = (cfg and cfg.tabIdleAlpha ~= nil) and cfg.tabIdleAlpha or 0
+            for i = 1, 10 do
+                local tab = _G["ChatFrame" .. i .. "Tab"]
+                if tab then
+                    tab.noMouseAlpha = idleAlpha
+                    tab:SetAlpha(idleAlpha)
+                end
+            end
+        end)
     end
 end)
 

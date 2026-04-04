@@ -630,7 +630,11 @@ local defaults = {
             },
             chatmods = {
                 enabled = true, -- Chat enhancements: hide buttons, editbox position, URL copy, chat copy
-                editbox = "top" -- Editbox position: "top", "bottom", or "middle"
+                editbox = "bottom", -- Editbox position: "top", "bottom", or "middle"
+                tabIdleAlpha = 0, -- Tab opacity when not hovered (0 = hidden, 1 = fully visible)
+                chatStyle = "none", -- Chat frame background style: "none", "dark", "dragon", "midnight"
+                chatBgIdleAlpha = 0, -- Chat style background opacity when idle/mouse away (0 = hidden, 1 = always visible)
+                editboxStyle = "none", -- Editbox background style: "none", "dark", "dragon", "midnight"
             },
             combuctor = {
                 enabled = false -- All-in-one bag replacement with filtering and search

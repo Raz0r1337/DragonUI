@@ -81,6 +81,7 @@ L["Unit Frames"] = true
 L["XP & Rep Bars"] = true
 L["Chat"] = true
 L["Bags"] = true
+L["Appearance"] = true
 L["Left Side Tabs"] = true
 L["Place category filter tabs on the left side of the bag frame instead of the right."] = true
 
@@ -225,12 +226,23 @@ L["Make the tooltip follow the cursor position instead of the default anchor."] 
 -- Chat Mods
 L["Chat Mods"] = true
 L["Enable Chat Mods"] = true
-L["Chat enhancements: hide buttons, editbox positioning, URL detection & copy, chat copy, link hover tooltips, tell target, mousewheel scroll."] = true
+L["Enables or disables Chat Mods."] = true
 L["Editbox Position"] = true
 L["Choose where the chat editbox is positioned."] = true
 L["Top"] = true
 L["Bottom"] = true
 L["Middle"] = true
+L["Tab & Button Fade"] = true
+L["Opacity of tabs, buttons and chat background when not hovered. 0 = hidden, 1 = always visible."] = true
+L["Style Min Opacity"] = true
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = true
+L["Chat Style"] = true
+L["Visual style for the chat frame background."] = true
+L["Editbox Style"] = true
+L["Visual style for the chat input box background."] = true
+L["Dark"] = true
+L["DragonUI Style"] = true
+L["Midnight"] = true
 
 -- Combuctor
 L["Combuctor"] = true

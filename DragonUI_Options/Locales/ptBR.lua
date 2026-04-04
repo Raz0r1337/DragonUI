@@ -1,4 +1,4 @@
---[[
+﻿--[[
  DragonUI_Options - Portuguese (Brazil) Locale (ptBR)
  Community translation — Edit this file to contribute!
 
@@ -52,3 +52,25 @@ L["Not a valid DragonUI preset string."] = "Não é um texto de predefinição D
 L["Failed to export preset."] = "Falha ao exportar a predefinição."
 L["Show Buff/Debuff on Focus"] = "Mostrar buffs/debuffs no foco"
 L["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."] = "Usa o modo nativo de quadro de foco grande para mostrar buffs e debuffs no quadro de foco."
+
+-- Chat Mods
+L["Enable Chat Mods"] = "Ativar Mods de Chat"
+L["Enables or disables Chat Mods."] = "Ativa ou desativa os mods de chat."
+L["Editbox Position"] = "Posi\u00e7\u00e3o da Caixa de Entrada"
+L["Choose where the chat editbox is positioned."] = "Escolha onde a caixa de entrada do chat fica posicionada."
+L["Top"] = "Cima"
+L["Bottom"] = "Baixo"
+L["Middle"] = "Meio"
+L["Tab & Button Fade"] = "Desvanecimento de abas e botões"
+L["How visible chat tabs are when not hovered. 0 = fully hidden, 1 = fully visible."] = "Visibilidade das abas de chat sem o cursor. 0 = totalmente ocultas, 1 = totalmente vis\u00edveis."
+L["Style Min Opacity"] = "Opacidade mínima do estilo"
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = "Opacidade mínima do skin do chat e da caixa de texto. Em 0 desvanece com as abas; acima disso permanece parcialmente visível quando inativo."
+L["Chat Style"] = "Estilo do chat"
+L["Visual style for the chat frame background."] = "Estilo visual do fundo do quadro de chat."
+L["Editbox Style"] = "Estilo da caixa de entrada"
+L["Visual style for the chat input box background."] = "Estilo visual do fundo da caixa de entrada do chat."
+L["Dark"] = "Escuro"
+L["DragonUI Style"] = "Estilo DragonUI"
+L["Midnight"] = "Meia-noite"
+L["Chat"] = "Chat"
+L["Appearance"] = "Apar\u00eancia"

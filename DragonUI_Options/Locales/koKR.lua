@@ -1,4 +1,4 @@
---[[
+﻿--[[
 ================================================================================
 DragonUI_Options - English Locale (Default)
 ================================================================================
@@ -75,6 +75,7 @@ L["Profiles"] = "프로필"
 L["Unit Frames"] = "유닛 프레임"
 L["XP & Rep Bars"] = "경험치 및 평판 바"
 L["Chat"] = "채팅"
+L["Appearance"] = "\uc678\ud615"
 
 -- ============================================================================
 -- MODULES TAB
@@ -211,12 +212,24 @@ L["Make the tooltip follow the cursor position instead of the default anchor."] 
 
 -- Chat Mods
 L["Enable Chat Mods"] = "채팅 모드 활성화"
-L["Chat enhancements: hide buttons, editbox positioning, URL detection & copy, chat copy, link hover tooltips, tell target, mousewheel scroll."] = "채팅 강화: 버튼 숨기기, 입력창 위치 조정, URL 감지 및 복사, 대화 복사, 링크 마우스 오버 툴팁, 대상에게 귓속말, 마우스 휠 스크롤."
+L["Enables or disables Chat Mods."] = "쳄팅 모드를 활성화하거나 비활성화합니다."
 L["Editbox Position"] = "입력창 위치"
 L["Choose where the chat editbox is positioned."] = "채팅 입력창의 위치를 선택하세요."
 L["Top"] = "상단"
 L["Bottom"] = "하단"
 L["Middle"] = "중간"
+L["Tab & Button Fade"] = "탭 및 버튼 페이드아웃"
+L["How visible chat tabs are when not hovered. 0 = fully hidden, 1 = fully visible."] = "마우스를 올리지 않을 때 채팅 탭의 가시성. 0 = 완전히 숨김, 1 = 완전히 표시."
+L["Style Min Opacity"] = "스타일 최소 불투명도"
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = "채팅 및 텍스트 입력란 스키의 최소 불투명도. 0이면 탭과 동기화되어 사라짐; 그 이상이면 유유 시에도 부분적으로 표시됩니다."
+L["Chat Style"] = "\ucc44\ud305 \uc2a4\ud0c0\uc77c"
+L["Visual style for the chat frame background."] = "\ucc44\ud305 \ud504\ub808\uc784 \ubc30\uacbd\uc758 \uc2dc\uac01\uc801 \uc2a4\ud0c0\uc77c."
+L["Editbox Style"] = "입력 스타일"
+L["Visual style for the chat input box background."] = "입력란 배경의 시각적 스타일."
+L["Dark"] = "\uc5b4\ub450\uc6b4"
+L["DragonUI Style"] = "DragonUI \uc2a4\ud0c0\uc77c"
+L["Midnight"] = "\uc790\uc815"
+
 
 -- Combuctor
 L["Enable Combuctor"] = "통합가방(Combuctor) 활성화"

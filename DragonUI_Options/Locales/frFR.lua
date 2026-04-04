@@ -1,4 +1,4 @@
---[[
+﻿--[[
  DragonUI_Options - French Locale (frFR)
  Community translation — Edit this file to contribute!
 
@@ -52,3 +52,25 @@ L["Not a valid DragonUI preset string."] = "Ce n'est pas un texte de préréglag
 L["Failed to export preset."] = "Échec de l'exportation du préréglage."
 L["Show Buff/Debuff on Focus"] = "Afficher les buffs/debuffs sur la focalisation"
 L["Uses the native large focus frame mode to show buffs and debuffs on the focus frame."] = "Utilise le mode natif de grand cadre de focalisation pour afficher les buffs et debuffs sur le cadre de focalisation."
+
+-- Chat Mods
+L["Enable Chat Mods"] = "Activer les mods de chat"
+L["Enables or disables Chat Mods."] = "Active ou désactive les mods de chat."
+L["Editbox Position"] = "Position de la zone de saisie"
+L["Choose where the chat editbox is positioned."] = "Choisissez o\u00f9 se trouve la zone de saisie du chat."
+L["Top"] = "Haut"
+L["Bottom"] = "Bas"
+L["Middle"] = "Milieu"
+L["Tab & Button Fade"] = "Fondu des onglets et boutons"
+L["Opacity of tabs, buttons and chat background when not hovered. 0 = hidden, 1 = always visible."] = "Opacit\u00e9 des onglets, boutons et fond du chat sans survol. 0 = cach\u00e9, 1 = toujours visible."
+L["Style Min Opacity"] = "Opacité minimale du style"
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = "Opacité minimale du style du chat et de la zone de texte. À 0 il s'estompe avec les onglets ; au-dessus, il reste partiellement visible au repos."
+L["Chat Style"] = "Style du chat"
+L["Visual style for the chat frame background."] = "Style visuel du fond du cadre de chat."
+L["Editbox Style"] = "Style de la zone de saisie"
+L["Visual style for the chat input box background."] = "Style visuel du fond de la zone de saisie du chat."
+L["Dark"] = "Sombre"
+L["DragonUI Style"] = "Style DragonUI"
+L["Midnight"] = "Minuit"
+L["Chat"] = "Chat"
+L["Appearance"] = "Apparence"

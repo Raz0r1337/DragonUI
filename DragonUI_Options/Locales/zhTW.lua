@@ -1,4 +1,4 @@
---[[
+﻿--[[
 ================================================================================
 DragonUI_Options - 繁體中文本地化檔案
 ================================================================================
@@ -74,6 +74,8 @@ L["Profiles"] = "配置檔案"
 L["Unit Frames"] = "單位框架"
 L["XP & Rep Bars"] = "經驗值 & 聲望條"
 L["Chat"] = "聊天"
+L["Appearance"] = "\u5916\u89c0"
+
 
 -- ============================================================================
 -- 模組標籤頁
@@ -208,12 +210,24 @@ L["Make the tooltip follow the cursor position instead of the default anchor."] 
 
 -- 聊天修改
 L["Enable Chat Mods"] = "啟用聊天功能修改"
-L["Chat enhancements: hide buttons, editbox positioning, URL detection & copy, chat copy, link hover tooltips, tell target, mousewheel scroll."] = "聊天增強功能：隱藏按鈕、輸入框定位、URL檢測和複製、聊天覆制、連結懸停提示、/告訴目標、滑鼠滾輪滾動。"
+L["Enables or disables Chat Mods."] = "啟用或停用聊天功能修改。"
 L["Editbox Position"] = "輸入框位置"
 L["Choose where the chat editbox is positioned."] = "選擇聊天輸入框的擺放位置。"
 L["Top"] = "頂部"
 L["Bottom"] = "底部"
 L["Middle"] = "中間"
+L["Tab & Button Fade"] = "標籤與按鈕淡出"
+L["How visible chat tabs are when not hovered. 0 = fully hidden, 1 = fully visible."] = "未懸停時聊天分頁的可見度。0 = 完全隱藏，1 = 完全可見。"
+L["Style Min Opacity"] = "樣式最小透明度"
+L["Minimum opacity of the chat and text box skin. At 0 it fades in sync with tabs; above 0 it stays partially visible even when idle."] = "聊天與文字框樣式的最小透明度。0時與標籤同步淡出；超出0則閒置時仍部分可見。"
+L["Chat Style"] = "\u804a\u5929\u6a23\u5f0f"
+L["Visual style for the chat frame background."] = "\u804a\u5929\u6846\u80cc\u666f\u7684\u8996\u89ba\u6a23\u5f0f\u3002"
+L["Editbox Style"] = "輸入框樣式"
+L["Visual style for the chat input box background."] = "聊天輸入框背景的視覺樣式。"
+L["Dark"] = "\u6697\u8272"
+L["DragonUI Style"] = "DragonUI \u6a23\u5f0f"
+L["Midnight"] = "\u5b50\u591c"
+
 
 -- 揹包整合 (Combuctor)
 L["Enable Combuctor"] = "啟用揹包整合 (Combuctor)"
