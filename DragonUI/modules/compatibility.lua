@@ -576,29 +576,183 @@ local function RefreshBigDebuffsAffectedPortrait(unit)
     end
 end
 
+-- BigDebuffs icon-border fix for DragonUI portraits.
+--
+-- Problem:  SetPortraitToTexture inscribes a circle in the full icon
+-- texture region.  WoW spell icons have a thin decorative border baked
+-- into the texture — that border peeks through at the circle's edge.
+--
+-- Fix:  We create an OVERSIZED replica texture directly on the BigDebuffs
+-- frame, anchored with negative insets (outset).  The replica is physically
+-- LARGER than the frame.  SetPortraitToTexture inscribes its circle in
+-- the larger area → the icon border is pushed outward.  The portrait ring
+-- (at a higher frame level) covers the overflow.
+--
+-- KEY ADVANTAGE: Since the replica is a TEXTURE (not a frame), it is
+-- ALWAYS drawn below child frames (cooldown swirl, text, etc.).
+-- No frame-level hacks needed.  Layering is correct by definition.
+--
+-- ► To tweak:
+--   BIGDEBUFFS_ICON_ZOOM  = extra pixels per edge before scaling (border push)
+--   BIGDEBUFFS_ICON_SCALE = multiplier on the final texture size (zoom level)
+--   BIGDEBUFFS_ICON_OFFSET_X/Y = centering correction relative to bdFrame
+local BIGDEBUFFS_ICON_ZOOM     = 1.5   -- user fine-tuned
+local BIGDEBUFFS_ICON_SCALE    = 1.46  -- user fine-tuned
+local BIGDEBUFFS_ICON_OFFSET_X = 0.1   -- user fine-tuned
+local BIGDEBUFFS_ICON_OFFSET_Y = 1.3   -- user fine-tuned
+
+-- Units whose portrait frames are affected by DragonUI's resizing
+local BIGDEBUFFS_AFFECTED_UNITS = {
+    player = true, playerFAKE = true, target = true, focus = true,
+}
+
+-- Maps BigDebuffs frame → replica texture
+local bdFrameReplicas = {}
+-- Tracks last-known BigDebuffs active state per unit, so we only call
+-- RefreshBigDebuffsAffectedPortrait when the state actually changes
+-- (active→inactive or inactive→active).  This avoids the constant
+-- ClearAllPoints/SetAllPoints layout churn that causes cooldown jitter.
+local bdLastActiveState = {}
+
+-- Set up an oversized replica texture on a BigDebuffs frame.
+local function SetupBDIconReplica(bdFrame)
+    if not bdFrame or not bdFrame.icon then return end
+    if bdFrameReplicas[bdFrame] then return end
+
+    local w, h = bdFrame:GetSize()
+    if w == 0 or h == 0 then return end -- frame not sized yet
+
+    local zoom  = BIGDEBUFFS_ICON_ZOOM
+    local scale = BIGDEBUFFS_ICON_SCALE
+
+    -- Effective size = (frame + zoom-per-side) × scale.
+    -- Matches the old ScrollFrame visual: child was (w+zoom*2) at 1.46×.
+    local effectiveW = (w + zoom * 2) * scale
+    local effectiveH = (h + zoom * 2) * scale
+
+    -- Replica is a texture on bdFrame at BORDER layer (same as BigDebuffs'
+    -- own icon).  Must be above ActionButtonTemplate's BACKGROUND elements
+    -- to avoid black-background rendering.  Textures are always below child
+    -- frames (cooldowns) regardless of draw layer — no layering issues.
+    local replica = bdFrame:CreateTexture(nil, "BORDER")
+    replica:SetSize(effectiveW, effectiveH)
+    replica:SetPoint("CENTER", bdFrame, "CENTER",
+                     BIGDEBUFFS_ICON_OFFSET_X, BIGDEBUFFS_ICON_OFFSET_Y)
+
+    -- Hide the original BigDebuffs icon visually; BigDebuffs still
+    -- operates on it (SetPortraitToTexture, Show, Hide) but the user
+    -- sees only the replica.
+    bdFrame.icon:SetAlpha(0)
+
+    bdFrameReplicas[bdFrame] = replica
+end
+
+-- Mirror the texture from original icon → replica.
+-- Called after BigDebuffs UNIT_AURA / Refresh.
+--
+-- BigDebuffs stores the icon path on frame.current (line 2483) after
+-- calling SetPortraitToTexture.  We use that instead of GetTexture()
+-- because GetTexture() returns unusable data after SetPortraitToTexture.
+local function SyncBDIconReplica(bdFrame)
+    local replica = bdFrameReplicas[bdFrame]
+    if not replica then return end
+    -- Keep original icon invisible (BigDebuffs may reset alpha)
+    if bdFrame.icon and bdFrame.icon:GetAlpha() > 0 then
+        bdFrame.icon:SetAlpha(0)
+    end
+    local iconPath = bdFrame.current
+    if iconPath then
+        if replica._lastIcon ~= iconPath then
+            SetPortraitToTexture(replica, iconPath)
+            replica._lastIcon = iconPath
+        end
+        if not replica:IsShown() then
+            replica:Show()
+        end
+    else
+        if replica:IsShown() then
+            replica:Hide()
+        end
+        replica._lastIcon = nil
+    end
+end
+
 behaviors.BigDebuffsTargetFocusCompatibility = function(addonName, addonInfo)
     local bigDebuffs = _G.BigDebuffs
     if not bigDebuffs then
         return
     end
 
-    -- Only hook once to refresh DragonUI portraits when BigDebuffs state changes.
-    -- We never modify BigDebuffs frames — it handles its own positioning.
+    -- Only hook once.
     if not bigDebuffs.__DragonUI_TargetFocusCompatHooked then
-        -- BigDebuffs:UNIT_AURA(event, unit) — event is first arg, unit is second
+
+        -- Post-hook UNIT_AURA: sync replica AND refresh portrait only
+        -- when BigDebuffs active state CHANGES for a unit.
+        -- Calling RefreshBigDebuffsAffectedPortrait on every event causes
+        -- ClearAllPoints/SetAllPoints churn → cooldown swirl jitter.
+        -- By tracking state transitions we hide the class icon when BD
+        -- activates, restore it when BD deactivates, and do nothing in between.
         hooksecurefunc(bigDebuffs, "UNIT_AURA", function(self, event, unit)
-            if unit then
+            if not unit then return end
+            -- Sync replica for the unit that just updated
+            if BIGDEBUFFS_AFFECTED_UNITS[unit] then
+                local frame = self.UnitFrames[unit]
+                if frame and frame.blizzard then
+                    SyncBDIconReplica(frame)
+                end
+            end
+            -- Detect state change: BD active ↔ inactive
+            local bdFrame = self.UnitFrames and self.UnitFrames[unit]
+            local isActive = bdFrame and bdFrame:IsShown() and bdFrame.current ~= nil
+            local wasActive = bdLastActiveState[unit]
+            if isActive ~= wasActive then
+                bdLastActiveState[unit] = isActive
                 RefreshBigDebuffsAffectedPortrait(unit)
             end
         end)
 
-        hooksecurefunc(bigDebuffs, "Refresh", function()
-            RefreshBigDebuffsAffectedPortrait("player")
-            RefreshBigDebuffsAffectedPortrait("target")
-            RefreshBigDebuffsAffectedPortrait("focus")
-            RefreshBigDebuffsAffectedPortrait("targettarget")
-            RefreshBigDebuffsAffectedPortrait("focustarget")
+        hooksecurefunc(bigDebuffs, "Refresh", function(self)
+            -- Sync all replicas after a full refresh
+            for unit, _ in pairs(BIGDEBUFFS_AFFECTED_UNITS) do
+                local frame = self.UnitFrames[unit]
+                if frame and frame.blizzard then
+                    SyncBDIconReplica(frame)
+                end
+            end
+            -- Refresh portraits only for units whose BD state changed
+            local refreshUnits = {"player", "target", "focus", "targettarget", "focustarget"}
+            for _, unit in ipairs(refreshUnits) do
+                local bdFrame = self.UnitFrames and self.UnitFrames[unit]
+                local isActive = bdFrame and bdFrame:IsShown() and bdFrame.current ~= nil
+                local wasActive = bdLastActiveState[unit]
+                if isActive ~= wasActive then
+                    bdLastActiveState[unit] = isActive
+                    RefreshBigDebuffsAffectedPortrait(unit)
+                end
+            end
         end)
+
+        -- When BigDebuffs creates/re-attaches an affected frame, set up
+        -- the inset replica icon.
+        hooksecurefunc(bigDebuffs, "AttachUnitFrame", function(self, unit)
+            if not BIGDEBUFFS_AFFECTED_UNITS[unit] then return end
+            local frame = self.UnitFrames[unit]
+            if frame and frame.blizzard then
+                SetupBDIconReplica(frame)
+            end
+        end)
+
+        -- Catch-up: set up replicas for frames that already exist and
+        -- sync their current texture.
+        if bigDebuffs.UnitFrames then
+            for unit, _ in pairs(BIGDEBUFFS_AFFECTED_UNITS) do
+                local frame = bigDebuffs.UnitFrames[unit]
+                if frame and frame.blizzard then
+                    SetupBDIconReplica(frame)
+                    SyncBDIconReplica(frame)
+                end
+            end
+        end
 
         bigDebuffs.__DragonUI_TargetFocusCompatHooked = true
     end
