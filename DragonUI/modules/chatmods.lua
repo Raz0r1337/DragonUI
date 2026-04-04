@@ -210,28 +210,33 @@ local function EnsureChatButtonsHoverUpdater()
     end
 
     local updater = CreateFrame("Frame")
+    local _throttle = 0
     updater:SetScript("OnUpdate", function(_, elapsed)
+        _throttle = _throttle + elapsed
+        if _throttle < 0.1 then return end
+        _throttle = 0
+
         if not ChatModsModule.applied then return end
 
         local entries = ChatModsModule.frames.chatHoverEntries
         if not entries then return end
 
+        -- Cache config once per tick, outside the loop
+        local cfg = GetModuleConfig()
+        local idleAlpha = (cfg and cfg.chatBgIdleAlpha ~= nil) and cfg.chatBgIdleAlpha or 0
+
         for _, entry in ipairs(entries) do
-            if entry.bf then
-                StripButtonFrameBackground(entry.bf)
-            end
+            -- StripButtonFrameBackground is NOT called here — it's handled by the
+            -- OnShow hook set in ApplyChatFrameTweaks. Calling it on a throttle
+            -- causes a visible flicker when Blizzard restores textures between ticks.
 
             -- Mirror the tab's current alpha (Blizzard fades it via noMouseAlpha).
-            -- This keeps buttons and the style background in perfect sync.
             local tabAlpha = entry.tab and entry.tab:GetAlpha() or 0
             SetChatHoverButtonsAlpha(entry.index, tabAlpha)
 
             -- Sync style background frame with tab fade.
-            -- chatBgIdleAlpha sets the minimum floor (0 = fully transparent when idle).
             local cf = _G["ChatFrame" .. entry.index]
             if cf and cf._dragonUIBgFrame and cf._dragonUIBgFrame:IsShown() then
-                local cfg = GetModuleConfig()
-                local idleAlpha = (cfg and cfg.chatBgIdleAlpha ~= nil) and cfg.chatBgIdleAlpha or 0
                 cf._dragonUIBgFrame:SetAlpha(math.max(idleAlpha, tabAlpha))
             end
 
