@@ -717,6 +717,11 @@ function addon.RefreshButtonStyling()
         
         -- Refresh button states
         addon.RefreshButtons()
+
+        -- Re-apply dark mode tinting after full button restyle
+        if addon.RefreshDarkModeActionButtons then
+            addon.RefreshDarkModeActionButtons()
+        end
     else
         -- Restore original buttons
         RestoreAllButtons()

@@ -83,7 +83,9 @@ local function DarkenTexture(texture, tint)
     if not texture.__DragonUI_OrigColor then
         texture.__DragonUI_OrigColor = { texture:GetVertexColor() }
     end
+    texture.__DragonUI_SettingDark = true
     texture:SetVertexColor(tint[1], tint[2], tint[3])
+    texture.__DragonUI_SettingDark = nil
     DarkModeModule.darkenedTextures[texture] = true
 end
 
@@ -91,7 +93,9 @@ local function RestoreTexture(texture)
     if not texture then return end
     if texture.__DragonUI_OrigColor then
         local c = texture.__DragonUI_OrigColor
+        texture.__DragonUI_SettingDark = true
         texture:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+        texture.__DragonUI_SettingDark = nil
         texture.__DragonUI_OrigColor = nil
     end
     DarkModeModule.darkenedTextures[texture] = nil
@@ -334,15 +338,21 @@ local function DarkenUnitFrameBorders(tint)
                     texPath = ""
                 end
 
-                local isBorder = texPath:find("BORDER") or texPath:find("BACKGROUND")
-                                 or texPath:find("INCOMBAT") or texPath:find("THREAT")
-                                 or texPath:find("NAMEBACKGROUND") or texPath:find("UIUNITFRAME")
+                -- Skip the NameBackground — it shows faction/selection color,
+                -- not chrome. Darkening it makes it invisible.
+                if texPath:find("NAMEBACKGROUND") then
+                    -- do nothing: this is visual content, not frame border
+                else
+                    local isBorder = texPath:find("BORDER") or texPath:find("BACKGROUND")
+                                     or texPath:find("INCOMBAT") or texPath:find("THREAT")
+                                     or texPath:find("UIUNITFRAME")
 
-                local layer = region:GetDrawLayer()
-                local isOverlay = (layer == "OVERLAY")
+                    local layer = region:GetDrawLayer()
+                    local isOverlay = (layer == "OVERLAY")
 
-                if isBorder or isOverlay then
-                    DarkenTexture(region, tint)
+                    if isBorder or isOverlay then
+                        DarkenTexture(region, tint)
+                    end
                 end
             end
         end
@@ -396,6 +406,13 @@ local function DarkenUnitFrameBorders(tint)
     DarkenFrameBorderTextures(_G["TargetFrame"])
     local targetTex = _G["TargetFrameTexture"]
     if targetTex then DarkenTexture(targetTex, tint) end
+    -- DragonUI custom target border/background (target_style factory puts the
+    -- border on a child frame, so DarkenFrameBorderTextures misses it)
+    local dragonTargetBorder = _G["DragonUI_TargetBorder"]
+    if dragonTargetBorder then DarkenTexture(dragonTargetBorder, tint) end
+    local dragonTargetBG = _G["DragonUI_TargetBG"]
+    if dragonTargetBG then DarkenTexture(dragonTargetBG, tint) end
+
     DarkenFrameBorderTextures(_G["TargetFrameToT"])
 
     -- DragonUI custom ToT border/background (created by small_frame factory)
@@ -408,6 +425,12 @@ local function DarkenUnitFrameBorders(tint)
     DarkenFrameBorderTextures(_G["FocusFrame"])
     local focusTex = _G["FocusFrameTexture"]
     if focusTex then DarkenTexture(focusTex, tint) end
+    -- DragonUI custom focus border/background (same child-frame issue as target)
+    local dragonFocusBorder = _G["DragonUI_FocusBorder"]
+    if dragonFocusBorder then DarkenTexture(dragonFocusBorder, tint) end
+    local dragonFocusBG = _G["DragonUI_FocusBG"]
+    if dragonFocusBG then DarkenTexture(dragonFocusBG, tint) end
+
     DarkenFrameBorderTextures(_G["FocusFrameToT"])
 
     -- DragonUI custom ToF border/background (created by small_frame factory)
@@ -687,8 +710,9 @@ local function ReDarkenButton(button)
     local tint = GetTintValues()
     local name = button:GetName()
     if not name then return end
-    -- Re-darken NormalTexture (border)
-    local normal = _G[name .. "NormalTexture"] or (button.GetNormalTexture and button:GetNormalTexture())
+    -- Re-darken NormalTexture (border) — check NormalTexture2 first for pet/stance buttons
+    local normal = _G[name .. "NormalTexture2"] or _G[name .. "NormalTexture"]
+                   or (button.GetNormalTexture and button:GetNormalTexture())
     if normal and normal.GetObjectType and normal:GetObjectType() == "Texture" then
         DarkenTexture(normal, tint)
     end
@@ -831,6 +855,74 @@ local function SetupBarRefreshHooks()
     DarkModeModule.hooks.barRefreshHooked = true
 end
 
+-- -----------------------------------------------------------------------
+-- VERTEX COLOR GUARDS: Hook SetVertexColor on every action/stance/pet
+-- button NormalTexture so that ANY external vertex color reset (range
+-- checks in ActionButton_OnUpdate, usability updates, ShowGrid, etc.)
+-- is immediately overridden with the dark mode tint.
+-- This is the definitive fix for intermittent border depaint.
+-- -----------------------------------------------------------------------
+local function GuardSetVertexColor(self)
+    if not DarkModeModule.applied then return end
+    if self.__DragonUI_SettingDark then return end
+    self.__DragonUI_SettingDark = true
+    local tint = GetTintValues()
+    self:SetVertexColor(tint[1], tint[2], tint[3])
+    self.__DragonUI_SettingDark = nil
+end
+
+local function InstallVertexColorGuards()
+    if DarkModeModule.hooks.vertexGuardsInstalled then return end
+
+    -- Action bar button NormalTextures
+    local prefixes = {
+        "ActionButton", "MultiBarBottomLeftButton", "MultiBarBottomRightButton",
+        "MultiBarRightButton", "MultiBarLeftButton", "BonusActionButton",
+    }
+    for _, prefix in ipairs(prefixes) do
+        for i = 1, 12 do
+            local normal = _G[prefix .. i .. "NormalTexture"]
+            if not normal then
+                local btn = _G[prefix .. i]
+                if btn and btn.GetNormalTexture then normal = btn:GetNormalTexture() end
+            end
+            if normal and not normal.__DragonUI_VCGuard then
+                hooksecurefunc(normal, "SetVertexColor", GuardSetVertexColor)
+                normal.__DragonUI_VCGuard = true
+            end
+        end
+    end
+
+    -- Stance / Shapeshift NormalTextures
+    for i = 1, 10 do
+        local normal = _G["ShapeshiftButton" .. i .. "NormalTexture"]
+        if not normal then
+            local btn = _G["ShapeshiftButton" .. i]
+            if btn and btn.GetNormalTexture then normal = btn:GetNormalTexture() end
+        end
+        if normal and not normal.__DragonUI_VCGuard then
+            hooksecurefunc(normal, "SetVertexColor", GuardSetVertexColor)
+            normal.__DragonUI_VCGuard = true
+        end
+    end
+
+    -- Pet button NormalTextures
+    for i = 1, 10 do
+        local normal = _G["PetActionButton" .. i .. "NormalTexture2"]
+                       or _G["PetActionButton" .. i .. "NormalTexture"]
+        if not normal then
+            local btn = _G["PetActionButton" .. i]
+            if btn and btn.GetNormalTexture then normal = btn:GetNormalTexture() end
+        end
+        if normal and not normal.__DragonUI_VCGuard then
+            hooksecurefunc(normal, "SetVertexColor", GuardSetVertexColor)
+            normal.__DragonUI_VCGuard = true
+        end
+    end
+
+    DarkModeModule.hooks.vertexGuardsInstalled = true
+end
+
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -852,6 +944,7 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
 
         -- Setup hooks ONCE (before ApplyDarkMode so they catch future updates)
         SetupBarRefreshHooks()
+        InstallVertexColorGuards()
 
         -- Hook player frame refresh so dark mode re-applies after decoration/fat bar changes
         if not DarkModeModule.hooks.playerFrameHooked then
@@ -889,6 +982,33 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
             DarkModeModule.hooks.playerFrameHooked = true
         end
 
+        -- Hook TargetFrame_Update / FocusFrame_Update so dark mode re-applies
+        -- to custom DragonUI border/background textures after Blizzard refreshes.
+        -- Throttled to avoid excessive re-darkening on rapid fire events.
+        if not DarkModeModule.hooks.targetFocusHooked then
+            local lastUFRefresh = 0
+            local function ThrottledUFRedarken()
+                if not DarkModeModule.applied then return end
+                local now = GetTime()
+                if now - lastUFRefresh < 0.15 then return end
+                lastUFRefresh = now
+                addon:After(0.05, function()
+                    if not DarkModeModule.applied then return end
+                    local ufTint = GetUFTintValues()
+                    DarkenUnitFrameBorders(ufTint)
+                end)
+            end
+
+            if TargetFrame_Update then
+                hooksecurefunc("TargetFrame_Update", ThrottledUFRedarken)
+            end
+            if FocusFrame_Update then
+                hooksecurefunc("FocusFrame_Update", ThrottledUFRedarken)
+            end
+
+            DarkModeModule.hooks.targetFocusHooked = true
+        end
+
         -- Register bar-change events for full re-darken of all buttons
         if not DarkModeModule.hooks.barEventsRegistered then
             self:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
@@ -898,6 +1018,8 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
             self:RegisterEvent("SPELL_UPDATE_USABLE")
             self:RegisterEvent("ACTIONBAR_UPDATE_STATE")
             self:RegisterEvent("PLAYER_REGEN_DISABLED")
+            self:RegisterEvent("PLAYER_TARGET_CHANGED")
+            self:RegisterEvent("PLAYER_FOCUS_CHANGED")
             DarkModeModule.hooks.barEventsRegistered = true
         end
 
@@ -957,6 +1079,18 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
             local tint = GetTintValues()
             DarkenActionButtonBorders(tint)
         end)
+
+    elseif event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_FOCUS_CHANGED" then
+        -- Re-darken unit frame borders after target/focus change.
+        -- The target_style factory's custom textures persist across target
+        -- changes, but Blizzard's TargetFrame_Update may reset some
+        -- Blizzard texture vertex colors that we also darken.
+        if not DarkModeModule.applied then return end
+        addon:After(0.05, function()
+            if not DarkModeModule.applied then return end
+            local ufTint = GetUFTintValues()
+            DarkenUnitFrameBorders(ufTint)
+        end)
     end
 end)
 
@@ -985,4 +1119,14 @@ addon.RefreshDarkModeXPRepBars = function()
     if not DarkModeModule.applied then return end
     local tint = GetTintValues()
     DarkenXPRepBorders(tint)
+end
+
+-- Re-darken all action/stance/pet button borders (called from buttons.lua after restyling)
+addon.RefreshDarkModeActionButtons = function()
+    if not IsModuleEnabled() then return end
+    if not DarkModeModule.applied then return end
+    local tint = GetTintValues()
+    DarkenActionButtonBorders(tint)
+    DarkenStanceButtonBorders(tint)
+    DarkenPetButtonBorders(tint)
 end
