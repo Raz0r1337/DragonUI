@@ -1,6 +1,6 @@
 ﻿--[[
 ================================================================================
-DragonUI_Options - English Locale (Default)
+DragonUI_Options - German Locale (Default)
 ================================================================================
 Base locale for the options panel: labels, descriptions, section headers,
 dropdown values, print messages, popup text.
